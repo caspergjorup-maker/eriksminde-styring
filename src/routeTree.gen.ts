@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -42,6 +43,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVedligeholdRoute =
+  AuthenticatedVedligeholdRouteImport.update({
+    id: '/vedligehold',
+    path: '/vedligehold',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLandbrugsjordRoute =
   AuthenticatedLandbrugsjordRouteImport.update({
     id: '/landbrugsjord',
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
+    | '/vedligehold'
     | '/halm/lager'
     | '/halm/oekonomi'
     | '/halm/salg'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
+    | '/vedligehold'
     | '/halm/lager'
     | '/halm/oekonomi'
     | '/halm/salg'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dokumenter'
     | '/_authenticated/landbrugsjord'
+    | '/_authenticated/vedligehold'
     | '/_authenticated/halm/lager'
     | '/_authenticated/halm/oekonomi'
     | '/_authenticated/halm/salg'
@@ -275,6 +288,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/vedligehold': {
+      id: '/_authenticated/vedligehold'
+      path: '/vedligehold'
+      fullPath: '/vedligehold'
+      preLoaderRoute: typeof AuthenticatedVedligeholdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/landbrugsjord': {
       id: '/_authenticated/landbrugsjord'
@@ -389,6 +409,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
+  AuthenticatedVedligeholdRoute: typeof AuthenticatedVedligeholdRoute
   AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
   AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
   AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
@@ -407,6 +428,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
+  AuthenticatedVedligeholdRoute: AuthenticatedVedligeholdRoute,
   AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
   AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
   AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
@@ -432,3 +454,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

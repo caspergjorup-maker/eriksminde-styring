@@ -16,6 +16,7 @@ import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as AuthenticatedSkovOverblikRouteImport } from './routes/_authenticated/skov.overblik'
+import { Route as AuthenticatedSkovHugstRouteImport } from './routes/_authenticated/skov.hugst'
 import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
 import { Route as AuthenticatedHalmOekonomiRouteImport } from './routes/_authenticated/halm.oekonomi'
 import { Route as AuthenticatedHalmLagerRouteImport } from './routes/_authenticated/halm.lager'
@@ -56,6 +57,11 @@ const AuthenticatedSkovOverblikRoute =
     path: '/skov/overblik',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSkovHugstRoute = AuthenticatedSkovHugstRouteImport.update({
+  id: '/skov/hugst',
+  path: '/skov/hugst',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHalmSalgRoute = AuthenticatedHalmSalgRouteImport.update({
   id: '/halm/salg',
   path: '/halm/salg',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
+  '/skov/hugst': typeof AuthenticatedSkovHugstRoute
   '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
+  '/skov/hugst': typeof AuthenticatedSkovHugstRoute
   '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
   '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
+  '/_authenticated/skov/hugst': typeof AuthenticatedSkovHugstRoute
   '/_authenticated/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRouteTypes {
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/halm/lager'
     | '/halm/oekonomi'
     | '/halm/salg'
+    | '/skov/hugst'
     | '/skov/overblik'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/halm/lager'
     | '/halm/oekonomi'
     | '/halm/salg'
+    | '/skov/hugst'
     | '/skov/overblik'
   id:
     | '__root__'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/halm/lager'
     | '/_authenticated/halm/oekonomi'
     | '/_authenticated/halm/salg'
+    | '/_authenticated/skov/hugst'
     | '/_authenticated/skov/overblik'
   fileRoutesById: FileRoutesById
 }
@@ -202,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSkovOverblikRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/skov/hugst': {
+      id: '/_authenticated/skov/hugst'
+      path: '/skov/hugst'
+      fullPath: '/skov/hugst'
+      preLoaderRoute: typeof AuthenticatedSkovHugstRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/halm/salg': {
       id: '/_authenticated/halm/salg'
       path: '/halm/salg'
@@ -233,6 +252,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
   AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
   AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
+  AuthenticatedSkovHugstRoute: typeof AuthenticatedSkovHugstRoute
   AuthenticatedSkovOverblikRoute: typeof AuthenticatedSkovOverblikRoute
 }
 
@@ -243,6 +263,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
   AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
   AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
+  AuthenticatedSkovHugstRoute: AuthenticatedSkovHugstRoute,
   AuthenticatedSkovOverblikRoute: AuthenticatedSkovOverblikRoute,
 }
 

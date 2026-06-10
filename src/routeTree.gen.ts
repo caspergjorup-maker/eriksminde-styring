@@ -16,6 +16,7 @@ import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as AuthenticatedSkovOverblikRouteImport } from './routes/_authenticated/skov.overblik'
+import { Route as AuthenticatedSkovJagtlejeRouteImport } from './routes/_authenticated/skov.jagtleje'
 import { Route as AuthenticatedSkovHugstRouteImport } from './routes/_authenticated/skov.hugst'
 import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
 import { Route as AuthenticatedHalmOekonomiRouteImport } from './routes/_authenticated/halm.oekonomi'
@@ -57,6 +58,12 @@ const AuthenticatedSkovOverblikRoute =
     path: '/skov/overblik',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSkovJagtlejeRoute =
+  AuthenticatedSkovJagtlejeRouteImport.update({
+    id: '/skov/jagtleje',
+    path: '/skov/jagtleje',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSkovHugstRoute = AuthenticatedSkovHugstRouteImport.update({
   id: '/skov/hugst',
   path: '/skov/hugst',
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/skov/hugst': typeof AuthenticatedSkovHugstRoute
+  '/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
   '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/skov/hugst': typeof AuthenticatedSkovHugstRoute
+  '/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
   '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRoutesById {
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/_authenticated/skov/hugst': typeof AuthenticatedSkovHugstRoute
+  '/_authenticated/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
   '/_authenticated/skov/overblik': typeof AuthenticatedSkovOverblikRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/halm/oekonomi'
     | '/halm/salg'
     | '/skov/hugst'
+    | '/skov/jagtleje'
     | '/skov/overblik'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/halm/oekonomi'
     | '/halm/salg'
     | '/skov/hugst'
+    | '/skov/jagtleje'
     | '/skov/overblik'
   id:
     | '__root__'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/_authenticated/halm/oekonomi'
     | '/_authenticated/halm/salg'
     | '/_authenticated/skov/hugst'
+    | '/_authenticated/skov/jagtleje'
     | '/_authenticated/skov/overblik'
   fileRoutesById: FileRoutesById
 }
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSkovOverblikRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/skov/jagtleje': {
+      id: '/_authenticated/skov/jagtleje'
+      path: '/skov/jagtleje'
+      fullPath: '/skov/jagtleje'
+      preLoaderRoute: typeof AuthenticatedSkovJagtlejeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/skov/hugst': {
       id: '/_authenticated/skov/hugst'
       path: '/skov/hugst'
@@ -253,6 +273,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
   AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
   AuthenticatedSkovHugstRoute: typeof AuthenticatedSkovHugstRoute
+  AuthenticatedSkovJagtlejeRoute: typeof AuthenticatedSkovJagtlejeRoute
   AuthenticatedSkovOverblikRoute: typeof AuthenticatedSkovOverblikRoute
 }
 
@@ -264,6 +285,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
   AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
   AuthenticatedSkovHugstRoute: AuthenticatedSkovHugstRoute,
+  AuthenticatedSkovJagtlejeRoute: AuthenticatedSkovJagtlejeRoute,
   AuthenticatedSkovOverblikRoute: AuthenticatedSkovOverblikRoute,
 }
 

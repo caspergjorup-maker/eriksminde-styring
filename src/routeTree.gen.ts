@@ -16,6 +16,7 @@ import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
+import { Route as AuthenticatedHalmOekonomiRouteImport } from './routes/_authenticated/halm.oekonomi'
 import { Route as AuthenticatedHalmLagerRouteImport } from './routes/_authenticated/halm.lager'
 
 const AuthRoute = AuthRouteImport.update({
@@ -53,6 +54,12 @@ const AuthenticatedHalmSalgRoute = AuthenticatedHalmSalgRouteImport.update({
   path: '/halm/salg',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHalmOekonomiRoute =
+  AuthenticatedHalmOekonomiRouteImport.update({
+    id: '/halm/oekonomi',
+    path: '/halm/oekonomi',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHalmLagerRoute = AuthenticatedHalmLagerRouteImport.update({
   id: '/halm/lager',
   path: '/halm/lager',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRoutesByTo {
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRoutesById {
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRouteTypes {
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/landbrugsjord'
     | '/halm/lager'
+    | '/halm/oekonomi'
     | '/halm/salg'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/landbrugsjord'
     | '/halm/lager'
+    | '/halm/oekonomi'
     | '/halm/salg'
   id:
     | '__root__'
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/landbrugsjord'
     | '/_authenticated/halm/lager'
+    | '/_authenticated/halm/oekonomi'
     | '/_authenticated/halm/salg'
   fileRoutesById: FileRoutesById
 }
@@ -176,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHalmSalgRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/halm/oekonomi': {
+      id: '/_authenticated/halm/oekonomi'
+      path: '/halm/oekonomi'
+      fullPath: '/halm/oekonomi'
+      preLoaderRoute: typeof AuthenticatedHalmOekonomiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/halm/lager': {
       id: '/_authenticated/halm/lager'
       path: '/halm/lager'
@@ -191,6 +211,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
+  AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
   AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
 }
 
@@ -199,6 +220,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
+  AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
   AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
 }
 

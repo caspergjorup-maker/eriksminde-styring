@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
+import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
 import { Route as AuthenticatedHalmLagerRouteImport } from './routes/_authenticated/halm.lager'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +48,11 @@ const AuthenticatedBygningerRoute = AuthenticatedBygningerRouteImport.update({
   path: '/bygninger',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHalmSalgRoute = AuthenticatedHalmSalgRouteImport.update({
+  id: '/halm/salg',
+  path: '/halm/salg',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHalmLagerRoute = AuthenticatedHalmLagerRouteImport.update({
   id: '/halm/lager',
   path: '/halm/lager',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
+  '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/landbrugsjord'
     | '/halm/lager'
+    | '/halm/salg'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/landbrugsjord'
     | '/halm/lager'
+    | '/halm/salg'
   id:
     | '__root__'
     | '/'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/landbrugsjord'
     | '/_authenticated/halm/lager'
+    | '/_authenticated/halm/salg'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBygningerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/halm/salg': {
+      id: '/_authenticated/halm/salg'
+      path: '/halm/salg'
+      fullPath: '/halm/salg'
+      preLoaderRoute: typeof AuthenticatedHalmSalgRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/halm/lager': {
       id: '/_authenticated/halm/lager'
       path: '/halm/lager'
@@ -172,6 +191,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
+  AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -179,6 +199,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
+  AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

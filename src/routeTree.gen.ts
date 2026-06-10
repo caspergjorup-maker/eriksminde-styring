@@ -21,6 +21,7 @@ import { Route as AuthenticatedSkovHugstRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOekonomiOverblikRouteImport } from './routes/_authenticated/oekonomi.overblik'
 import { Route as AuthenticatedOekonomiFakturaerRouteImport } from './routes/_authenticated/oekonomi.fakturaer'
 import { Route as AuthenticatedOekonomiBudgetRouteImport } from './routes/_authenticated/oekonomi.budget'
+import { Route as AuthenticatedKontakterLeverandoererRouteImport } from './routes/_authenticated/kontakter.leverandoerer'
 import { Route as AuthenticatedKontakterKunderRouteImport } from './routes/_authenticated/kontakter.kunder'
 import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
 import { Route as AuthenticatedHalmOekonomiRouteImport } from './routes/_authenticated/halm.oekonomi'
@@ -91,6 +92,12 @@ const AuthenticatedOekonomiBudgetRoute =
     path: '/oekonomi/budget',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKontakterLeverandoererRoute =
+  AuthenticatedKontakterLeverandoererRouteImport.update({
+    id: '/kontakter/leverandoerer',
+    path: '/kontakter/leverandoerer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedKontakterKunderRoute =
   AuthenticatedKontakterKunderRouteImport.update({
     id: '/kontakter/kunder',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
+  '/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
   '/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
   '/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
   '/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
@@ -141,6 +149,7 @@ export interface FileRoutesByTo {
   '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
+  '/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
   '/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
   '/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
   '/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
@@ -160,6 +169,7 @@ export interface FileRoutesById {
   '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
   '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
   '/_authenticated/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
+  '/_authenticated/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
   '/_authenticated/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
   '/_authenticated/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
   '/_authenticated/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/halm/oekonomi'
     | '/halm/salg'
     | '/kontakter/kunder'
+    | '/kontakter/leverandoerer'
     | '/oekonomi/budget'
     | '/oekonomi/fakturaer'
     | '/oekonomi/overblik'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/halm/oekonomi'
     | '/halm/salg'
     | '/kontakter/kunder'
+    | '/kontakter/leverandoerer'
     | '/oekonomi/budget'
     | '/oekonomi/fakturaer'
     | '/oekonomi/overblik'
@@ -214,6 +226,7 @@ export interface FileRouteTypes {
     | '/_authenticated/halm/oekonomi'
     | '/_authenticated/halm/salg'
     | '/_authenticated/kontakter/kunder'
+    | '/_authenticated/kontakter/leverandoerer'
     | '/_authenticated/oekonomi/budget'
     | '/_authenticated/oekonomi/fakturaer'
     | '/_authenticated/oekonomi/overblik'
@@ -314,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOekonomiBudgetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kontakter/leverandoerer': {
+      id: '/_authenticated/kontakter/leverandoerer'
+      path: '/kontakter/leverandoerer'
+      fullPath: '/kontakter/leverandoerer'
+      preLoaderRoute: typeof AuthenticatedKontakterLeverandoererRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kontakter/kunder': {
       id: '/_authenticated/kontakter/kunder'
       path: '/kontakter/kunder'
@@ -353,6 +373,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
   AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
   AuthenticatedKontakterKunderRoute: typeof AuthenticatedKontakterKunderRoute
+  AuthenticatedKontakterLeverandoererRoute: typeof AuthenticatedKontakterLeverandoererRoute
   AuthenticatedOekonomiBudgetRoute: typeof AuthenticatedOekonomiBudgetRoute
   AuthenticatedOekonomiFakturaerRoute: typeof AuthenticatedOekonomiFakturaerRoute
   AuthenticatedOekonomiOverblikRoute: typeof AuthenticatedOekonomiOverblikRoute
@@ -369,6 +390,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
   AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
   AuthenticatedKontakterKunderRoute: AuthenticatedKontakterKunderRoute,
+  AuthenticatedKontakterLeverandoererRoute:
+    AuthenticatedKontakterLeverandoererRoute,
   AuthenticatedOekonomiBudgetRoute: AuthenticatedOekonomiBudgetRoute,
   AuthenticatedOekonomiFakturaerRoute: AuthenticatedOekonomiFakturaerRoute,
   AuthenticatedOekonomiOverblikRoute: AuthenticatedOekonomiOverblikRoute,

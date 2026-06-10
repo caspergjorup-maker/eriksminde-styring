@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
+import { Route as AuthenticatedHalmLagerRouteImport } from './routes/_authenticated/halm.lager'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -46,6 +47,11 @@ const AuthenticatedBygningerRoute = AuthenticatedBygningerRouteImport.update({
   path: '/bygninger',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHalmLagerRoute = AuthenticatedHalmLagerRouteImport.update({
+  id: '/halm/lager',
+  path: '/halm/lager',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/bygninger': typeof AuthenticatedBygningerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/halm/lager': typeof AuthenticatedHalmLagerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/bygninger': typeof AuthenticatedBygningerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/halm/lager': typeof AuthenticatedHalmLagerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,12 +77,25 @@ export interface FileRoutesById {
   '/_authenticated/bygninger': typeof AuthenticatedBygningerRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/bygninger' | '/dashboard' | '/landbrugsjord'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/bygninger'
+    | '/dashboard'
+    | '/landbrugsjord'
+    | '/halm/lager'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/bygninger' | '/dashboard' | '/landbrugsjord'
+  to:
+    | '/'
+    | '/auth'
+    | '/bygninger'
+    | '/dashboard'
+    | '/landbrugsjord'
+    | '/halm/lager'
   id:
     | '__root__'
     | '/'
@@ -83,6 +104,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bygninger'
     | '/_authenticated/dashboard'
     | '/_authenticated/landbrugsjord'
+    | '/_authenticated/halm/lager'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBygningerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/halm/lager': {
+      id: '/_authenticated/halm/lager'
+      path: '/halm/lager'
+      fullPath: '/halm/lager'
+      preLoaderRoute: typeof AuthenticatedHalmLagerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -142,12 +171,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBygningerRoute: typeof AuthenticatedBygningerRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
+  AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBygningerRoute: AuthenticatedBygningerRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
+  AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

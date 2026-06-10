@@ -68,6 +68,29 @@ function AuthPage() {
           Adgang til gårdens styringssystem
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={loading}
+            onClick={async () => {
+              setError(null);
+              const result = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: window.location.origin + "/dashboard",
+              });
+              if (result?.error) setError(result.error.message);
+            }}
+          >
+            Fortsæt med Google
+          </Button>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">eller</span>
+            </div>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">E-mail</Label>
             <Input

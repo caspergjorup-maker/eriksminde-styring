@@ -524,6 +524,75 @@ export type Database = {
           },
         ]
       }
+      maintenance_tasks: {
+        Row: {
+          actual_cost: number | null
+          assigned_contact_id: string | null
+          building_id: string | null
+          category: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          id: string
+          notes: string | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_contact_id?: string | null
+          building_id?: string | null
+          category?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_contact_id?: string | null
+          building_id?: string | null
+          category?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tasks_assigned_contact_id_fkey"
+            columns: ["assigned_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       straw_inventory: {
         Row: {
           bale_type: string

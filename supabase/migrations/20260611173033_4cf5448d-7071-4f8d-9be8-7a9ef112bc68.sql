@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.update_maintenance_tasks_updated_at() FROM PUBLIC, anon, authenticated;

@@ -156,10 +156,14 @@ export const listStrawMovements = createServerFn({ method: "GET" })
     }
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((r: { contacts?: { name: string } | null } & StrawMovementRow) => ({
-      ...r,
-      contact_name: r.contacts?.name ?? null,
-    })) as StrawMovementRow[];
+    return (rows ?? []).map((r) => {
+      const { contacts, ...rest } = r as typeof r & { contacts?: { name: string } | null };
+      return {
+        ...rest,
+        direction: rest.direction as "in" | "out",
+        contact_name: contacts?.name ?? null,
+      };
+    }) as StrawMovementRow[];
   });
 
 export const createStrawMovement = createServerFn({ method: "POST" })

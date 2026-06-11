@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PagePlaceholder } from "@/components/page-placeholder";
+import { ContactsPage } from "@/components/contacts/contacts-page";
 
 export const Route = createFileRoute("/_authenticated/kontakter/kunder")({
-  component: () => <PagePlaceholder title="Kunder" description="Kunder, lejere, forpagtere og jagtlejere" />,
+  component: () => (
+    <ContactsPage
+      kind="customers"
+      title="Kunder"
+      description="Kunder, lejere, forpagtere og jagtlejere"
+    />
+  ),
 });

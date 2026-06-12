@@ -13,6 +13,7 @@ export type LandLease = {
   contract_start: string | null;
   contract_end: string | null;
   notes: string | null;
+  field_names: string[];
 };
 
 const input = z.object({
@@ -29,20 +30,27 @@ export const listLandLeases = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<LandLease[]> => {
     const { data, error } = await context.supabase
       .from("land_leases")
-      .select("id, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name)")
+      .select("id, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name), parcels:parcels!parcels_land_lease_id_fkey(field:field_id(name))")
       .order("contract_end", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
-    return (data ?? []).map((r) => ({
-      id: r.id,
-      leaseholder_id: r.leaseholder_id,
-      leaseholder_name: (r.contacts as { name?: string } | null)?.name ?? null,
-      area_ha: Number(r.area_ha ?? 0),
-      price_per_ha: Number(r.price_per_ha ?? 0),
-      annual_fee: r.annual_fee == null ? null : Number(r.annual_fee),
-      contract_start: r.contract_start,
-      contract_end: r.contract_end,
-      notes: r.notes,
-    }));
+    return (data ?? []).map((r) => {
+      const parcels = (r.parcels ?? []) as Array<{ field: { name: string } | null }>;
+      const names = Array.from(
+        new Set(parcels.map((p) => p.field?.name).filter((n): n is string => !!n)),
+      ).sort((a, b) => a.localeCompare(b, "da"));
+      return {
+        id: r.id,
+        leaseholder_id: r.leaseholder_id,
+        leaseholder_name: (r.contacts as { name?: string } | null)?.name ?? null,
+        area_ha: Number(r.area_ha ?? 0),
+        price_per_ha: Number(r.price_per_ha ?? 0),
+        annual_fee: r.annual_fee == null ? null : Number(r.annual_fee),
+        contract_start: r.contract_start,
+        contract_end: r.contract_end,
+        notes: r.notes,
+        field_names: names,
+      };
+    });
   });
 
 export const createLandLease = createServerFn({ method: "POST" })

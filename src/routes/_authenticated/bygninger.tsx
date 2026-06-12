@@ -266,57 +266,282 @@ function BuildingsSection({
   );
 }
 
+type BuildingForm = {
+  name: string;
+  type: BuildingType;
+  description: string;
+  build_year: string;
+  area_m2_gross: string;
+  area_m2_net: string;
+  floors: string;
+  parcel_id: string | null;
+  condition: BuildingCondition | null;
+  last_inspection: string;
+  lease_status: BuildingLeaseStatus;
+  lease_status_note: string;
+  estimated_monthly_rent: string;
+  has_electricity: boolean;
+  has_water: boolean;
+  has_heating: boolean;
+  heating_type: HeatingType | null;
+  has_sewage: boolean;
+  has_internet: boolean;
+  internal_notes: string;
+};
+
+const emptyBuilding: BuildingForm = {
+  name: "", type: "lade", description: "",
+  build_year: "", area_m2_gross: "", area_m2_net: "", floors: "1",
+  parcel_id: null,
+  condition: null, last_inspection: "",
+  lease_status: "ledig", lease_status_note: "", estimated_monthly_rent: "",
+  has_electricity: false, has_water: false, has_heating: false, heating_type: null,
+  has_sewage: false, has_internet: false,
+  internal_notes: "",
+};
+
+function toForm(b: Building): BuildingForm {
+  return {
+    name: b.name,
+    type: b.type,
+    description: b.description ?? "",
+    build_year: b.build_year != null ? String(b.build_year) : "",
+    area_m2_gross: b.area_m2_gross != null ? String(b.area_m2_gross) : "",
+    area_m2_net: b.area_m2_net != null ? String(b.area_m2_net) : "",
+    floors: b.floors != null ? String(b.floors) : "1",
+    parcel_id: b.parcel_id,
+    condition: b.condition,
+    last_inspection: b.last_inspection ?? "",
+    lease_status: b.lease_status ?? "ledig",
+    lease_status_note: b.lease_status_note ?? "",
+    estimated_monthly_rent: b.estimated_monthly_rent != null ? String(b.estimated_monthly_rent) : "",
+    has_electricity: !!b.has_electricity,
+    has_water: !!b.has_water,
+    has_heating: !!b.has_heating,
+    heating_type: b.heating_type,
+    has_sewage: !!b.has_sewage,
+    has_internet: !!b.has_internet,
+    internal_notes: b.internal_notes ?? "",
+  };
+}
+
+export type BuildingSubmit = {
+  name: string; type: BuildingType; description: string | null;
+  build_year: number | null; area_m2_gross: number | null; area_m2_net: number | null;
+  floors: number | null; parcel_id: string | null;
+  condition: BuildingCondition | null; last_inspection: string | null;
+  lease_status: BuildingLeaseStatus; lease_status_note: string | null;
+  estimated_monthly_rent: number | null;
+  has_electricity: boolean; has_water: boolean; has_heating: boolean;
+  heating_type: HeatingType | null;
+  has_sewage: boolean; has_internet: boolean;
+  internal_notes: string | null;
+};
+
+function UtilityIcons({ b }: { b: Building }) {
+  const items: { on: boolean | null; icon: React.ReactNode; title: string }[] = [
+    { on: b.has_electricity, icon: <Bolt className="h-3.5 w-3.5" />, title: "El" },
+    { on: b.has_water, icon: <Droplet className="h-3.5 w-3.5" />, title: "Vand" },
+    { on: b.has_heating, icon: <Flame className="h-3.5 w-3.5" />, title: "Varme" },
+    { on: b.has_sewage, icon: <Waves className="h-3.5 w-3.5" />, title: "Kloak" },
+    { on: b.has_internet, icon: <Wifi className="h-3.5 w-3.5" />, title: "Internet" },
+  ];
+  const active = items.filter((i) => i.on);
+  if (active.length === 0) return <span className="text-muted-foreground text-xs">—</span>;
+  return (
+    <div className="flex items-center gap-1.5 text-muted-foreground">
+      {active.map((i) => (
+        <span key={i.title} title={i.title}>{i.icon}</span>
+      ))}
+    </div>
+  );
+}
+
+function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+      <span className="text-sm">{label}</span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
 function BuildingDialog({
   open, editing, onOpenChange, onSubmit,
 }: {
   open: boolean;
   editing: Building | null;
   onOpenChange: (o: boolean) => void;
-  onSubmit: (v: { name: string; type: BuildingType; description: string | null }) => Promise<void>;
+  onSubmit: (v: BuildingSubmit) => Promise<void>;
 }) {
-  const [name, setName] = useState("");
-  const [type, setType] = useState<BuildingType>("lade");
-  const [description, setDescription] = useState("");
+  const [v, setV] = useState<BuildingForm>(emptyBuilding);
   const [saving, setSaving] = useState(false);
   const key = `${open}-${editing?.id ?? "new"}`;
   const [lastKey, setLastKey] = useState("");
   if (open && lastKey !== key) {
     setLastKey(key);
-    setName(editing?.name ?? "");
-    setType(editing?.type ?? "lade");
-    setDescription(editing?.description ?? "");
+    setV(editing ? toForm(editing) : emptyBuilding);
   }
+  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "udlejes_ikke";
+  const numOrNull = (s: string) => (s.trim() === "" ? null : Number(s));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Rediger bygning" : "Ny bygning"}</DialogTitle></DialogHeader>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            if (!name.trim()) return;
+            if (!v.name.trim()) return;
             setSaving(true);
-            try { await onSubmit({ name: name.trim(), type, description: description.trim() || null }); }
-            finally { setSaving(false); }
+            try {
+              await onSubmit({
+                name: v.name.trim(),
+                type: v.type,
+                description: v.description.trim() || null,
+                build_year: numOrNull(v.build_year),
+                area_m2_gross: numOrNull(v.area_m2_gross),
+                area_m2_net: numOrNull(v.area_m2_net),
+                floors: numOrNull(v.floors),
+                parcel_id: v.parcel_id,
+                condition: v.condition,
+                last_inspection: v.last_inspection || null,
+                lease_status: v.lease_status,
+                lease_status_note: showLeaseNote ? (v.lease_status_note.trim() || null) : null,
+                estimated_monthly_rent: numOrNull(v.estimated_monthly_rent),
+                has_electricity: v.has_electricity,
+                has_water: v.has_water,
+                has_heating: v.has_heating,
+                heating_type: v.has_heating ? v.heating_type : null,
+                has_sewage: v.has_sewage,
+                has_internet: v.has_internet,
+                internal_notes: v.internal_notes.trim() || null,
+              });
+            } finally { setSaving(false); }
           }}
-          className="space-y-3"
+          className="space-y-5"
         >
-          <div className="space-y-1.5">
-            <Label htmlFor="bn">Navn *</Label>
-            <Input id="bn" required maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as BuildingType)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {BUILDING_TYPES.map((t) => <SelectItem key={t} value={t}>{BUILDING_TYPE_LABEL[t]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="bd">Beskrivelse</Label>
-            <Textarea id="bd" rows={3} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Generelt</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="bn">Navn *</Label>
+                <Input id="bn" required maxLength={200} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select value={v.type} onValueChange={(x) => setV({ ...v, type: x as BuildingType })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BUILDING_TYPES.map((t) => <SelectItem key={t} value={t}>{BUILDING_TYPE_LABEL[t]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="by">Byggeår</Label>
+                <Input id="by" type="number" min={1500} max={2100} value={v.build_year} onChange={(e) => setV({ ...v, build_year: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fl">Etager</Label>
+                <Input id="fl" type="number" min={0} max={50} value={v.floors} onChange={(e) => setV({ ...v, floors: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ag">Areal brutto (m²)</Label>
+                <Input id="ag" type="number" min={0} value={v.area_m2_gross} onChange={(e) => setV({ ...v, area_m2_gross: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="an">Areal netto (m²)</Label>
+                <Input id="an" type="number" min={0} value={v.area_m2_net} onChange={(e) => setV({ ...v, area_m2_net: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bd">Beskrivelse</Label>
+              <Textarea id="bd" rows={2} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Stand</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Bygningsstand</Label>
+                <Select
+                  value={v.condition ?? NONE}
+                  onValueChange={(x) => setV({ ...v, condition: x === NONE ? null : (x as BuildingCondition) })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Vælg…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>— Ikke angivet —</SelectItem>
+                    {BUILDING_CONDITIONS.map((c) => <SelectItem key={c} value={c}>{CONDITION_LABEL[c]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="li">Seneste bygningssyn</Label>
+                <Input id="li" type="date" value={v.last_inspection} onChange={(e) => setV({ ...v, last_inspection: e.target.value })} />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Udlejning</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Udlejningsstatus</Label>
+                <Select value={v.lease_status} onValueChange={(x) => setV({ ...v, lease_status: x as BuildingLeaseStatus })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BUILDING_LEASE_STATUSES.map((s) => <SelectItem key={s} value={s}>{LEASE_STATUS_LABEL[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="emr">Estimeret månedlig markedsleje (kr)</Label>
+                <Input id="emr" type="number" min={0} value={v.estimated_monthly_rent}
+                  onChange={(e) => setV({ ...v, estimated_monthly_rent: e.target.value })} />
+              </div>
+            </div>
+            {showLeaseNote && (
+              <div className="space-y-1.5">
+                <Label htmlFor="lsn">Årsag / note</Label>
+                <Input id="lsn" maxLength={2000} value={v.lease_status_note}
+                  onChange={(e) => setV({ ...v, lease_status_note: e.target.value })} />
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Forsyning</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <ToggleRow label="El" checked={v.has_electricity} onChange={(x) => setV({ ...v, has_electricity: x })} />
+              <ToggleRow label="Vand" checked={v.has_water} onChange={(x) => setV({ ...v, has_water: x })} />
+              <ToggleRow label="Varme" checked={v.has_heating} onChange={(x) => setV({ ...v, has_heating: x })} />
+              <ToggleRow label="Kloak / spildevand" checked={v.has_sewage} onChange={(x) => setV({ ...v, has_sewage: x })} />
+              <ToggleRow label="Internet" checked={v.has_internet} onChange={(x) => setV({ ...v, has_internet: x })} />
+            </div>
+            {v.has_heating && (
+              <div className="space-y-1.5">
+                <Label>Varmetype</Label>
+                <Select
+                  value={v.heating_type ?? NONE}
+                  onValueChange={(x) => setV({ ...v, heating_type: x === NONE ? null : (x as HeatingType) })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Vælg…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>— Ikke angivet —</SelectItem>
+                    {HEATING_TYPES.map((h) => <SelectItem key={h} value={h}>{HEATING_LABEL[h]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Interne noter</h3>
+            <Textarea rows={3} maxLength={5000} placeholder="Ikke synlig for lejere"
+              value={v.internal_notes} onChange={(e) => setV({ ...v, internal_notes: e.target.value })} />
+          </section>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Annullér</Button>
             <Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button>

@@ -671,18 +671,8 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                 {selectedParcel.parcel.notes}
               </p>
             )}
-
-            {selectedParcel.parcel?.id && (
-              <button
-                onClick={() =>
-                  startDrawing(selectedParcel.parcel!.id, selectedParcel.matrikelnr ?? "?")
-                }
-                className="mt-3 w-full px-3 py-1.5 text-[13px] rounded-md bg-[#1D9E75] text-white hover:opacity-90 transition-opacity"
-              >
-                Tegn geometri for denne mark
-              </button>
-            )}
           </div>
+
         )}
 
         {editing && (

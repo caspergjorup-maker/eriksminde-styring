@@ -185,20 +185,41 @@ function BuildingsSection({
             <tr>
               <th className="px-4 py-2.5 font-medium">Navn</th>
               <th className="px-4 py-2.5 font-medium">Type</th>
-              <th className="px-4 py-2.5 font-medium">Beskrivelse</th>
+              <th className="px-4 py-2.5 font-medium">Areal</th>
+              <th className="px-4 py-2.5 font-medium">Stand</th>
+              <th className="px-4 py-2.5 font-medium">Forsyning</th>
+              <th className="px-4 py-2.5 font-medium">Status</th>
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && buildings.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Ingen bygninger endnu.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen bygninger endnu.</td></tr>
             )}
             {buildings.map((b) => (
               <tr key={b.id} className="hover:bg-muted/30">
                 <td className="px-4 py-2.5 font-medium">{b.name}</td>
                 <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{b.description ?? "—"}</td>
+                <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
+                  {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
+                </td>
+                <td className="px-4 py-2.5 text-muted-foreground">
+                  {b.condition ? CONDITION_LABEL[b.condition] : "—"}
+                </td>
+                <td className="px-4 py-2.5">
+                  <UtilityIcons b={b} />
+                </td>
+                <td className="px-4 py-2.5">
+                  {b.lease_status ? (
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
+                      title={b.lease_status_note ?? undefined}
+                    >
+                      {LEASE_STATUS_LABEL[b.lease_status]}
+                    </span>
+                  ) : "—"}
+                </td>
                 <td className="px-4 py-2.5 text-right">
                   <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                   <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>

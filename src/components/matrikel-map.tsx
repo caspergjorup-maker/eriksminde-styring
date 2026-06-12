@@ -52,6 +52,7 @@ export function MatrikelMap() {
 
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
+    let ignored = false;
 
     const map = L.map(mapRef.current, { zoomControl: true }).setView(
       [56.7115, 8.92],
@@ -70,6 +71,7 @@ export function MatrikelMap() {
         return r.json();
       })
       .then((geojson) => {
+        if (ignored) return;
         setLoading(false);
         let activeLayer: L.Path | null = null;
 
@@ -109,12 +111,14 @@ export function MatrikelMap() {
         }
       })
       .catch((err) => {
+        if (ignored) return;
         console.error(err);
         setLoading(false);
         setError("Kunne ikke hente matrikeldata fra Datafordeler.");
       });
 
     return () => {
+      ignored = true;
       map.remove();
       leafletMap.current = null;
     };

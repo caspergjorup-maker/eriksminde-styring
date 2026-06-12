@@ -126,6 +126,7 @@ export type Database = {
           map_y: number | null
           name: string
           parcel_id: string | null
+          preferred_supplier_id: string | null
           type: string
         }
         Insert: {
@@ -158,6 +159,7 @@ export type Database = {
           map_y?: number | null
           name: string
           parcel_id?: string | null
+          preferred_supplier_id?: string | null
           type: string
         }
         Update: {
@@ -190,9 +192,18 @@ export type Database = {
           map_y?: number | null
           name?: string
           parcel_id?: string | null
+          preferred_supplier_id?: string | null
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "buildings_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -647,6 +658,101 @@ export type Database = {
           },
         ]
       }
+      machines: {
+        Row: {
+          brand: string | null
+          created_at: string
+          current_hours: number | null
+          estimated_value: number | null
+          id: string
+          image_url: string | null
+          insurance_company: string | null
+          insurance_expiry: string | null
+          last_service_date: string | null
+          last_service_hours: number | null
+          lease_expiry: string | null
+          model: string | null
+          name: string
+          next_service_date: string | null
+          next_service_hours: number | null
+          notes: string | null
+          ownership: string | null
+          preferred_supplier_id: string | null
+          registration_number: string | null
+          serial_number: string | null
+          service_interval_hours: number | null
+          service_interval_months: number | null
+          status: string | null
+          type: string | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          current_hours?: number | null
+          estimated_value?: number | null
+          id?: string
+          image_url?: string | null
+          insurance_company?: string | null
+          insurance_expiry?: string | null
+          last_service_date?: string | null
+          last_service_hours?: number | null
+          lease_expiry?: string | null
+          model?: string | null
+          name: string
+          next_service_date?: string | null
+          next_service_hours?: number | null
+          notes?: string | null
+          ownership?: string | null
+          preferred_supplier_id?: string | null
+          registration_number?: string | null
+          serial_number?: string | null
+          service_interval_hours?: number | null
+          service_interval_months?: number | null
+          status?: string | null
+          type?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          current_hours?: number | null
+          estimated_value?: number | null
+          id?: string
+          image_url?: string | null
+          insurance_company?: string | null
+          insurance_expiry?: string | null
+          last_service_date?: string | null
+          last_service_hours?: number | null
+          lease_expiry?: string | null
+          model?: string | null
+          name?: string
+          next_service_date?: string | null
+          next_service_hours?: number | null
+          notes?: string | null
+          ownership?: string | null
+          preferred_supplier_id?: string | null
+          registration_number?: string | null
+          serial_number?: string | null
+          service_interval_hours?: number | null
+          service_interval_months?: number | null
+          status?: string | null
+          type?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machines_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_tasks: {
         Row: {
           actual_cost: number | null
@@ -659,7 +765,9 @@ export type Database = {
           due_date: string | null
           estimated_cost: number | null
           id: string
+          machine_id: string | null
           notes: string | null
+          preferred_supplier_id: string | null
           priority: string
           status: string
           title: string
@@ -676,7 +784,9 @@ export type Database = {
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
+          machine_id?: string | null
           notes?: string | null
+          preferred_supplier_id?: string | null
           priority?: string
           status?: string
           title: string
@@ -693,7 +803,9 @@ export type Database = {
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
+          machine_id?: string | null
           notes?: string | null
+          preferred_supplier_id?: string | null
           priority?: string
           status?: string
           title?: string
@@ -712,6 +824,20 @@ export type Database = {
             columns: ["building_id"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -772,6 +898,60 @@ export type Database = {
             columns: ["land_lease_id"]
             isOneToOne: false
             referencedRelation: "land_leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_logs: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          hours_at_service: number | null
+          id: string
+          machine_id: string
+          next_service_date: string | null
+          next_service_hours: number | null
+          service_date: string
+          supplier_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          hours_at_service?: number | null
+          id?: string
+          machine_id: string
+          next_service_date?: string | null
+          next_service_hours?: number | null
+          service_date: string
+          supplier_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          hours_at_service?: number | null
+          id?: string
+          machine_id?: string
+          next_service_date?: string | null
+          next_service_hours?: number | null
+          service_date?: string
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_logs_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_logs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]

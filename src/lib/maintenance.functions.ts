@@ -43,7 +43,9 @@ export type MaintenanceTaskRow = {
   title: string;
   description: string | null;
   building_id: string | null;
+  machine_id: string | null;
   assigned_contact_id: string | null;
+  preferred_supplier_id: string | null;
   category: string | null;
   priority: string;
   status: string;
@@ -55,14 +57,18 @@ export type MaintenanceTaskRow = {
   created_at: string;
   updated_at: string;
   building_name?: string | null;
+  machine_name?: string | null;
   contact_name?: string | null;
+  preferred_supplier_name?: string | null;
 };
 
 const taskInput = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(4000).nullable().optional(),
   building_id: z.string().uuid().nullable().optional(),
+  machine_id: z.string().uuid().nullable().optional(),
   assigned_contact_id: z.string().uuid().nullable().optional(),
+  preferred_supplier_id: z.string().uuid().nullable().optional(),
   category: z.string().trim().max(60).nullable().optional(),
   priority: z.enum(PRIORITIES),
   status: z.enum(STATUSES),
@@ -86,18 +92,24 @@ export const listMaintenanceTasks = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MaintenanceTaskRow[]> => {
     const { data, error } = await context.supabase
       .from("maintenance_tasks")
-      .select("*, buildings(name), contacts(name)")
+      .select(
+        "*, buildings(name), machines(name), contacts!maintenance_tasks_assigned_contact_id_fkey(name), preferred_supplier:contacts!maintenance_tasks_preferred_supplier_id_fkey(name)",
+      )
       .order("due_date", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => {
-      const { buildings, contacts, ...rest } = r as typeof r & {
+      const { buildings, machines, contacts, preferred_supplier, ...rest } = r as typeof r & {
         buildings?: { name: string } | null;
+        machines?: { name: string } | null;
         contacts?: { name: string } | null;
+        preferred_supplier?: { name: string } | null;
       };
       return {
         ...rest,
         building_name: buildings?.name ?? null,
+        machine_name: machines?.name ?? null,
         contact_name: contacts?.name ?? null,
+        preferred_supplier_name: preferred_supplier?.name ?? null,
       };
     }) as MaintenanceTaskRow[];
   });

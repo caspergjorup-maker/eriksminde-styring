@@ -318,25 +318,46 @@ export type Database = {
       fields: {
         Row: {
           created_at: string
+          eligible_area_ha: number | null
+          has_irrigation: boolean
           id: string
+          is_drained: boolean
+          lease_area_ha: number | null
+          lease_price_per_ha: number | null
           name: string
+          non_eligible_area_ha: number | null
           notes: string | null
+          soil_type: string | null
           updated_at: string
           use_type: string | null
         }
         Insert: {
           created_at?: string
+          eligible_area_ha?: number | null
+          has_irrigation?: boolean
           id?: string
+          is_drained?: boolean
+          lease_area_ha?: number | null
+          lease_price_per_ha?: number | null
           name: string
+          non_eligible_area_ha?: number | null
           notes?: string | null
+          soil_type?: string | null
           updated_at?: string
           use_type?: string | null
         }
         Update: {
           created_at?: string
+          eligible_area_ha?: number | null
+          has_irrigation?: boolean
           id?: string
+          is_drained?: boolean
+          lease_area_ha?: number | null
+          lease_price_per_ha?: number | null
           name?: string
+          non_eligible_area_ha?: number | null
           notes?: string | null
+          soil_type?: string | null
           updated_at?: string
           use_type?: string | null
         }

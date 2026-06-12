@@ -42,6 +42,13 @@ type Field = {
   name: string;
   use_type: UseType | null;
   notes: string | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
 };
 type Parcel = {
   id: string;
@@ -73,6 +80,13 @@ export type FieldSummary = {
   leaseholder: string | null;
   contractEnd: string | null;
   annualFee: number | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
 };
 
 
@@ -296,6 +310,13 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             leaseholder: lease?.leaseholder?.name ?? null,
             contractEnd: lease?.contract_end ?? null,
             annualFee: lease?.annual_fee ?? null,
+            lease_area_ha: fieldMeta.lease_area_ha ?? null,
+            lease_price_per_ha: fieldMeta.lease_price_per_ha ?? null,
+            soil_type: fieldMeta.soil_type ?? null,
+            is_drained: fieldMeta.is_drained ?? null,
+            has_irrigation: fieldMeta.has_irrigation ?? null,
+            eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
+            non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
           };
           summaries.push(summary);
 
@@ -595,9 +616,36 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             <div className="mt-3 grid grid-cols-2 gap-2">
               <MetricCard label="Samlet areal" value={`${selectedField.totalHa} ha`} />
               <MetricCard label="Matrikler" value={selectedField.matrikler.join(", ")} />
+              <MetricCard
+                label="Forpagtningsareal"
+                value={selectedField.lease_area_ha != null ? `${selectedField.lease_area_ha} ha` : "—"}
+              />
+              <MetricCard
+                label="Støtteberettiget"
+                value={selectedField.eligible_area_ha != null ? `${selectedField.eligible_area_ha} ha` : "—"}
+              />
+              <MetricCard
+                label="Pris pr. ha"
+                value={
+                  selectedField.lease_price_per_ha != null
+                    ? `${selectedField.lease_price_per_ha.toLocaleString("da-DK")} kr`
+                    : "—"
+                }
+              />
+              <MetricCard
+                label="Årlig afgift"
+                value={
+                  selectedField.lease_area_ha != null && selectedField.lease_price_per_ha != null
+                    ? `${(selectedField.lease_area_ha * selectedField.lease_price_per_ha).toLocaleString("da-DK")} kr`
+                    : "—"
+                }
+              />
+              <MetricCard label="Jordtype" value={selectedField.soil_type ?? "—"} />
+              <MetricCard label="Drænlagt" value={selectedField.is_drained ? "Ja" : "Nej"} />
+              <MetricCard label="Vandingsret" value={selectedField.has_irrigation ? "Ja" : "Nej"} />
               <MetricCard label="Forpagter" value={selectedField.leaseholder ?? "—"} />
               <MetricCard
-                label="Årlig leje"
+                label="Årlig leje (kontrakt)"
                 value={selectedField.annualFee != null ? formatDKK(selectedField.annualFee) : "—"}
               />
               <MetricCard

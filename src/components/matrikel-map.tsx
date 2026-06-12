@@ -99,6 +99,8 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const parcelLayers = useRef<L.Path[]>([]);
   const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
   const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
+  const backdropLayer = useRef<L.GeoJSON | null>(null);
+  const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);

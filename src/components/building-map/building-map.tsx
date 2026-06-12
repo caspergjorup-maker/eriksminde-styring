@@ -183,8 +183,14 @@ export function BuildingMap({
                   transition: "filter 0.15s",
                 }}
               >
+                <UnitOverlay
+                  units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
+                  width={b.map_w ?? 40}
+                  height={b.map_h ?? 40}
+                />
                 <span
                   style={{
+                    position: "relative",
                     fontSize: 11,
                     fontWeight: 500,
                     color: "#fff",

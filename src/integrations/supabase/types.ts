@@ -97,10 +97,26 @@ export type Database = {
       }
       buildings: {
         Row: {
+          area_m2_gross: number | null
+          area_m2_net: number | null
+          build_year: number | null
           building_nr: string | null
+          condition: string | null
           created_at: string
           description: string | null
+          estimated_monthly_rent: number | null
+          floors: number | null
+          has_electricity: boolean | null
+          has_heating: boolean | null
+          has_internet: boolean | null
+          has_sewage: boolean | null
+          has_water: boolean | null
+          heating_type: string | null
           id: string
+          internal_notes: string | null
+          last_inspection: string | null
+          lease_status: string | null
+          lease_status_note: string | null
           map_color: string | null
           map_h: number | null
           map_section: string | null
@@ -109,13 +125,30 @@ export type Database = {
           map_x: number | null
           map_y: number | null
           name: string
+          parcel_id: string | null
           type: string
         }
         Insert: {
+          area_m2_gross?: number | null
+          area_m2_net?: number | null
+          build_year?: number | null
           building_nr?: string | null
+          condition?: string | null
           created_at?: string
           description?: string | null
+          estimated_monthly_rent?: number | null
+          floors?: number | null
+          has_electricity?: boolean | null
+          has_heating?: boolean | null
+          has_internet?: boolean | null
+          has_sewage?: boolean | null
+          has_water?: boolean | null
+          heating_type?: string | null
           id?: string
+          internal_notes?: string | null
+          last_inspection?: string | null
+          lease_status?: string | null
+          lease_status_note?: string | null
           map_color?: string | null
           map_h?: number | null
           map_section?: string | null
@@ -124,13 +157,30 @@ export type Database = {
           map_x?: number | null
           map_y?: number | null
           name: string
+          parcel_id?: string | null
           type: string
         }
         Update: {
+          area_m2_gross?: number | null
+          area_m2_net?: number | null
+          build_year?: number | null
           building_nr?: string | null
+          condition?: string | null
           created_at?: string
           description?: string | null
+          estimated_monthly_rent?: number | null
+          floors?: number | null
+          has_electricity?: boolean | null
+          has_heating?: boolean | null
+          has_internet?: boolean | null
+          has_sewage?: boolean | null
+          has_water?: boolean | null
+          heating_type?: string | null
           id?: string
+          internal_notes?: string | null
+          last_inspection?: string | null
+          lease_status?: string | null
+          lease_status_note?: string | null
           map_color?: string | null
           map_h?: number | null
           map_section?: string | null
@@ -139,6 +189,7 @@ export type Database = {
           map_x?: number | null
           map_y?: number | null
           name?: string
+          parcel_id?: string | null
           type?: string
         }
         Relationships: []

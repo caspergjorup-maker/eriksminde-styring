@@ -16,6 +16,7 @@ import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBygningsplanRouteImport } from './routes/_authenticated/bygningsplan'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as ApiDineroExportInvoiceRouteImport } from './routes/api/dinero/export-invoice'
 import { Route as AuthenticatedSkovOverblikRouteImport } from './routes/_authenticated/skov.overblik'
@@ -66,6 +67,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBygningsplanRoute =
+  AuthenticatedBygningsplanRouteImport.update({
+    id: '/bygningsplan',
+    path: '/bygningsplan',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBygningerRoute = AuthenticatedBygningerRouteImport.update({
   id: '/bygninger',
   path: '/bygninger',
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bygninger': typeof AuthenticatedBygningerRoute
+  '/bygningsplan': typeof AuthenticatedBygningsplanRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bygninger': typeof AuthenticatedBygningerRoute
+  '/bygningsplan': typeof AuthenticatedBygningsplanRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/bygninger': typeof AuthenticatedBygningerRoute
+  '/_authenticated/bygningsplan': typeof AuthenticatedBygningsplanRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bygninger'
+    | '/bygningsplan'
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/bygninger'
+    | '/bygningsplan'
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/bygninger'
+    | '/_authenticated/bygningsplan'
     | '/_authenticated/dashboard'
     | '/_authenticated/dokumenter'
     | '/_authenticated/landbrugsjord'
@@ -328,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bygningsplan': {
+      id: '/_authenticated/bygningsplan'
+      path: '/bygningsplan'
+      fullPath: '/bygningsplan'
+      preLoaderRoute: typeof AuthenticatedBygningsplanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/bygninger': {
@@ -426,6 +446,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBygningerRoute: typeof AuthenticatedBygningerRoute
+  AuthenticatedBygningsplanRoute: typeof AuthenticatedBygningsplanRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
@@ -445,6 +466,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBygningerRoute: AuthenticatedBygningerRoute,
+  AuthenticatedBygningsplanRoute: AuthenticatedBygningsplanRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,

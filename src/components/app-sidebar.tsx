@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Tractor,
   Building2,
+  Map,
   Wheat,
   ShoppingCart,
   Coins,

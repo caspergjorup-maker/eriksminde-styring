@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bolt, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
+import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -28,6 +28,17 @@ import {
   type HeatingType,
   type LeaseStatus,
 } from "@/lib/buildings.functions";
+import {
+  UNIT_LEASE_STATUSES,
+  UNIT_LEASE_STATUS_LABEL,
+  UNIT_LEASE_STATUS_TONE,
+  createBuildingUnit,
+  deleteBuildingUnit,
+  listBuildingUnits,
+  updateBuildingUnit,
+  type BuildingUnit,
+  type UnitLeaseStatus,
+} from "@/lib/building-units.functions";
 import { formatDKK, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,18 +119,21 @@ export function BygningerPage() {
   const listB = useServerFn(listBuildings);
   const listL = useServerFn(listBuildingLeases);
   const listT = useServerFn(listTenantOptions);
+  const listU = useServerFn(listBuildingUnits);
 
   const { data: buildings = [], isLoading: lb } = useQuery({ queryKey: ["buildings"], queryFn: () => listB() });
   const { data: leases = [], isLoading: ll } = useQuery({ queryKey: ["building-leases"], queryFn: () => listL() });
   const { data: tenants = [] } = useQuery({ queryKey: ["building-tenants"], queryFn: () => listT() });
+  const { data: units = [] } = useQuery({ queryKey: ["building-units"], queryFn: () => listU() });
 
   return (
     <div className="space-y-8">
-      <BuildingsSection buildings={buildings} loading={lb} qc={qc} />
+      <BuildingsSection buildings={buildings} units={units} loading={lb} qc={qc} />
       <LeasesSection
         leases={leases}
         loading={ll}
         buildings={buildings}
+        units={units}
         tenants={tenants}
         qc={qc}
       />
@@ -130,9 +144,10 @@ export function BygningerPage() {
 /* ---------- Buildings ---------- */
 
 function BuildingsSection({
-  buildings, loading, qc,
+  buildings, units, loading, qc,
 }: {
   buildings: Building[];
+  units: BuildingUnit[];
   loading: boolean;
   qc: ReturnType<typeof useQueryClient>;
 }) {
@@ -143,6 +158,26 @@ function BuildingsSection({
   const [editing, setEditing] = useState<Building | null>(null);
   const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<Building | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
+  const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
+
+  const unitsByBuilding = new Map<string, BuildingUnit[]>();
+  for (const u of units) {
+    if (!u.building_id) continue;
+    const arr = unitsByBuilding.get(u.building_id) ?? [];
+    arr.push(u);
+    unitsByBuilding.set(u.building_id, arr);
+  }
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => remove({ data: { id } }),
@@ -150,6 +185,7 @@ function BuildingsSection({
       toast.success("Bygning slettet");
       qc.invalidateQueries({ queryKey: ["buildings"] });
       qc.invalidateQueries({ queryKey: ["building-leases"] });
+      qc.invalidateQueries({ queryKey: ["building-units"] });
       setToDelete(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -172,8 +208,8 @@ function BuildingsSection({
               <th className="px-4 py-2.5 font-medium">Areal</th>
               <th className="px-4 py-2.5 font-medium">Stand</th>
               <th className="px-4 py-2.5 font-medium">Forsyning</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 w-24"></th>
+              <th className="px-4 py-2.5 font-medium">Status / lejer</th>
+              <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -181,35 +217,95 @@ function BuildingsSection({
             {!loading && buildings.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen bygninger endnu.</td></tr>
             )}
-            {buildings.map((b) => (
-              <tr key={b.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-medium">{b.name}</td>
-                <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
-                <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
-                  {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {b.condition ? CONDITION_LABEL[b.condition] : "—"}
-                </td>
-                <td className="px-4 py-2.5">
-                  <UtilityIcons b={b} />
-                </td>
-                <td className="px-4 py-2.5">
-                  {b.lease_status ? (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
-                      title={b.lease_status_note ?? undefined}
-                    >
-                      {LEASE_STATUS_LABEL[b.lease_status]}
-                    </span>
-                  ) : "—"}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
-                </td>
-              </tr>
-            ))}
+            {buildings.map((b) => {
+              const bUnits = unitsByBuilding.get(b.id) ?? [];
+              const isExpanded = expanded.has(b.id);
+              const hasUnits = bUnits.length > 0;
+              return (
+                <>
+                  <tr
+                    key={b.id}
+                    className="hover:bg-muted/30 cursor-pointer"
+                    onClick={() => hasUnits && toggleExpand(b.id)}
+                  >
+                    <td className="px-4 py-2.5 font-medium">
+                      <div className="flex items-center gap-1.5">
+                        {hasUnits ? (
+                          isExpanded
+                            ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        ) : <span className="w-3.5" />}
+                        {b.name}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
+                      {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {b.condition ? CONDITION_LABEL[b.condition] : "—"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <UtilityIcons b={b} />
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {hasUnits ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
+                          {bUnits.length} enheder
+                        </span>
+                      ) : b.lease_status ? (
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
+                          title={b.lease_status_note ?? undefined}
+                        >
+                          {LEASE_STATUS_LABEL[b.lease_status]}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setCreatingUnitFor(b)}
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                        title="Tilføj enhed"
+                      ><Plus className="h-4 w-4" /></button>
+                      <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    </td>
+                  </tr>
+
+                  {isExpanded && bUnits.map((u) => (
+                    <tr key={u.id} className="bg-muted/30 text-[13px]">
+                      <td className="px-4 py-2 pl-10 text-muted-foreground">↳ {u.name}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.area_m2 != null ? `${u.area_m2} m²` : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.lease?.tenant?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground tabular-nums">
+                        {u.lease?.monthly_rent ? formatDKK(u.lease.monthly_rent) : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.lease?.contract_end ? formatDate(u.lease.contract_end) : "—"}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${UNIT_LEASE_STATUS_TONE[u.lease_status]}`}
+                          title={u.lease_status_note ?? undefined}
+                        >
+                          {UNIT_LEASE_STATUS_LABEL[u.lease_status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <button onClick={() => setEditingUnit(u)} className="p-1.5 rounded hover:bg-muted">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -234,11 +330,24 @@ function BuildingsSection({
         }}
       />
 
+      <UnitDialog
+        open={creatingUnitFor != null || editingUnit != null}
+        editing={editingUnit}
+        building={creatingUnitFor}
+        onOpenChange={(o) => { if (!o) { setCreatingUnitFor(null); setEditingUnit(null); } }}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["building-units"] });
+          qc.invalidateQueries({ queryKey: ["building-leases"] });
+          setCreatingUnitFor(null);
+          setEditingUnit(null);
+        }}
+      />
+
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Slet bygning</AlertDialogTitle>
-            <AlertDialogDescription>Slet "{toDelete?.name}"? Lejemål knyttet hertil mister referencen.</AlertDialogDescription>
+            <AlertDialogDescription>Slet "{toDelete?.name}"? Lejemål og enheder slettes også.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annullér</AlertDialogCancel>
@@ -540,6 +649,7 @@ function BuildingDialog({
 
 type LeaseForm = {
   building_id: string | null;
+  unit_id: string | null;
   tenant_id: string | null;
   monthly_rent: string;
   deposit: string;
@@ -550,16 +660,17 @@ type LeaseForm = {
 };
 
 const emptyLease: LeaseForm = {
-  building_id: null, tenant_id: null, monthly_rent: "", deposit: "",
+  building_id: null, unit_id: null, tenant_id: null, monthly_rent: "", deposit: "",
   contract_start: "", contract_end: "", status: "active", notes: "",
 };
 
 function LeasesSection({
-  leases, loading, buildings, tenants, qc,
+  leases, loading, buildings, units, tenants, qc,
 }: {
   leases: BuildingLease[];
   loading: boolean;
   buildings: Building[];
+  units: BuildingUnit[];
   tenants: { id: string; name: string }[];
   qc: ReturnType<typeof useQueryClient>;
 }) {
@@ -609,7 +720,7 @@ function LeasesSection({
             )}
             {leases.map((l) => (
               <tr key={l.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}</td>
+                <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}{l.unit_name ? <span className="text-xs text-muted-foreground"> · {l.unit_name}</span> : null}</td>
                 <td className="px-4 py-2.5">{l.tenant_name ?? "—"}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{formatDKK(l.monthly_rent)}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{formatDKK(l.deposit)}</td>
@@ -635,11 +746,13 @@ function LeasesSection({
         open={creating || editing != null}
         editing={editing}
         buildings={buildings}
+        units={units}
         tenants={tenants}
         onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }}
         onSubmit={async (v) => {
           const payload = {
             building_id: v.building_id,
+            unit_id: v.unit_id,
             tenant_id: v.tenant_id,
             monthly_rent: Number(v.monthly_rent) || 0,
             deposit: Number(v.deposit) || 0,
@@ -657,10 +770,12 @@ function LeasesSection({
               toast.success("Oprettet");
             }
             qc.invalidateQueries({ queryKey: ["building-leases"] });
+            qc.invalidateQueries({ queryKey: ["building-units"] });
             setCreating(false); setEditing(null);
           } catch (e) { toast.error((e as Error).message); }
         }}
       />
+
 
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
@@ -681,11 +796,12 @@ function LeasesSection({
 }
 
 function LeaseDialog({
-  open, editing, buildings, tenants, onOpenChange, onSubmit,
+  open, editing, buildings, units, tenants, onOpenChange, onSubmit,
 }: {
   open: boolean;
   editing: BuildingLease | null;
   buildings: Building[];
+  units: BuildingUnit[];
   tenants: { id: string; name: string }[];
   onOpenChange: (o: boolean) => void;
   onSubmit: (v: LeaseForm) => Promise<void>;
@@ -698,6 +814,7 @@ function LeaseDialog({
     setLastKey(key);
     setValues(editing ? {
       building_id: editing.building_id,
+      unit_id: editing.unit_id,
       tenant_id: editing.tenant_id,
       monthly_rent: String(editing.monthly_rent ?? ""),
       deposit: String(editing.deposit ?? ""),
@@ -707,6 +824,9 @@ function LeaseDialog({
       notes: editing.notes ?? "",
     } : emptyLease);
   }
+  const buildingUnits = values.building_id
+    ? units.filter((u) => u.building_id === values.building_id)
+    : [];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -722,7 +842,7 @@ function LeaseDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Bygning</Label>
-              <Select value={values.building_id ?? NONE} onValueChange={(v) => setValues({ ...values, building_id: v === NONE ? null : v })}>
+              <Select value={values.building_id ?? NONE} onValueChange={(v) => setValues({ ...values, building_id: v === NONE ? null : v, unit_id: null })}>
                 <SelectTrigger><SelectValue placeholder="Vælg…" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>— Ingen —</SelectItem>
@@ -741,6 +861,18 @@ function LeaseDialog({
               </Select>
             </div>
           </div>
+          {buildingUnits.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Enhed</Label>
+              <Select value={values.unit_id ?? NONE} onValueChange={(v) => setValues({ ...values, unit_id: v === NONE ? null : v })}>
+                <SelectTrigger><SelectValue placeholder="Vælg enhed eller hele bygningen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>— Hele bygningen —</SelectItem>
+                  {buildingUnits.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="mr">Mdl. leje (kr)</Label>
@@ -788,3 +920,205 @@ function LeaseDialog({
     </Dialog>
   );
 }
+
+/* ---------- Units ---------- */
+
+type UnitForm = {
+  name: string;
+  description: string;
+  area_m2: string;
+  lease_status: UnitLeaseStatus;
+  lease_status_note: string;
+  estimated_monthly_rent: string;
+  inherit_utilities: boolean;
+  has_electricity: boolean;
+  has_water: boolean;
+  has_heating: boolean;
+  heating_type: string;
+  has_sewage: boolean;
+  has_internet: boolean;
+  notes: string;
+};
+
+const emptyUnit: UnitForm = {
+  name: "", description: "", area_m2: "", lease_status: "ledig",
+  lease_status_note: "", estimated_monthly_rent: "",
+  inherit_utilities: true,
+  has_electricity: false, has_water: false, has_heating: false, heating_type: "",
+  has_sewage: false, has_internet: false, notes: "",
+};
+
+function UnitDialog({
+  open, editing, building, onOpenChange, onSaved,
+}: {
+  open: boolean;
+  editing: BuildingUnit | null;
+  building: Building | null;
+  onOpenChange: (o: boolean) => void;
+  onSaved: () => void;
+}) {
+  const create = useServerFn(createBuildingUnit);
+  const update = useServerFn(updateBuildingUnit);
+  const remove = useServerFn(deleteBuildingUnit);
+  const [v, setV] = useState<UnitForm>(emptyUnit);
+  const [saving, setSaving] = useState(false);
+  const key = `${open}-${editing?.id ?? "new"}-${building?.id ?? "-"}`;
+  const [lastKey, setLastKey] = useState("");
+  if (open && lastKey !== key) {
+    setLastKey(key);
+    setV(editing ? {
+      name: editing.name,
+      description: editing.description ?? "",
+      area_m2: editing.area_m2 != null ? String(editing.area_m2) : "",
+      lease_status: editing.lease_status,
+      lease_status_note: editing.lease_status_note ?? "",
+      estimated_monthly_rent: editing.estimated_monthly_rent != null ? String(editing.estimated_monthly_rent) : "",
+      inherit_utilities: editing.has_electricity == null && editing.has_water == null && editing.has_heating == null && editing.has_sewage == null && editing.has_internet == null,
+      has_electricity: !!editing.has_electricity,
+      has_water: !!editing.has_water,
+      has_heating: !!editing.has_heating,
+      heating_type: editing.heating_type ?? "",
+      has_sewage: !!editing.has_sewage,
+      has_internet: !!editing.has_internet,
+      notes: editing.notes ?? "",
+    } : emptyUnit);
+  }
+
+  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "udlejes_ikke";
+  const buildingId = editing?.building_id ?? building?.id ?? null;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!v.name.trim() || !buildingId) return;
+    setSaving(true);
+    try {
+      const payload = {
+        building_id: buildingId,
+        name: v.name.trim(),
+        description: v.description.trim() || null,
+        area_m2: v.area_m2 ? Number(v.area_m2) : null,
+        lease_status: v.lease_status,
+        lease_status_note: showLeaseNote ? (v.lease_status_note.trim() || null) : null,
+        estimated_monthly_rent: v.estimated_monthly_rent ? Number(v.estimated_monthly_rent) : null,
+        has_electricity: v.inherit_utilities ? null : v.has_electricity,
+        has_water: v.inherit_utilities ? null : v.has_water,
+        has_heating: v.inherit_utilities ? null : v.has_heating,
+        heating_type: v.inherit_utilities || !v.has_heating ? null : (v.heating_type || null),
+        has_sewage: v.inherit_utilities ? null : v.has_sewage,
+        has_internet: v.inherit_utilities ? null : v.has_internet,
+        notes: v.notes.trim() || null,
+      };
+      if (editing) {
+        await update({ data: { id: editing.id, ...payload } });
+        toast.success("Enhed opdateret");
+      } else {
+        await create({ data: payload });
+        toast.success("Enhed oprettet");
+      }
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!editing) return;
+    try {
+      await remove({ data: { id: editing.id } });
+      toast.success("Enhed slettet");
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  const title = editing
+    ? `Rediger enhed — ${editing.name}`
+    : building ? `Ny enhed på ${building.name}` : "Ny enhed";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Generelt</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="un">Navn *</Label>
+                <Input id="un" required maxLength={200} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ua">Areal (m²)</Label>
+                <Input id="ua" type="number" min={0} value={v.area_m2} onChange={(e) => setV({ ...v, area_m2: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ud">Beskrivelse</Label>
+              <Textarea id="ud" rows={2} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Udlejning</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={v.lease_status} onValueChange={(x) => setV({ ...v, lease_status: x as UnitLeaseStatus })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIT_LEASE_STATUSES.map((s) => <SelectItem key={s} value={s}>{UNIT_LEASE_STATUS_LABEL[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="uemr">Est. mdl. leje (kr)</Label>
+                <Input id="uemr" type="number" min={0} value={v.estimated_monthly_rent}
+                  onChange={(e) => setV({ ...v, estimated_monthly_rent: e.target.value })} />
+              </div>
+            </div>
+            {showLeaseNote && (
+              <div className="space-y-1.5">
+                <Label htmlFor="ulsn">Årsag / note</Label>
+                <Input id="ulsn" maxLength={2000} value={v.lease_status_note}
+                  onChange={(e) => setV({ ...v, lease_status_note: e.target.value })} />
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Forsyning</h3>
+            <ToggleRow label="Arv fra bygning" checked={v.inherit_utilities} onChange={(x) => setV({ ...v, inherit_utilities: x })} />
+            {!v.inherit_utilities && (
+              <div className="grid grid-cols-2 gap-3">
+                <ToggleRow label="El" checked={v.has_electricity} onChange={(x) => setV({ ...v, has_electricity: x })} />
+                <ToggleRow label="Vand" checked={v.has_water} onChange={(x) => setV({ ...v, has_water: x })} />
+                <ToggleRow label="Varme" checked={v.has_heating} onChange={(x) => setV({ ...v, has_heating: x })} />
+                <ToggleRow label="Kloak" checked={v.has_sewage} onChange={(x) => setV({ ...v, has_sewage: x })} />
+                <ToggleRow label="Internet" checked={v.has_internet} onChange={(x) => setV({ ...v, has_internet: x })} />
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-1.5">
+            <Label htmlFor="unotes">Noter</Label>
+            <Textarea id="unotes" rows={3} maxLength={4000} value={v.notes} onChange={(e) => setV({ ...v, notes: e.target.value })} />
+          </section>
+
+          <DialogFooter>
+            {editing && (
+              <Button type="button" variant="outline" className="mr-auto text-red-600" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-1" /> Slet enhed
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Annullér</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

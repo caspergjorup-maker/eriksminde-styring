@@ -478,6 +478,10 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       map.removeLayer(drawFeatureGroup.current);
       drawFeatureGroup.current = null;
     }
+    if (backdropLayer.current && map) {
+      map.removeLayer(backdropLayer.current);
+      backdropLayer.current = null;
+    }
     setEditing(null);
     setDrawnGeometry(null);
     if (map) {

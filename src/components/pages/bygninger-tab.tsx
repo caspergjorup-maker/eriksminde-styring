@@ -842,7 +842,7 @@ function LeaseDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Bygning</Label>
-              <Select value={values.building_id ?? NONE} onValueChange={(v) => setValues({ ...values, building_id: v === NONE ? null : v })}>
+              <Select value={values.building_id ?? NONE} onValueChange={(v) => setValues({ ...values, building_id: v === NONE ? null : v, unit_id: null })}>
                 <SelectTrigger><SelectValue placeholder="Vælg…" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>— Ingen —</SelectItem>
@@ -861,6 +861,18 @@ function LeaseDialog({
               </Select>
             </div>
           </div>
+          {buildingUnits.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Enhed</Label>
+              <Select value={values.unit_id ?? NONE} onValueChange={(v) => setValues({ ...values, unit_id: v === NONE ? null : v })}>
+                <SelectTrigger><SelectValue placeholder="Vælg enhed eller hele bygningen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>— Hele bygningen —</SelectItem>
+                  {buildingUnits.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="mr">Mdl. leje (kr)</Label>

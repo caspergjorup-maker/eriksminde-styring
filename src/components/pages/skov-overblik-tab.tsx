@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Pencil, Plus, Trash2, Trees } from "lucide-react";
@@ -46,9 +45,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/skov/overblik")({
-  component: SkovOverblikPage,
-});
 
 type FormState = {
   name: string;
@@ -79,7 +75,7 @@ const statusColor: Record<string, string> = {
   fredet: "bg-purple-100 text-purple-800",
 };
 
-function SkovOverblikPage() {
+export function SkovOverblikPage() {
   const qc = useQueryClient();
   const list = useServerFn(listForestParcels);
   const create = useServerFn(createForestParcel);

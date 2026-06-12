@@ -12,7 +12,7 @@ import {
 import { getDashboardSummary } from "@/lib/dashboard.functions";
 import { formatDKK, formatDate, formatNumber, daysUntil } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/_authenticated/overblik")({
   component: DashboardPage,
 });
 

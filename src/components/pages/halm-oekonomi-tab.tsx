@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowUpRight, Package, TrendingUp } from "lucide-react";
@@ -6,15 +5,12 @@ import { ArrowDownLeft, ArrowUpRight, Package, TrendingUp } from "lucide-react";
 import { BALE_TYPE_LABEL, getStrawSummary } from "@/lib/straw.functions";
 import { formatDKK, formatNumber } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/halm/oekonomi")({
-  component: HalmOekonomiPage,
-});
 
 function labelFor(bt: string) {
   return (BALE_TYPE_LABEL as Record<string, string>)[bt] ?? bt;
 }
 
-function HalmOekonomiPage() {
+export function HalmOekonomiPage() {
   const fn = useServerFn(getStrawSummary);
   const { data, isLoading } = useQuery({
     queryKey: ["straw-summary"],

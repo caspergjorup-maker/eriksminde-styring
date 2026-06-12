@@ -50,7 +50,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/skov/jagtleje")({
+export const Route = createFileRoute("/_authenticated/jagtleje")({
   component: JagtlejePage,
 });
 

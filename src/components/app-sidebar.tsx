@@ -1,18 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
-  Tractor,
+  Sprout,
   Building2,
-  Map,
-  Wheat,
-  ShoppingCart,
-  Coins,
+  Crosshair,
+  Layers,
   Trees,
-  Axe,
-  Target,
-  PieChart,
+  BarChart3,
   FileText,
-  CalendarRange,
+  Calculator,
   Users,
   Truck,
   FolderOpen,
@@ -30,42 +26,32 @@ const sections: Section[] = [
   {
     title: "Drift",
     items: [
-      { label: "Overblik", to: "/dashboard", icon: LayoutDashboard },
-      { label: "Landbrugsjord", to: "/landbrugsjord", icon: Tractor },
-      { label: "Marker", to: "/marker", icon: Map },
+      { label: "Overblik", to: "/overblik", icon: LayoutDashboard },
+      { label: "Landbrugsjord & Marker", to: "/landbrugsjord", icon: Sprout },
       { label: "Bygninger", to: "/bygninger", icon: Building2 },
-      { label: "Bygningsplan", to: "/bygningsplan", icon: Map },
+      { label: "Jagtleje", to: "/jagtleje", icon: Crosshair },
     ],
   },
   {
-    title: "Halm",
+    title: "Produktion & Salg",
     items: [
-      { label: "Lager", to: "/halm/lager", icon: Wheat },
-      { label: "Salg & kunder", to: "/halm/salg", icon: ShoppingCart },
-      { label: "Økonomi", to: "/halm/oekonomi", icon: Coins },
-    ],
-  },
-  {
-    title: "Skov",
-    items: [
-      { label: "Skovoverblik", to: "/skov/overblik", icon: Trees },
-      { label: "Hugst & aktivitet", to: "/skov/hugst", icon: Axe },
-      { label: "Jagtleje", to: "/skov/jagtleje", icon: Target },
+      { label: "Halm", to: "/halm", icon: Layers },
+      { label: "Skov & hugst", to: "/skov", icon: Trees },
     ],
   },
   {
     title: "Økonomi",
     items: [
-      { label: "Overblik", to: "/oekonomi/overblik", icon: PieChart },
-      { label: "Fakturakladder", to: "/oekonomi/fakturaer", icon: FileText },
-      { label: "Budget", to: "/oekonomi/budget", icon: CalendarRange },
+      { label: "Årsresultat", to: "/oekonomi", icon: BarChart3 },
+      { label: "Fakturakladder", to: "/fakturakladder", icon: FileText },
+      { label: "Budget", to: "/budget", icon: Calculator },
     ],
   },
   {
     title: "Kontakter",
     items: [
-      { label: "Kunder", to: "/kontakter/kunder", icon: Users },
-      { label: "Leverandører", to: "/kontakter/leverandoerer", icon: Truck },
+      { label: "Kunder", to: "/kunder", icon: Users },
+      { label: "Leverandører", to: "/leverandoerer", icon: Truck },
     ],
   },
   {

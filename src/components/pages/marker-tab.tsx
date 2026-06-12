@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 
 import {
@@ -10,11 +9,8 @@ import {
 } from "@/components/matrikel-map";
 import { formatDKK, formatDate } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/marker")({
-  component: MarkerPage,
-});
 
-function MarkerPage() {
+export function MarkerPage() {
   const mapRef = useRef<MatrikelMapHandle>(null);
   const [fields, setFields] = useState<FieldSummary[]>([]);
 

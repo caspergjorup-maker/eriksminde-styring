@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -46,9 +45,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/skov/hugst")({
-  component: HugstPage,
-});
 
 type FormState = {
   parcel_id: string;
@@ -76,7 +72,7 @@ const empty: FormState = {
   notes: "",
 };
 
-function HugstPage() {
+export function HugstPage() {
   const qc = useQueryClient();
   const list = useServerFn(listForestActivities);
   const listParcels = useServerFn(listForestParcels);

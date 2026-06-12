@@ -421,6 +421,25 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
 
+    // Show matrikel-boundaries as a non-interactive backdrop so the user
+    // can stay inside them while drawing.
+    if (rawGeojson.current) {
+      backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
+        interactive: false,
+        style: () => ({
+          color: "#1f2937",
+          weight: 1.5,
+          opacity: 0.85,
+          dashArray: "4 3",
+          fill: false,
+        }),
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties as FeatureProps;
+          (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });
+        },
+      }).addTo(map);
+    }
+
     const fg = new L.FeatureGroup().addTo(map);
     drawFeatureGroup.current = fg;
 

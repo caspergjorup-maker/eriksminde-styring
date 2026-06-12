@@ -38,6 +38,11 @@ export type UnitLeaseSummary = {
   tenant: { id: string; name: string; phone: string | null; email: string | null } | null;
 };
 
+export type UnitMapKind = "rect" | "polygon";
+export type UnitMapRect = { x: number; y: number; w: number; h: number };
+export type UnitMapPolygon = { points: Array<[number, number]> };
+export type UnitMapGeometry = UnitMapRect | UnitMapPolygon;
+
 export type BuildingUnit = {
   id: string;
   building_id: string | null;
@@ -54,6 +59,9 @@ export type BuildingUnit = {
   has_sewage: boolean | null;
   has_internet: boolean | null;
   notes: string | null;
+  map_kind: UnitMapKind | null;
+  map_geometry: UnitMapGeometry | null;
+  map_color: string | null;
   lease: UnitLeaseSummary | null;
 };
 
@@ -73,6 +81,21 @@ const unitInput = z.object({
   has_internet: z.boolean().nullable().optional(),
   notes: z.string().trim().max(4000).nullable().optional(),
 });
+
+const geometrySchema = z.union([
+  z.object({
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+    w: z.number().min(0).max(100),
+    h: z.number().min(0).max(100),
+  }),
+  z.object({
+    points: z
+      .array(z.tuple([z.number().min(0).max(100), z.number().min(0).max(100)]))
+      .min(3)
+      .max(60),
+  }),
+]);
 
 function pickLease(rows: Array<Record<string, unknown>> | null | undefined): UnitLeaseSummary | null {
   if (!rows || rows.length === 0) return null;

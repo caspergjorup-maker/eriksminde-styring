@@ -746,11 +746,13 @@ function LeasesSection({
         open={creating || editing != null}
         editing={editing}
         buildings={buildings}
+        units={units}
         tenants={tenants}
         onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }}
         onSubmit={async (v) => {
           const payload = {
             building_id: v.building_id,
+            unit_id: v.unit_id,
             tenant_id: v.tenant_id,
             monthly_rent: Number(v.monthly_rent) || 0,
             deposit: Number(v.deposit) || 0,
@@ -768,10 +770,12 @@ function LeasesSection({
               toast.success("Oprettet");
             }
             qc.invalidateQueries({ queryKey: ["building-leases"] });
+            qc.invalidateQueries({ queryKey: ["building-units"] });
             setCreating(false); setEditing(null);
           } catch (e) { toast.error((e as Error).message); }
         }}
       />
+
 
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
@@ -792,11 +796,12 @@ function LeasesSection({
 }
 
 function LeaseDialog({
-  open, editing, buildings, tenants, onOpenChange, onSubmit,
+  open, editing, buildings, units, tenants, onOpenChange, onSubmit,
 }: {
   open: boolean;
   editing: BuildingLease | null;
   buildings: Building[];
+  units: BuildingUnit[];
   tenants: { id: string; name: string }[];
   onOpenChange: (o: boolean) => void;
   onSubmit: (v: LeaseForm) => Promise<void>;
@@ -809,6 +814,7 @@ function LeaseDialog({
     setLastKey(key);
     setValues(editing ? {
       building_id: editing.building_id,
+      unit_id: editing.unit_id,
       tenant_id: editing.tenant_id,
       monthly_rent: String(editing.monthly_rent ?? ""),
       deposit: String(editing.deposit ?? ""),
@@ -818,6 +824,9 @@ function LeaseDialog({
       notes: editing.notes ?? "",
     } : emptyLease);
   }
+  const buildingUnits = values.building_id
+    ? units.filter((u) => u.building_id === values.building_id)
+    : [];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">

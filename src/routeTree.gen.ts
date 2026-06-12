@@ -16,6 +16,7 @@ import { Route as ApiMatrikelRouteImport } from './routes/api/matrikel'
 import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
 import { Route as AuthenticatedOverblikRouteImport } from './routes/_authenticated/overblik'
 import { Route as AuthenticatedLeverandoererRouteImport } from './routes/_authenticated/leverandoerer'
+import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedKunderRouteImport } from './routes/_authenticated/kunder'
 import { Route as AuthenticatedJagtlejeRouteImport } from './routes/_authenticated/jagtleje'
 import { Route as AuthenticatedFakturakladderRouteImport } from './routes/_authenticated/fakturakladder'
@@ -59,6 +60,12 @@ const AuthenticatedLeverandoererRoute =
     path: '/leverandoerer',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLandbrugsjordRoute =
+  AuthenticatedLandbrugsjordRouteImport.update({
+    id: '/landbrugsjord',
+    path: '/landbrugsjord',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedKunderRoute = AuthenticatedKunderRouteImport.update({
   id: '/kunder',
   path: '/kunder',
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
   '/kunder': typeof AuthenticatedKunderRoute
+  '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/overblik': typeof AuthenticatedOverblikRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
@@ -113,6 +121,7 @@ export interface FileRoutesByTo {
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
   '/kunder': typeof AuthenticatedKunderRoute
+  '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/overblik': typeof AuthenticatedOverblikRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
@@ -129,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/_authenticated/jagtleje': typeof AuthenticatedJagtlejeRoute
   '/_authenticated/kunder': typeof AuthenticatedKunderRoute
+  '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/_authenticated/overblik': typeof AuthenticatedOverblikRoute
   '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/fakturakladder'
     | '/jagtleje'
     | '/kunder'
+    | '/landbrugsjord'
     | '/leverandoerer'
     | '/overblik'
     | '/vedligehold'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/fakturakladder'
     | '/jagtleje'
     | '/kunder'
+    | '/landbrugsjord'
     | '/leverandoerer'
     | '/overblik'
     | '/vedligehold'
@@ -174,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fakturakladder'
     | '/_authenticated/jagtleje'
     | '/_authenticated/kunder'
+    | '/_authenticated/landbrugsjord'
     | '/_authenticated/leverandoerer'
     | '/_authenticated/overblik'
     | '/_authenticated/vedligehold'
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeverandoererRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/landbrugsjord': {
+      id: '/_authenticated/landbrugsjord'
+      path: '/landbrugsjord'
+      fullPath: '/landbrugsjord'
+      preLoaderRoute: typeof AuthenticatedLandbrugsjordRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kunder': {
       id: '/_authenticated/kunder'
       path: '/kunder'
@@ -291,6 +311,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFakturakladderRoute: typeof AuthenticatedFakturakladderRoute
   AuthenticatedJagtlejeRoute: typeof AuthenticatedJagtlejeRoute
   AuthenticatedKunderRoute: typeof AuthenticatedKunderRoute
+  AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedLeverandoererRoute: typeof AuthenticatedLeverandoererRoute
   AuthenticatedOverblikRoute: typeof AuthenticatedOverblikRoute
   AuthenticatedVedligeholdRoute: typeof AuthenticatedVedligeholdRoute
@@ -302,6 +323,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFakturakladderRoute: AuthenticatedFakturakladderRoute,
   AuthenticatedJagtlejeRoute: AuthenticatedJagtlejeRoute,
   AuthenticatedKunderRoute: AuthenticatedKunderRoute,
+  AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedLeverandoererRoute: AuthenticatedLeverandoererRoute,
   AuthenticatedOverblikRoute: AuthenticatedOverblikRoute,
   AuthenticatedVedligeholdRoute: AuthenticatedVedligeholdRoute,
@@ -320,3 +342,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

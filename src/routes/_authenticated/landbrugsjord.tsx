@@ -127,10 +127,10 @@ function LandbrugsjordPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>
             )}
             {!isLoading && rows.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen forpagtninger endnu.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Ingen forpagtninger endnu.</td></tr>
             )}
             {rows.map((r) => {
               const days = daysUntil(r.contract_end);
@@ -145,6 +145,19 @@ function LandbrugsjordPage() {
               return (
                 <tr key={r.id} className="hover:bg-muted/30">
                   <td className="px-4 py-2.5 font-medium">{r.leaseholder_name ?? "—"}</td>
+                  <td className="px-4 py-2.5">
+                    {r.field_names.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {r.field_names.map((n) => (
+                          <span key={n} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-foreground">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{r.area_ha.toLocaleString("da-DK")}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{formatDKK(r.price_per_ha)}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums font-medium">{formatDKK(r.annual_fee ?? 0)}</td>

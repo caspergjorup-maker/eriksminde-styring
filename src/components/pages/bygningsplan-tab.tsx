@@ -1,16 +1,10 @@
 import { Suspense } from "react";
-import { createFileRoute, ErrorComponent } from "@tanstack/react-router";
+import { ErrorComponent } from "@tanstack/react-router";
 
 import { BuildingMap, BuildingMapLegend, buildingsMapQuery } from "@/components/building-map/building-map";
 
-export const Route = createFileRoute("/_authenticated/bygningsplan")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(buildingsMapQuery),
-  component: BygningsplanPage,
-  errorComponent: ErrorComponent,
-  notFoundComponent: () => <div className="p-6">Siden blev ikke fundet.</div>,
-});
 
-function BygningsplanPage() {
+export function BygningsplanPage() {
   return (
     <div style={{ padding: "1.5rem" }}>
       <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: "0.25rem" }}>Bygningsplan</h1>

@@ -1,5 +1,4 @@
 import { Suspense, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bolt, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
@@ -48,9 +47,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 
-export const Route = createFileRoute("/_authenticated/bygninger")({
-  component: BygningerPage,
-});
 
 const NONE = "__none__";
 
@@ -108,7 +104,7 @@ const STATUS_TONE: Record<LeaseStatus, string> = {
   vacant: "bg-muted text-muted-foreground",
 };
 
-function BygningerPage() {
+export function BygningerPage() {
   const qc = useQueryClient();
   const listB = useServerFn(listBuildings);
   const listL = useServerFn(listBuildingLeases);

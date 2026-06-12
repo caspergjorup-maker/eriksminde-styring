@@ -55,11 +55,18 @@ export const Route = createFileRoute("/api/matrikel")({
         const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string }>;
 
         geojson.features = (geojson.features ?? []).map((f) => {
-          const matrikelnr = String(f.properties?.matrikelnr ?? "");
+          const props = f.properties as Record<string, unknown>;
+          const matrikelnr = String(props?.matrikelnr ?? "");
           const match = list.find((p) => p.matrikel_id === matrikelnr) ?? null;
           return {
             ...f,
-            properties: { ...f.properties, parcel: match },
+            properties: {
+              ...props,
+              // Normalisér DAWA-felter til de navne UI'et bruger
+              ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
+              registreretAreal: props.registreretareal ?? props.registreretAreal,
+              parcel: match,
+            },
           };
         });
 

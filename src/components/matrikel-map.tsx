@@ -189,6 +189,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       })
       .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[] }) => {
         if (ignored) return;
+        rawGeojson.current = geojson;
         setLoading(false);
 
         // Detect split matrikler (same matrikelnr appearing in multiple fields)

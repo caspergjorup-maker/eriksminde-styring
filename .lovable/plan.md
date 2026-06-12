@@ -1,54 +1,52 @@
-# Eriksminde — Byggeplan
+## Bygningsplan — interaktiv kortkomponent
 
-En fuld-stack gårdstyringsapp til Familien Gjørup, bygget med rigtige tabeller, auth og relationer fra dag ét. Dette er en stor leverance, så jeg foreslår at bygge i 3 faser så du kan teste undervejs.
+### 1. Database (migration)
+Tilføj kortlægningskolonner til `buildings`:
+- `building_nr text`, `map_color text`, `map_section text`
+- `map_x int`, `map_y int`, `map_w int`, `map_h int`
+- `map_shape text default 'rect'`
 
-## Fase 1 — Fundament (denne leverance)
+Seed 12 bygninger (1–11 inkl. 8b) via `supabase--insert` med UPSERT-logik på `name` så vi ikke duplikerer eksisterende rækker. Bestående rækker opdateres med kortdata; nye indsættes.
 
-**Backend**
-- Aktivér Lovable Cloud (Supabase under motorhjelmen)
-- Migration med alle 14 tabeller + relationer + generated columns + RLS + GRANTs
-- Seed-data som beskrevet (kontakter, jord, bygninger, halm, skov, jagt, budgetter)
-- Supabase Auth (email/password) — enkeltbruger
-- `_authenticated/` gate så hele appen kræver login
+### 2. Server function-udvidelse
+I `src/lib/buildings.functions.ts`:
+- Udvid `Building`-typen med de nye felter.
+- Tilføj `listBuildingsWithLeases()` som returnerer bygninger joinet med deres seneste lease + tenant (`name, phone, email`), sorteret efter `building_nr`. Bruger `requireSupabaseAuth`.
+- Udvid `buildingInput` Zod-schema til at acceptere de nye felter (alle optional/nullable) så eksisterende create/update fortsat virker.
 
-**Design system**
-- Tailwind v4 tokens i `src/styles.css` med teal-paletten (#1D9E75, #085041, #E1F5EE, m.fl.)
-- Georgia serif til logo + brand-typografi
-- Logo-komponent: ERIKSMINDE-tekst, bølgelinje, FAMILIEN GJØRUP
-- Sidebar (shadcn) med hvid baggrund, teal aktiv-border, sektioneret nav, kollaps på mobil
-- Badge-varianter: grøn/gul/rød/blå
-- DKK-formattering (tusindtalsseparator) + dansk datoformat helpers
+### 3. `BuildingMap`-komponent
+Ny fil `src/components/building-map/building-map.tsx`:
+- Henter data via `useSuspenseQuery` + ny serverFn.
+- 600×520 px container, baggrund `#EBF8F3`, afrundet, overflow hidden.
+- Tegner veje (Fjordager lodret roteret 8°, Sønderbyen vandret) + vejskilte.
+- Mapper bygninger til absolut-positionerede divs med `map_color`, rect/circle, rotation -8° for nr. 1–4.
+- Border-farve via `getBorderColor(lease)`: blå (vacant), gul (pending_payment), rød (<90 dage til udløb), ellers transparent. Valgt bygning får mørk teal border + `brightness(0.82)`.
+- Etiket inde i bygningen: nr + navn med tekstskygge.
+- Prop `scale?: number` og `interactive?: boolean` så samme komponent kan bruges mini-version (skaleret container, vejskilte `pointer-events:none`).
 
-**Navigation & shell**
-- Alle ruter under `_authenticated/` jf. struktur:
-  Drift (Overblik, Landbrugsjord, Bygninger), Halm (Lager, Salg & kunder, Økonomi),
-  Skov (Skovoverblik, Hugst & aktivitet, Jagtleje), Økonomi (Overblik, Fakturakladder, Budget),
-  Kontakter (Kunder, Leverandører), Andet (Dokumenter, Vedligehold)
-- Login-side `/auth`
+Underkomponenter i samme mappe:
+- `building-info-panel.tsx` — header med farvet cirkel + nr, type + status-badge, `MetricCard`-grid (Lejer / Månedlig leje / Kontraktudløb / Telefon / Email / Depositum), knapper "Se lejekontrakt" (→ `/dokumenter?building=<id>`) og "Rediger" (→ `/bygninger`).
+- `building-map-legend.tsx` — farvelegende.
+- `status-badge.tsx` — genbruger eksisterende Badge-varianter.
+- `metric-card.tsx` — simpel label/value-celle.
 
-**Overblikssiden (dashboard)**
-- 4 metric-cards: årets indtægt, halm på lager, åbne fakturakladder, næste kontraktudløb
-- Kommende opgaver (kontrakter <90 dage, ubetalte lejemål, fakturakladder klar)
-- Indtægtsoverblik med progress-bars realiseret vs. budget pr. kategori
+Bruger eksisterende `formatDKK` / `formatDate` fra `src/lib/format.ts` (ingen ny `date-fns`-afhængighed).
 
-## Fase 2 — CRUD pr. domæne (efter du har godkendt fase 1)
-Liste-, detalje- og formular-sider for hver entitet: contacts, land_leases, buildings + building_leases, straw (inventory + movements), forest (parcels + activities), hunting (leases + records), invoices, expenses, budgets, documents. Klikbare rækker, badges, dansk formattering.
+### 4. Ny rute
+`src/routes/_authenticated/bygningsplan.tsx`:
+- Side-titel "Bygningsplan" + undertekst.
+- Renderer `<BuildingMap />` + `<BuildingMapLegend />` + infopanel under kortet.
+- Suspense-boundary + errorComponent/notFoundComponent.
 
-## Fase 3 — Økonomi & Dinero-forberedelse
-- Aggregeringer realiseret vs. budget
-- Faktura-workflow draft → ready → exported → paid
-- API route `/api/dinero/export-invoice` med TODO-stub + docs-link
-- Banner: "Dinero-integration ikke konfigureret"
+### 5. Navigation
+Tilføj i `src/components/app-sidebar.tsx` under "Drift" efter "Bygninger":
+- `{ label: "Bygningsplan", to: "/bygningsplan", icon: Map }` (lucide `Map`-ikon).
 
-## Tekniske detaljer
-- TanStack Start file-routes under `src/routes/_authenticated/`
-- Data fetching: `createServerFn` + `requireSupabaseAuth` + TanStack Query (`ensureQueryData` / `useSuspenseQuery`)
-- Public schema GRANTs til `authenticated` + `service_role` på alle tabeller
-- RLS: enkeltbruger-app → policies tillader alt for `authenticated` indtil vi udvider med roller
-- Generated columns: `annual_fee`, `total_amount` (movements + invoices)
-- Storage bucket til `documents.file_url` og `expenses.attachment_url`
-- Dinero-integration: kun stub i fase 3, ingen API-kald
+### 6. Mini-version på Bygninger-siden
+I `src/routes/_authenticated/bygninger.tsx` tilføjes øverst (over tabellen) en `<BuildingMap scale={0.5} interactive={false} />` som visuel oversigt (klik kan stadig vælge en bygning og scrolle til rækken — eller blot være dekorativ; jeg laver den klikbar og scroller til den valgte række).
 
-## Spørgsmål før jeg starter
-1. **OK at jeg går i gang med Fase 1 nu?** (Database + design + shell + dashboard + auth + seed.) Fase 2 og 3 kommer som separate leverancer.
-2. **Login**: skal jeg seede en demo-bruger, eller opretter du selv den første konto via signup?
+### Tekniske noter
+- Migrationen skal medbringe nye GRANTs ikke — bygnings-tabellen har dem allerede.
+- Seed køres som separat `supabase--insert`-kald efter migrationen er godkendt.
+- `building_nr` bruges som visuel identifier, ikke som unik nøgle (8 og 8b deler placering).
+- Komponenten er client-only (interaktiv state) — ingen SSR-problemer da ruten er under `_authenticated/` (ssr: false).

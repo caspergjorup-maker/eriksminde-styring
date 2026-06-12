@@ -17,6 +17,7 @@ import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSkovRouteImport } from './routes/_authenticated/skov'
 import { Route as AuthenticatedOverblikRouteImport } from './routes/_authenticated/overblik'
 import { Route as AuthenticatedOekonomiRouteImport } from './routes/_authenticated/oekonomi'
+import { Route as AuthenticatedMaskinerRouteImport } from './routes/_authenticated/maskiner'
 import { Route as AuthenticatedLeverandoererRouteImport } from './routes/_authenticated/leverandoerer'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedKunderRouteImport } from './routes/_authenticated/kunder'
@@ -66,6 +67,11 @@ const AuthenticatedOverblikRoute = AuthenticatedOverblikRouteImport.update({
 const AuthenticatedOekonomiRoute = AuthenticatedOekonomiRouteImport.update({
   id: '/oekonomi',
   path: '/oekonomi',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMaskinerRoute = AuthenticatedMaskinerRouteImport.update({
+  id: '/maskiner',
+  path: '/maskiner',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeverandoererRoute =
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/kunder': typeof AuthenticatedKunderRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/maskiner': typeof AuthenticatedMaskinerRoute
   '/oekonomi': typeof AuthenticatedOekonomiRoute
   '/overblik': typeof AuthenticatedOverblikRoute
   '/skov': typeof AuthenticatedSkovRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/kunder': typeof AuthenticatedKunderRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/maskiner': typeof AuthenticatedMaskinerRoute
   '/oekonomi': typeof AuthenticatedOekonomiRoute
   '/overblik': typeof AuthenticatedOverblikRoute
   '/skov': typeof AuthenticatedSkovRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/kunder': typeof AuthenticatedKunderRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/_authenticated/maskiner': typeof AuthenticatedMaskinerRoute
   '/_authenticated/oekonomi': typeof AuthenticatedOekonomiRoute
   '/_authenticated/overblik': typeof AuthenticatedOverblikRoute
   '/_authenticated/skov': typeof AuthenticatedSkovRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/kunder'
     | '/landbrugsjord'
     | '/leverandoerer'
+    | '/maskiner'
     | '/oekonomi'
     | '/overblik'
     | '/skov'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/kunder'
     | '/landbrugsjord'
     | '/leverandoerer'
+    | '/maskiner'
     | '/oekonomi'
     | '/overblik'
     | '/skov'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_authenticated/kunder'
     | '/_authenticated/landbrugsjord'
     | '/_authenticated/leverandoerer'
+    | '/_authenticated/maskiner'
     | '/_authenticated/oekonomi'
     | '/_authenticated/overblik'
     | '/_authenticated/skov'
@@ -306,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/oekonomi'
       fullPath: '/oekonomi'
       preLoaderRoute: typeof AuthenticatedOekonomiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maskiner': {
+      id: '/_authenticated/maskiner'
+      path: '/maskiner'
+      fullPath: '/maskiner'
+      preLoaderRoute: typeof AuthenticatedMaskinerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leverandoerer': {
@@ -391,6 +410,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedKunderRoute: typeof AuthenticatedKunderRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedLeverandoererRoute: typeof AuthenticatedLeverandoererRoute
+  AuthenticatedMaskinerRoute: typeof AuthenticatedMaskinerRoute
   AuthenticatedOekonomiRoute: typeof AuthenticatedOekonomiRoute
   AuthenticatedOverblikRoute: typeof AuthenticatedOverblikRoute
   AuthenticatedSkovRoute: typeof AuthenticatedSkovRoute
@@ -407,6 +427,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKunderRoute: AuthenticatedKunderRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedLeverandoererRoute: AuthenticatedLeverandoererRoute,
+  AuthenticatedMaskinerRoute: AuthenticatedMaskinerRoute,
   AuthenticatedOekonomiRoute: AuthenticatedOekonomiRoute,
   AuthenticatedOverblikRoute: AuthenticatedOverblikRoute,
   AuthenticatedSkovRoute: AuthenticatedSkovRoute,

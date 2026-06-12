@@ -649,6 +649,7 @@ function BuildingDialog({
 
 type LeaseForm = {
   building_id: string | null;
+  unit_id: string | null;
   tenant_id: string | null;
   monthly_rent: string;
   deposit: string;
@@ -659,16 +660,17 @@ type LeaseForm = {
 };
 
 const emptyLease: LeaseForm = {
-  building_id: null, tenant_id: null, monthly_rent: "", deposit: "",
+  building_id: null, unit_id: null, tenant_id: null, monthly_rent: "", deposit: "",
   contract_start: "", contract_end: "", status: "active", notes: "",
 };
 
 function LeasesSection({
-  leases, loading, buildings, tenants, qc,
+  leases, loading, buildings, units, tenants, qc,
 }: {
   leases: BuildingLease[];
   loading: boolean;
   buildings: Building[];
+  units: BuildingUnit[];
   tenants: { id: string; name: string }[];
   qc: ReturnType<typeof useQueryClient>;
 }) {

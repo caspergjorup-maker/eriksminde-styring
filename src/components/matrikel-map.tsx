@@ -95,12 +95,19 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const fieldLayer = useRef<L.GeoJSON | null>(null);
   const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
   const parcelLayers = useRef<L.Path[]>([]);
+  const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
+  const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ parcelId: string; matrikelnr: string } | null>(null);
+  const [drawnGeometry, setDrawnGeometry] = useState<Polygon | MultiPolygon | null>(null);
+  const [saving, setSaving] = useState(false);
+  const saveGeometry = useServerFn(saveParcelGeometry);
+
 
   const resetParcelStyles = () => {
     parcelLayers.current.forEach((lyr) => {

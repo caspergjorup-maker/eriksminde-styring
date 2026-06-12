@@ -85,6 +85,12 @@ function BygningerPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Bygninger og lejemål</p>
       </div>
 
+      <Suspense fallback={null}>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <BuildingMap scale={0.6} interactive={false} showPanel={false} />
+        </div>
+      </Suspense>
+
       <BuildingsSection buildings={buildings} loading={lb} qc={qc} />
       <LeasesSection
         leases={leases}

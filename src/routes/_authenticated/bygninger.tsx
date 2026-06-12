@@ -1,12 +1,16 @@
 import { Suspense } from "react";
 import { createFileRoute, ErrorComponent } from "@tanstack/react-router";
-import { buildingsMapQuery } from "@/components/building-map/building-map";
+import { buildingsMapQuery, buildingUnitsQuery } from "@/components/building-map/building-map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BygningerPage } from "@/components/pages/bygninger-tab";
 import { BygningsplanPage } from "@/components/pages/bygningsplan-tab";
 
 export const Route = createFileRoute("/_authenticated/bygninger")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(buildingsMapQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(buildingsMapQuery),
+      context.queryClient.ensureQueryData(buildingUnitsQuery),
+    ]),
   component: BygningerTabsPage,
   errorComponent: ErrorComponent,
   notFoundComponent: () => <div className="p-6">Siden blev ikke fundet.</div>,

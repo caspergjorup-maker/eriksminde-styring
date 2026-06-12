@@ -1,0 +1,1 @@
+ALTER TABLE public.parcels ADD COLUMN IF NOT EXISTS field_area_ha numeric;

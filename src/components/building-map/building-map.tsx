@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
 
 import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
+import { listBuildingUnits, type BuildingUnit } from "@/lib/building-units.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
 
 const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {

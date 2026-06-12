@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/matrikel")({
         const { data: parcels } = await supabaseAdmin
           .from("parcels")
           .select(
-            `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, field_id,
+            `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, field_id, custom_geometry,
              field:field_id ( id, name, use_type, notes ),
              land_leases:land_lease_id (
                annual_fee, price_per_ha, area_ha, contract_start, contract_end,
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/matrikel")({
              )`,
           );
 
-        const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string }>;
+        const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string; custom_geometry?: unknown }>;
 
         const inputFeatures = (geojson.features ?? []).filter((f) => {
           const props = f.properties as Record<string, unknown>;
@@ -80,11 +80,17 @@ export const Route = createFileRoute("/api/matrikel")({
           } else {
             // Emit one feature per parcel row so split matrikler appear in multiple fields
             for (const match of matches) {
-              outputFeatures.push({ ...f, properties: { ...baseProps, parcel: match } });
+              const geom = match.custom_geometry ?? f.geometry;
+              outputFeatures.push({
+                ...f,
+                geometry: geom,
+                properties: { ...baseProps, parcel: match },
+              });
             }
           }
         }
         geojson.features = outputFeatures;
+
 
         return Response.json(geojson, {
           headers: { "Cache-Control": "private, max-age=60" },

@@ -698,6 +698,7 @@ export type Database = {
       parcels: {
         Row: {
           created_at: string
+          custom_geometry: Json | null
           ejerlav: string
           field_area_ha: number | null
           field_id: string | null
@@ -711,6 +712,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_geometry?: Json | null
           ejerlav?: string
           field_area_ha?: number | null
           field_id?: string | null
@@ -724,6 +726,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_geometry?: Json | null
           ejerlav?: string
           field_area_ha?: number | null
           field_id?: string | null

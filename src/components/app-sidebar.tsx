@@ -32,6 +32,7 @@ const sections: Section[] = [
     items: [
       { label: "Overblik", to: "/dashboard", icon: LayoutDashboard },
       { label: "Landbrugsjord", to: "/landbrugsjord", icon: Tractor },
+      { label: "Matrikelkort", to: "/matrikelkort", icon: Map },
       { label: "Bygninger", to: "/bygninger", icon: Building2 },
       { label: "Bygningsplan", to: "/bygningsplan", icon: Map },
     ],

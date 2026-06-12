@@ -9,6 +9,9 @@ import { BuildingMap } from "@/components/building-map/building-map";
 
 import {
   BUILDING_TYPES,
+  BUILDING_CONDITIONS,
+  BUILDING_LEASE_STATUSES,
+  HEATING_TYPES,
   LEASE_STATUSES,
   createBuilding,
   createBuildingLease,
@@ -20,8 +23,11 @@ import {
   updateBuilding,
   updateBuildingLease,
   type Building,
+  type BuildingCondition,
   type BuildingLease,
+  type BuildingLeaseStatus,
   type BuildingType,
+  type HeatingType,
   type LeaseStatus,
 } from "@/lib/buildings.functions";
 import { formatDKK, formatDate } from "@/lib/format";

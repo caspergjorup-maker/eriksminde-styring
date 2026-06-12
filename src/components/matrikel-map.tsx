@@ -42,6 +42,7 @@ type Parcel = {
   ejerlav: string;
   use_type: UseType | null;
   net_area_ha: number | null;
+  field_area_ha: number | null;
   notes: string | null;
   field_id?: string | null;
   field?: Field | null;

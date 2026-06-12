@@ -42,6 +42,13 @@ type Field = {
   name: string;
   use_type: UseType | null;
   notes: string | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
 };
 type Parcel = {
   id: string;
@@ -73,6 +80,13 @@ export type FieldSummary = {
   leaseholder: string | null;
   contractEnd: string | null;
   annualFee: number | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
 };
 
 

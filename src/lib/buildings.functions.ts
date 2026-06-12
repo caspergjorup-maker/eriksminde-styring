@@ -27,6 +27,14 @@ export type Building = {
   name: string;
   type: BuildingType;
   description: string | null;
+  building_nr: string | null;
+  map_color: string | null;
+  map_section: string | null;
+  map_x: number | null;
+  map_y: number | null;
+  map_w: number | null;
+  map_h: number | null;
+  map_shape: string | null;
 };
 
 export type BuildingLease = {
@@ -41,6 +49,27 @@ export type BuildingLease = {
   contract_end: string | null;
   status: LeaseStatus;
   notes: string | null;
+};
+
+export type BuildingMapTenant = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+};
+
+export type BuildingMapLease = {
+  id: string;
+  monthly_rent: number;
+  deposit: number;
+  contract_start: string | null;
+  contract_end: string | null;
+  status: LeaseStatus;
+  tenant: BuildingMapTenant | null;
+};
+
+export type BuildingWithLease = Building & {
+  lease: BuildingMapLease | null;
 };
 
 const buildingInput = z.object({
@@ -60,15 +89,56 @@ const leaseInput = z.object({
   notes: z.string().trim().max(2000).nullable(),
 });
 
+const BUILDING_COLS =
+  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape";
+
 export const listBuildings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Building[]> => {
     const { data, error } = await context.supabase
       .from("buildings")
-      .select("id, name, type, description")
+      .select(BUILDING_COLS)
       .order("name");
     if (error) throw new Error(error.message);
     return (data ?? []) as Building[];
+  });
+
+export const listBuildingsWithLeases = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<BuildingWithLease[]> => {
+    const { data, error } = await context.supabase
+      .from("buildings")
+      .select(
+        `${BUILDING_COLS}, building_leases(id, monthly_rent, deposit, contract_start, contract_end, status, tenant:contacts!building_leases_tenant_id_fkey(id, name, phone, email))`,
+      )
+      .order("building_nr", { nullsFirst: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: Record<string, unknown>) => {
+      const leases = (r.building_leases as Array<Record<string, unknown>> | null) ?? [];
+      // pick lease with farthest contract_end (latest); fallback first
+      const sorted = [...leases].sort((a, b) => {
+        const ae = a.contract_end as string | null;
+        const be = b.contract_end as string | null;
+        if (!ae) return 1;
+        if (!be) return -1;
+        return be.localeCompare(ae);
+      });
+      const l = sorted[0];
+      const lease: BuildingMapLease | null = l
+        ? {
+            id: l.id as string,
+            monthly_rent: Number(l.monthly_rent ?? 0),
+            deposit: Number(l.deposit ?? 0),
+            contract_start: (l.contract_start as string | null) ?? null,
+            contract_end: (l.contract_end as string | null) ?? null,
+            status: ((l.status as LeaseStatus) ?? "active"),
+            tenant: (l.tenant as BuildingMapTenant | null) ?? null,
+          }
+        : null;
+      const { building_leases: _omit, ...building } = r as Record<string, unknown>;
+      void _omit;
+      return { ...(building as unknown as Building), lease };
+    });
   });
 
 export const createBuilding = createServerFn({ method: "POST" })

@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Bolt, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 import { BuildingMap } from "@/components/building-map/building-map";

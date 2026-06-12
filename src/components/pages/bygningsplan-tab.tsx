@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ErrorComponent } from "@tanstack/react-router";
+
 
 import { BuildingMap, BuildingMapLegend, buildingsMapQuery } from "@/components/building-map/building-map";
 

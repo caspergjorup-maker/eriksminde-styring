@@ -99,6 +99,8 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const parcelLayers = useRef<L.Path[]>([]);
   const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
   const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
+  const backdropLayer = useRef<L.GeoJSON | null>(null);
+  const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
@@ -187,6 +189,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       })
       .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[] }) => {
         if (ignored) return;
+        rawGeojson.current = geojson;
         setLoading(false);
 
         // Detect split matrikler (same matrikelnr appearing in multiple fields)
@@ -418,6 +421,25 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
 
+    // Show matrikel-boundaries as a non-interactive backdrop so the user
+    // can stay inside them while drawing.
+    if (rawGeojson.current) {
+      backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
+        interactive: false,
+        style: () => ({
+          color: "#1f2937",
+          weight: 1.5,
+          opacity: 0.85,
+          dashArray: "4 3",
+          fill: false,
+        }),
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties as FeatureProps;
+          (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });
+        },
+      }).addTo(map);
+    }
+
     const fg = new L.FeatureGroup().addTo(map);
     drawFeatureGroup.current = fg;
 
@@ -455,6 +477,10 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (drawFeatureGroup.current && map) {
       map.removeLayer(drawFeatureGroup.current);
       drawFeatureGroup.current = null;
+    }
+    if (backdropLayer.current && map) {
+      map.removeLayer(backdropLayer.current);
+      backdropLayer.current = null;
     }
     setEditing(null);
     setDrawnGeometry(null);

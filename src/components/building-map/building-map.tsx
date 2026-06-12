@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
 
-import { listBuildingsWithLeases, type BuildingMapLease, type BuildingWithLease } from "@/lib/buildings.functions";
+import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
+
+const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
+  udlejet: "Udlejet",
+  ledig: "Ledig",
+  ikke_klar: "Ikke klar endnu",
+  intern_brug: "Intern brug",
+  udlejes_ikke: "Udlejes ikke",
+};
+
+const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }> = {
+  udlejet: { bg: "#D1FAE5", fg: "#065F46" },
+  ledig: { bg: "#DBEAFE", fg: "#1E3A8A" },
+  ikke_klar: { bg: "#FEF3C7", fg: "#854D0E" },
+  intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
+  udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
+};
 
 export const buildingsMapQuery = queryOptions({
   queryKey: ["buildings", "with-leases"],

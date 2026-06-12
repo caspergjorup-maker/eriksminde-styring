@@ -920,3 +920,205 @@ function LeaseDialog({
     </Dialog>
   );
 }
+
+/* ---------- Units ---------- */
+
+type UnitForm = {
+  name: string;
+  description: string;
+  area_m2: string;
+  lease_status: UnitLeaseStatus;
+  lease_status_note: string;
+  estimated_monthly_rent: string;
+  inherit_utilities: boolean;
+  has_electricity: boolean;
+  has_water: boolean;
+  has_heating: boolean;
+  heating_type: string;
+  has_sewage: boolean;
+  has_internet: boolean;
+  notes: string;
+};
+
+const emptyUnit: UnitForm = {
+  name: "", description: "", area_m2: "", lease_status: "ledig",
+  lease_status_note: "", estimated_monthly_rent: "",
+  inherit_utilities: true,
+  has_electricity: false, has_water: false, has_heating: false, heating_type: "",
+  has_sewage: false, has_internet: false, notes: "",
+};
+
+function UnitDialog({
+  open, editing, building, onOpenChange, onSaved,
+}: {
+  open: boolean;
+  editing: BuildingUnit | null;
+  building: Building | null;
+  onOpenChange: (o: boolean) => void;
+  onSaved: () => void;
+}) {
+  const create = useServerFn(createBuildingUnit);
+  const update = useServerFn(updateBuildingUnit);
+  const remove = useServerFn(deleteBuildingUnit);
+  const [v, setV] = useState<UnitForm>(emptyUnit);
+  const [saving, setSaving] = useState(false);
+  const key = `${open}-${editing?.id ?? "new"}-${building?.id ?? "-"}`;
+  const [lastKey, setLastKey] = useState("");
+  if (open && lastKey !== key) {
+    setLastKey(key);
+    setV(editing ? {
+      name: editing.name,
+      description: editing.description ?? "",
+      area_m2: editing.area_m2 != null ? String(editing.area_m2) : "",
+      lease_status: editing.lease_status,
+      lease_status_note: editing.lease_status_note ?? "",
+      estimated_monthly_rent: editing.estimated_monthly_rent != null ? String(editing.estimated_monthly_rent) : "",
+      inherit_utilities: editing.has_electricity == null && editing.has_water == null && editing.has_heating == null && editing.has_sewage == null && editing.has_internet == null,
+      has_electricity: !!editing.has_electricity,
+      has_water: !!editing.has_water,
+      has_heating: !!editing.has_heating,
+      heating_type: editing.heating_type ?? "",
+      has_sewage: !!editing.has_sewage,
+      has_internet: !!editing.has_internet,
+      notes: editing.notes ?? "",
+    } : emptyUnit);
+  }
+
+  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "udlejes_ikke";
+  const buildingId = editing?.building_id ?? building?.id ?? null;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!v.name.trim() || !buildingId) return;
+    setSaving(true);
+    try {
+      const payload = {
+        building_id: buildingId,
+        name: v.name.trim(),
+        description: v.description.trim() || null,
+        area_m2: v.area_m2 ? Number(v.area_m2) : null,
+        lease_status: v.lease_status,
+        lease_status_note: showLeaseNote ? (v.lease_status_note.trim() || null) : null,
+        estimated_monthly_rent: v.estimated_monthly_rent ? Number(v.estimated_monthly_rent) : null,
+        has_electricity: v.inherit_utilities ? null : v.has_electricity,
+        has_water: v.inherit_utilities ? null : v.has_water,
+        has_heating: v.inherit_utilities ? null : v.has_heating,
+        heating_type: v.inherit_utilities || !v.has_heating ? null : (v.heating_type || null),
+        has_sewage: v.inherit_utilities ? null : v.has_sewage,
+        has_internet: v.inherit_utilities ? null : v.has_internet,
+        notes: v.notes.trim() || null,
+      };
+      if (editing) {
+        await update({ data: { id: editing.id, ...payload } });
+        toast.success("Enhed opdateret");
+      } else {
+        await create({ data: payload });
+        toast.success("Enhed oprettet");
+      }
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!editing) return;
+    try {
+      await remove({ data: { id: editing.id } });
+      toast.success("Enhed slettet");
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  const title = editing
+    ? `Rediger enhed — ${editing.name}`
+    : building ? `Ny enhed på ${building.name}` : "Ny enhed";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Generelt</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="un">Navn *</Label>
+                <Input id="un" required maxLength={200} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ua">Areal (m²)</Label>
+                <Input id="ua" type="number" min={0} value={v.area_m2} onChange={(e) => setV({ ...v, area_m2: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ud">Beskrivelse</Label>
+              <Textarea id="ud" rows={2} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Udlejning</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={v.lease_status} onValueChange={(x) => setV({ ...v, lease_status: x as UnitLeaseStatus })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {UNIT_LEASE_STATUSES.map((s) => <SelectItem key={s} value={s}>{UNIT_LEASE_STATUS_LABEL[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="uemr">Est. mdl. leje (kr)</Label>
+                <Input id="uemr" type="number" min={0} value={v.estimated_monthly_rent}
+                  onChange={(e) => setV({ ...v, estimated_monthly_rent: e.target.value })} />
+              </div>
+            </div>
+            {showLeaseNote && (
+              <div className="space-y-1.5">
+                <Label htmlFor="ulsn">Årsag / note</Label>
+                <Input id="ulsn" maxLength={2000} value={v.lease_status_note}
+                  onChange={(e) => setV({ ...v, lease_status_note: e.target.value })} />
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Forsyning</h3>
+            <ToggleRow label="Arv fra bygning" checked={v.inherit_utilities} onChange={(x) => setV({ ...v, inherit_utilities: x })} />
+            {!v.inherit_utilities && (
+              <div className="grid grid-cols-2 gap-3">
+                <ToggleRow label="El" checked={v.has_electricity} onChange={(x) => setV({ ...v, has_electricity: x })} />
+                <ToggleRow label="Vand" checked={v.has_water} onChange={(x) => setV({ ...v, has_water: x })} />
+                <ToggleRow label="Varme" checked={v.has_heating} onChange={(x) => setV({ ...v, has_heating: x })} />
+                <ToggleRow label="Kloak" checked={v.has_sewage} onChange={(x) => setV({ ...v, has_sewage: x })} />
+                <ToggleRow label="Internet" checked={v.has_internet} onChange={(x) => setV({ ...v, has_internet: x })} />
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-1.5">
+            <Label htmlFor="unotes">Noter</Label>
+            <Textarea id="unotes" rows={3} maxLength={4000} value={v.notes} onChange={(e) => setV({ ...v, notes: e.target.value })} />
+          </section>
+
+          <DialogFooter>
+            {editing && (
+              <Button type="button" variant="outline" className="mr-auto text-red-600" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-1" /> Slet enhed
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Annullér</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { BuildingMap } from "@/components/building-map/building-map";
 
 import {
   BUILDING_TYPES,
@@ -84,6 +86,12 @@ function BygningerPage() {
         <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Bygninger</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Bygninger og lejemål</p>
       </div>
+
+      <Suspense fallback={null}>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <BuildingMap scale={0.6} interactive={false} showPanel={false} />
+        </div>
+      </Suspense>
 
       <BuildingsSection buildings={buildings} loading={lb} qc={qc} />
       <LeasesSection

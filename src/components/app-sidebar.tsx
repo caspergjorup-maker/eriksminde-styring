@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Tractor,
   Building2,
+  Map,
   Wheat,
   ShoppingCart,
   Coins,
@@ -32,6 +33,7 @@ const sections: Section[] = [
       { label: "Overblik", to: "/dashboard", icon: LayoutDashboard },
       { label: "Landbrugsjord", to: "/landbrugsjord", icon: Tractor },
       { label: "Bygninger", to: "/bygninger", icon: Building2 },
+      { label: "Bygningsplan", to: "/bygningsplan", icon: Map },
     ],
   },
   {

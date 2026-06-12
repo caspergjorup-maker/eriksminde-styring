@@ -119,18 +119,21 @@ export function BygningerPage() {
   const listB = useServerFn(listBuildings);
   const listL = useServerFn(listBuildingLeases);
   const listT = useServerFn(listTenantOptions);
+  const listU = useServerFn(listBuildingUnits);
 
   const { data: buildings = [], isLoading: lb } = useQuery({ queryKey: ["buildings"], queryFn: () => listB() });
   const { data: leases = [], isLoading: ll } = useQuery({ queryKey: ["building-leases"], queryFn: () => listL() });
   const { data: tenants = [] } = useQuery({ queryKey: ["building-tenants"], queryFn: () => listT() });
+  const { data: units = [] } = useQuery({ queryKey: ["building-units"], queryFn: () => listU() });
 
   return (
     <div className="space-y-8">
-      <BuildingsSection buildings={buildings} loading={lb} qc={qc} />
+      <BuildingsSection buildings={buildings} units={units} loading={lb} qc={qc} />
       <LeasesSection
         leases={leases}
         loading={ll}
         buildings={buildings}
+        units={units}
         tenants={tenants}
         qc={qc}
       />
@@ -141,9 +144,10 @@ export function BygningerPage() {
 /* ---------- Buildings ---------- */
 
 function BuildingsSection({
-  buildings, loading, qc,
+  buildings, units, loading, qc,
 }: {
   buildings: Building[];
+  units: BuildingUnit[];
   loading: boolean;
   qc: ReturnType<typeof useQueryClient>;
 }) {
@@ -154,6 +158,26 @@ function BuildingsSection({
   const [editing, setEditing] = useState<Building | null>(null);
   const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<Building | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
+  const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
+
+  const unitsByBuilding = new Map<string, BuildingUnit[]>();
+  for (const u of units) {
+    if (!u.building_id) continue;
+    const arr = unitsByBuilding.get(u.building_id) ?? [];
+    arr.push(u);
+    unitsByBuilding.set(u.building_id, arr);
+  }
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => remove({ data: { id } }),
@@ -161,6 +185,7 @@ function BuildingsSection({
       toast.success("Bygning slettet");
       qc.invalidateQueries({ queryKey: ["buildings"] });
       qc.invalidateQueries({ queryKey: ["building-leases"] });
+      qc.invalidateQueries({ queryKey: ["building-units"] });
       setToDelete(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -183,8 +208,8 @@ function BuildingsSection({
               <th className="px-4 py-2.5 font-medium">Areal</th>
               <th className="px-4 py-2.5 font-medium">Stand</th>
               <th className="px-4 py-2.5 font-medium">Forsyning</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 w-24"></th>
+              <th className="px-4 py-2.5 font-medium">Status / lejer</th>
+              <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -192,35 +217,95 @@ function BuildingsSection({
             {!loading && buildings.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen bygninger endnu.</td></tr>
             )}
-            {buildings.map((b) => (
-              <tr key={b.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-medium">{b.name}</td>
-                <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
-                <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
-                  {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
-                </td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {b.condition ? CONDITION_LABEL[b.condition] : "—"}
-                </td>
-                <td className="px-4 py-2.5">
-                  <UtilityIcons b={b} />
-                </td>
-                <td className="px-4 py-2.5">
-                  {b.lease_status ? (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
-                      title={b.lease_status_note ?? undefined}
-                    >
-                      {LEASE_STATUS_LABEL[b.lease_status]}
-                    </span>
-                  ) : "—"}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
-                </td>
-              </tr>
-            ))}
+            {buildings.map((b) => {
+              const bUnits = unitsByBuilding.get(b.id) ?? [];
+              const isExpanded = expanded.has(b.id);
+              const hasUnits = bUnits.length > 0;
+              return (
+                <>
+                  <tr
+                    key={b.id}
+                    className="hover:bg-muted/30 cursor-pointer"
+                    onClick={() => hasUnits && toggleExpand(b.id)}
+                  >
+                    <td className="px-4 py-2.5 font-medium">
+                      <div className="flex items-center gap-1.5">
+                        {hasUnits ? (
+                          isExpanded
+                            ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        ) : <span className="w-3.5" />}
+                        {b.name}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
+                      {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {b.condition ? CONDITION_LABEL[b.condition] : "—"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <UtilityIcons b={b} />
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {hasUnits ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
+                          {bUnits.length} enheder
+                        </span>
+                      ) : b.lease_status ? (
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
+                          title={b.lease_status_note ?? undefined}
+                        >
+                          {LEASE_STATUS_LABEL[b.lease_status]}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setCreatingUnitFor(b)}
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                        title="Tilføj enhed"
+                      ><Plus className="h-4 w-4" /></button>
+                      <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    </td>
+                  </tr>
+
+                  {isExpanded && bUnits.map((u) => (
+                    <tr key={u.id} className="bg-muted/30 text-[13px]">
+                      <td className="px-4 py-2 pl-10 text-muted-foreground">↳ {u.name}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.area_m2 != null ? `${u.area_m2} m²` : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.lease?.tenant?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground tabular-nums">
+                        {u.lease?.monthly_rent ? formatDKK(u.lease.monthly_rent) : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {u.lease?.contract_end ? formatDate(u.lease.contract_end) : "—"}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${UNIT_LEASE_STATUS_TONE[u.lease_status]}`}
+                          title={u.lease_status_note ?? undefined}
+                        >
+                          {UNIT_LEASE_STATUS_LABEL[u.lease_status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <button onClick={() => setEditingUnit(u)} className="p-1.5 rounded hover:bg-muted">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -245,11 +330,24 @@ function BuildingsSection({
         }}
       />
 
+      <UnitDialog
+        open={creatingUnitFor != null || editingUnit != null}
+        editing={editingUnit}
+        building={creatingUnitFor}
+        onOpenChange={(o) => { if (!o) { setCreatingUnitFor(null); setEditingUnit(null); } }}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["building-units"] });
+          qc.invalidateQueries({ queryKey: ["building-leases"] });
+          setCreatingUnitFor(null);
+          setEditingUnit(null);
+        }}
+      />
+
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Slet bygning</AlertDialogTitle>
-            <AlertDialogDescription>Slet "{toDelete?.name}"? Lejemål knyttet hertil mister referencen.</AlertDialogDescription>
+            <AlertDialogDescription>Slet "{toDelete?.name}"? Lejemål og enheder slettes også.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annullér</AlertDialogCancel>

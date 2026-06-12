@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
 
-import { listBuildingsWithLeases, type BuildingMapLease, type BuildingWithLease } from "@/lib/buildings.functions";
+import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
+
+const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
+  udlejet: "Udlejet",
+  ledig: "Ledig",
+  ikke_klar: "Ikke klar endnu",
+  intern_brug: "Intern brug",
+  udlejes_ikke: "Udlejes ikke",
+};
+
+const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }> = {
+  udlejet: { bg: "#D1FAE5", fg: "#065F46" },
+  ledig: { bg: "#DBEAFE", fg: "#1E3A8A" },
+  ikke_klar: { bg: "#FEF3C7", fg: "#854D0E" },
+  intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
+  udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
+};
 
 export const buildingsMapQuery = queryOptions({
   queryKey: ["buildings", "with-leases"],
@@ -244,20 +261,43 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             }}
           >
             <span>{building.type}</span>
-            <span>·</span>
-            <span
-              style={{
-                background: s.bg,
-                color: s.fg,
-                padding: "2px 8px",
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 500,
-              }}
-            >
-              {s.label}
-            </span>
+            {building.lease_status && (
+              <>
+                <span>·</span>
+                <span
+                  title={building.lease_status_note ?? undefined}
+                  style={{
+                    background: LEASE_STATUS_STYLE[building.lease_status].bg,
+                    color: LEASE_STATUS_STYLE[building.lease_status].fg,
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  {LEASE_STATUS_LABEL[building.lease_status]}
+                </span>
+              </>
+            )}
+            {lease && (
+              <>
+                <span>·</span>
+                <span
+                  style={{
+                    background: s.bg,
+                    color: s.fg,
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  {s.label}
+                </span>
+              </>
+            )}
           </div>
+          <UtilityIconRow building={building} />
         </div>
       </div>
 
@@ -366,6 +406,27 @@ export function BuildingMapLegend() {
           />
           {it.label}
         </div>
+      ))}
+    </div>
+  );
+}
+
+function UtilityIconRow({ building }: { building: BuildingWithLease }) {
+  const items: { on: boolean | null | undefined; icon: React.ReactNode; title: string }[] = [
+    { on: building.has_electricity, icon: <Bolt size={13} />, title: "El" },
+    { on: building.has_water, icon: <Droplet size={13} />, title: "Vand" },
+    { on: building.has_heating, icon: <Flame size={13} />, title: "Varme" },
+    { on: building.has_sewage, icon: <Waves size={13} />, title: "Kloak" },
+    { on: building.has_internet, icon: <Wifi size={13} />, title: "Internet" },
+  ];
+  const active = items.filter((i) => i.on);
+  if (active.length === 0) return null;
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 4, color: "hsl(var(--muted-foreground))" }}>
+      {active.map((i) => (
+        <span key={i.title} title={i.title} style={{ display: "inline-flex", alignItems: "center" }}>
+          {i.icon}
+        </span>
       ))}
     </div>
   );

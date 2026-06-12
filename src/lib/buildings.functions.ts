@@ -35,7 +35,33 @@ export type Building = {
   map_w: number | null;
   map_h: number | null;
   map_shape: string | null;
+  build_year: number | null;
+  area_m2_gross: number | null;
+  area_m2_net: number | null;
+  floors: number | null;
+  condition: BuildingCondition | null;
+  last_inspection: string | null;
+  lease_status: BuildingLeaseStatus | null;
+  lease_status_note: string | null;
+  estimated_monthly_rent: number | null;
+  has_electricity: boolean | null;
+  has_water: boolean | null;
+  has_heating: boolean | null;
+  heating_type: HeatingType | null;
+  has_sewage: boolean | null;
+  has_internet: boolean | null;
+  parcel_id: string | null;
+  internal_notes: string | null;
 };
+
+export const BUILDING_CONDITIONS = ["god", "vedligeholdelse_nødvendig", "renovering_nødvendig"] as const;
+export type BuildingCondition = (typeof BUILDING_CONDITIONS)[number];
+
+export const BUILDING_LEASE_STATUSES = ["udlejet", "ledig", "ikke_klar", "intern_brug", "udlejes_ikke"] as const;
+export type BuildingLeaseStatus = (typeof BUILDING_LEASE_STATUSES)[number];
+
+export const HEATING_TYPES = ["fjernvarme", "olie", "varmepumpe", "elvarme", "ingen"] as const;
+export type HeatingType = (typeof HEATING_TYPES)[number];
 
 export type BuildingLease = {
   id: string;
@@ -76,6 +102,23 @@ const buildingInput = z.object({
   name: z.string().trim().min(1).max(200),
   type: z.enum(BUILDING_TYPES),
   description: z.string().trim().max(2000).nullable(),
+  build_year: z.number().int().min(1500).max(2100).nullable(),
+  area_m2_gross: z.number().min(0).max(1_000_000).nullable(),
+  area_m2_net: z.number().min(0).max(1_000_000).nullable(),
+  floors: z.number().int().min(0).max(50).nullable(),
+  condition: z.enum(BUILDING_CONDITIONS).nullable(),
+  last_inspection: z.string().nullable(),
+  lease_status: z.enum(BUILDING_LEASE_STATUSES).nullable(),
+  lease_status_note: z.string().trim().max(2000).nullable(),
+  estimated_monthly_rent: z.number().min(0).max(10_000_000).nullable(),
+  has_electricity: z.boolean(),
+  has_water: z.boolean(),
+  has_heating: z.boolean(),
+  heating_type: z.enum(HEATING_TYPES).nullable(),
+  has_sewage: z.boolean(),
+  has_internet: z.boolean(),
+  parcel_id: z.string().uuid().nullable(),
+  internal_notes: z.string().trim().max(5000).nullable(),
 });
 
 const leaseInput = z.object({
@@ -90,7 +133,7 @@ const leaseInput = z.object({
 });
 
 const BUILDING_COLS =
-  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape";
+  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape, build_year, area_m2_gross, area_m2_net, floors, condition, last_inspection, lease_status, lease_status_note, estimated_monthly_rent, has_electricity, has_water, has_heating, heating_type, has_sewage, has_internet, parcel_id, internal_notes";
 
 export const listBuildings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

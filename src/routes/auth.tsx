@@ -24,7 +24,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard" });
+      if (data.user) navigate({ to: "/overblik" });
     });
   }, [navigate]);
 
@@ -37,12 +37,12 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/overblik" });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/dashboard" },
+          options: { emailRedirectTo: window.location.origin + "/overblik" },
         });
         if (error) throw error;
         setInfo("Konto oprettet. Du kan nu logge ind.");
@@ -76,7 +76,7 @@ function AuthPage() {
             onClick={async () => {
               setError(null);
               const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin + "/dashboard",
+                redirect_uri: window.location.origin + "/overblik",
               });
               if (result?.error) setError(result.error.message);
             }}

@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMatrikelRouteImport } from './routes/api/matrikel'
 import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
 import { Route as AuthenticatedMatrikelkortRouteImport } from './routes/_authenticated/matrikelkort'
+import { Route as AuthenticatedMarkerRouteImport } from './routes/_authenticated/marker'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -64,6 +65,11 @@ const AuthenticatedMatrikelkortRoute =
     path: '/matrikelkort',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMarkerRoute = AuthenticatedMarkerRouteImport.update({
+  id: '/marker',
+  path: '/marker',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLandbrugsjordRoute =
   AuthenticatedLandbrugsjordRouteImport.update({
     id: '/landbrugsjord',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/marker': typeof AuthenticatedMarkerRoute
   '/matrikelkort': typeof AuthenticatedMatrikelkortRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/marker': typeof AuthenticatedMarkerRoute
   '/matrikelkort': typeof AuthenticatedMatrikelkortRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
+  '/_authenticated/marker': typeof AuthenticatedMarkerRoute
   '/_authenticated/matrikelkort': typeof AuthenticatedMatrikelkortRoute
   '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
+    | '/marker'
     | '/matrikelkort'
     | '/vedligehold'
     | '/api/matrikel'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dokumenter'
     | '/landbrugsjord'
+    | '/marker'
     | '/matrikelkort'
     | '/vedligehold'
     | '/api/matrikel'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dokumenter'
     | '/_authenticated/landbrugsjord'
+    | '/_authenticated/marker'
     | '/_authenticated/matrikelkort'
     | '/_authenticated/vedligehold'
     | '/api/matrikel'
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/matrikelkort'
       fullPath: '/matrikelkort'
       preLoaderRoute: typeof AuthenticatedMatrikelkortRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marker': {
+      id: '/_authenticated/marker'
+      path: '/marker'
+      fullPath: '/marker'
+      preLoaderRoute: typeof AuthenticatedMarkerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/landbrugsjord': {
@@ -490,6 +509,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
+  AuthenticatedMarkerRoute: typeof AuthenticatedMarkerRoute
   AuthenticatedMatrikelkortRoute: typeof AuthenticatedMatrikelkortRoute
   AuthenticatedVedligeholdRoute: typeof AuthenticatedVedligeholdRoute
   AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
@@ -511,6 +531,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
+  AuthenticatedMarkerRoute: AuthenticatedMarkerRoute,
   AuthenticatedMatrikelkortRoute: AuthenticatedMatrikelkortRoute,
   AuthenticatedVedligeholdRoute: AuthenticatedVedligeholdRoute,
   AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
@@ -540,3 +561,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

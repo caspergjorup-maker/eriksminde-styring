@@ -720,7 +720,7 @@ function LeasesSection({
             )}
             {leases.map((l) => (
               <tr key={l.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}</td>
+                <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}{l.unit_name ? <span className="text-xs text-muted-foreground"> · {l.unit_name}</span> : null}</td>
                 <td className="px-4 py-2.5">{l.tenant_name ?? "—"}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{formatDKK(l.monthly_rent)}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{formatDKK(l.deposit)}</td>

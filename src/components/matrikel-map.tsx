@@ -42,6 +42,7 @@ type Parcel = {
   ejerlav: string;
   use_type: UseType | null;
   net_area_ha: number | null;
+  field_area_ha: number | null;
   notes: string | null;
   field_id?: string | null;
   field?: Field | null;
@@ -193,7 +194,9 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           const fieldMeta = features[0].properties.parcel?.field;
           if (!fieldMeta) return;
           const totalHa = features.reduce(
-            (s, f) => s + (f.properties.parcel?.net_area_ha ?? 0),
+            (s, f) =>
+              s +
+              (f.properties.parcel?.field_area_ha ?? f.properties.parcel?.net_area_ha ?? 0),
             0,
           );
           const lease =

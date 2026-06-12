@@ -699,6 +699,7 @@ export type Database = {
         Row: {
           created_at: string
           ejerlav: string
+          field_area_ha: number | null
           field_id: string | null
           id: string
           land_lease_id: string | null
@@ -711,6 +712,7 @@ export type Database = {
         Insert: {
           created_at?: string
           ejerlav?: string
+          field_area_ha?: number | null
           field_id?: string | null
           id?: string
           land_lease_id?: string | null
@@ -723,6 +725,7 @@ export type Database = {
         Update: {
           created_at?: string
           ejerlav?: string
+          field_area_ha?: number | null
           field_id?: string | null
           id?: string
           land_lease_id?: string | null

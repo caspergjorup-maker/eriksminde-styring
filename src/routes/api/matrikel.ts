@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/matrikel")({
         const { data: parcels } = await supabaseAdmin
           .from("parcels")
           .select(
-            `id, matrikel_id, ejerlav, use_type, net_area_ha, notes, field_id,
+            `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, field_id,
              field:field_id ( id, name, use_type, notes ),
              land_leases:land_lease_id (
                annual_fee, price_per_ha, area_ha, contract_start, contract_end,
@@ -59,27 +59,32 @@ export const Route = createFileRoute("/api/matrikel")({
 
         const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string }>;
 
-        geojson.features = (geojson.features ?? [])
-          .filter((f) => {
-            const props = f.properties as Record<string, unknown>;
-            const matrikelnr = String(props?.matrikelnr ?? "");
-            return TARGET_PARCELS.has(matrikelnr);
-          })
-          .map((f) => {
-            const props = f.properties as Record<string, unknown>;
-            const matrikelnr = String(props?.matrikelnr ?? "");
-            const match = list.find((p) => p.matrikel_id === matrikelnr) ?? null;
-            return {
-              ...f,
-              properties: {
-                ...props,
-                // Normalisér DAWA-felter til de navne UI'et bruger
-                ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
-                registreretAreal: props.registreretareal ?? props.registreretAreal,
-                parcel: match,
-              },
-            };
-          });
+        const inputFeatures = (geojson.features ?? []).filter((f) => {
+          const props = f.properties as Record<string, unknown>;
+          const matrikelnr = String(props?.matrikelnr ?? "");
+          return TARGET_PARCELS.has(matrikelnr);
+        });
+
+        const outputFeatures: WfsFeature[] = [];
+        for (const f of inputFeatures) {
+          const props = f.properties as Record<string, unknown>;
+          const matrikelnr = String(props?.matrikelnr ?? "");
+          const matches = list.filter((p) => p.matrikel_id === matrikelnr);
+          const baseProps = {
+            ...props,
+            ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
+            registreretAreal: props.registreretareal ?? props.registreretAreal,
+          };
+          if (matches.length === 0) {
+            outputFeatures.push({ ...f, properties: { ...baseProps, parcel: null } });
+          } else {
+            // Emit one feature per parcel row so split matrikler appear in multiple fields
+            for (const match of matches) {
+              outputFeatures.push({ ...f, properties: { ...baseProps, parcel: match } });
+            }
+          }
+        }
+        geojson.features = outputFeatures;
 
         return Response.json(geojson, {
           headers: { "Cache-Control": "private, max-age=60" },

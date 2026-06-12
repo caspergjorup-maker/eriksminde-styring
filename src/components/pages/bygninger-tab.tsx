@@ -162,6 +162,7 @@ function BuildingsSection({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
   const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
+  const [drawingFor, setDrawingFor] = useState<Building | null>(null);
 
   const unitsByBuilding = new Map<string, BuildingUnit[]>();
   for (const u of units) {

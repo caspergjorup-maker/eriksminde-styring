@@ -49,7 +49,8 @@ export const Route = createFileRoute("/api/matrikel")({
         const { data: parcels } = await supabaseAdmin
           .from("parcels")
           .select(
-            `id, matrikel_id, ejerlav, use_type, net_area_ha, notes,
+            `id, matrikel_id, ejerlav, use_type, net_area_ha, notes, field_id,
+             field:field_id ( id, name, use_type, notes ),
              land_leases:land_lease_id (
                annual_fee, price_per_ha, area_ha, contract_start, contract_end,
                leaseholder:leaseholder_id ( name, phone, email )

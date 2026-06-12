@@ -444,3 +444,61 @@ function UtilityIconRow({ building }: { building: BuildingWithLease }) {
     </div>
   );
 }
+
+function UnitOverlay({
+  units,
+  width,
+  height,
+}: {
+  units: BuildingUnit[];
+  width: number;
+  height: number;
+}) {
+  if (units.length === 0) return null;
+  // Use viewBox in same units as building box (px). Convert percentages → px.
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+    >
+      {units.map((u) => {
+        const color = u.map_color ?? "#3F8DDB";
+        if (u.map_kind === "rect") {
+          const g = u.map_geometry as { x: number; y: number; w: number; h: number };
+          return (
+            <rect
+              key={u.id}
+              x={(g.x / 100) * width}
+              y={(g.y / 100) * height}
+              width={(g.w / 100) * width}
+              height={(g.h / 100) * height}
+              fill={color}
+              fillOpacity={0.55}
+              stroke={color}
+              strokeWidth={0.5}
+            />
+          );
+        }
+        if (u.map_kind === "polygon") {
+          const g = u.map_geometry as { points: Array<[number, number]> };
+          const pts = g.points
+            .map(([x, y]) => `${(x / 100) * width},${(y / 100) * height}`)
+            .join(" ");
+          return (
+            <polygon
+              key={u.id}
+              points={pts}
+              fill={color}
+              fillOpacity={0.55}
+              stroke={color}
+              strokeWidth={0.5}
+            />
+          );
+        }
+        return null;
+      })}
+    </svg>
+  );
+}

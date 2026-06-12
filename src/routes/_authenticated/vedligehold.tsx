@@ -20,6 +20,7 @@ import {
   updateMaintenanceTask,
   type MaintenanceTaskRow,
 } from "@/lib/maintenance.functions";
+import { listMachines } from "@/lib/machines.functions";
 import { daysUntil, formatDKK, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,11 +59,16 @@ export const Route = createFileRoute("/_authenticated/vedligehold")({
 
 const NONE = "__none__";
 
+type LinkKind = "ingen" | "bygning" | "maskine";
+
 type FormState = {
   title: string;
   description: string;
+  link_kind: LinkKind;
   building_id: string;
+  machine_id: string;
   assigned_contact_id: string;
+  preferred_supplier_id: string;
   category: string;
   priority: (typeof PRIORITIES)[number];
   status: (typeof STATUSES)[number];
@@ -74,8 +82,11 @@ type FormState = {
 const empty: FormState = {
   title: "",
   description: "",
+  link_kind: "bygning",
   building_id: NONE,
+  machine_id: NONE,
   assigned_contact_id: NONE,
+  preferred_supplier_id: NONE,
   category: "bygning",
   priority: "medium",
   status: "open",
@@ -113,6 +124,7 @@ function VedligeholdPage() {
   const list = useServerFn(listMaintenanceTasks);
   const listBuildings = useServerFn(listMaintenanceBuildings);
   const listContacts = useServerFn(listMaintenanceContacts);
+  const listMachinesFn = useServerFn(listMachines);
   const create = useServerFn(createMaintenanceTask);
   const update = useServerFn(updateMaintenanceTask);
   const remove = useServerFn(deleteMaintenanceTask);
@@ -129,17 +141,25 @@ function VedligeholdPage() {
     queryKey: ["maintenance-contacts"],
     queryFn: () => listContacts(),
   });
+  const { data: machines = [] } = useQuery({
+    queryKey: ["machines"],
+    queryFn: () => listMachinesFn(),
+  });
 
   const [editing, setEditing] = useState<MaintenanceTaskRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<MaintenanceTaskRow | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [scope, setScope] = useState<"alle" | "bygninger" | "maskiner">("alle");
 
   const filtered = useMemo(() => {
-    if (statusFilter === "all") return rows;
-    if (statusFilter === "active") return rows.filter((r) => r.status === "open" || r.status === "in_progress");
-    return rows.filter((r) => r.status === statusFilter);
-  }, [rows, statusFilter]);
+    let r = rows;
+    if (scope === "bygninger") r = r.filter((x) => x.building_id);
+    if (scope === "maskiner") r = r.filter((x) => x.machine_id);
+    if (statusFilter === "active") r = r.filter((x) => x.status === "open" || x.status === "in_progress");
+    else if (statusFilter !== "all") r = r.filter((x) => x.status === statusFilter);
+    return r;
+  }, [rows, statusFilter, scope]);
 
   const openCount = rows.filter((r) => r.status === "open" || r.status === "in_progress").length;
   const overdueCount = rows.filter((r) => {
@@ -169,7 +189,9 @@ function VedligeholdPage() {
           title: r.title,
           description: r.description,
           building_id: r.building_id,
+          machine_id: r.machine_id,
           assigned_contact_id: r.assigned_contact_id,
+          preferred_supplier_id: r.preferred_supplier_id,
           category: r.category,
           priority: r.priority as (typeof PRIORITIES)[number],
           status: "done" as const,
@@ -194,7 +216,7 @@ function VedligeholdPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Vedligehold</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Opgaver på bygninger og udstyr</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Opgaver på bygninger og maskiner</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -226,14 +248,22 @@ function VedligeholdPage() {
         </div>
       </div>
 
+      <Tabs value={scope} onValueChange={(v) => setScope(v as typeof scope)} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="alle">Alle</TabsTrigger>
+          <TabsTrigger value="bygninger">Bygninger</TabsTrigger>
+          <TabsTrigger value="maskiner">Maskiner</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2.5 font-medium">Opgave</th>
               <th className="px-4 py-2.5 font-medium">Kategori</th>
-              <th className="px-4 py-2.5 font-medium">Bygning</th>
-              <th className="px-4 py-2.5 font-medium">Ansvarlig</th>
+              <th className="px-4 py-2.5 font-medium">Tilknyttet</th>
+              <th className="px-4 py-2.5 font-medium">Foretrukken leverandør</th>
               <th className="px-4 py-2.5 font-medium">Prioritet</th>
               <th className="px-4 py-2.5 font-medium">Status</th>
               <th className="px-4 py-2.5 font-medium">Forfald</th>
@@ -252,6 +282,11 @@ function VedligeholdPage() {
             {filtered.map((r) => {
               const days = daysUntil(r.due_date);
               const isDone = r.status === "done" || r.status === "cancelled";
+              const linked = r.building_name
+                ? `🏠 ${r.building_name}`
+                : r.machine_name
+                  ? `🚜 ${r.machine_name}`
+                  : "—";
               return (
                 <tr key={r.id} className="hover:bg-muted/30">
                   <td className="px-4 py-2.5">
@@ -259,8 +294,8 @@ function VedligeholdPage() {
                     {r.description && <div className="text-xs text-muted-foreground truncate max-w-xs">{r.description}</div>}
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{r.category ? (CATEGORY_LABEL[r.category] ?? r.category) : "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{r.building_name ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{r.contact_name ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{linked}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{r.preferred_supplier_name ?? "—"}</td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor[r.priority]}`}>
                       {PRIORITY_LABEL[r.priority]}
@@ -304,14 +339,17 @@ function VedligeholdPage() {
         open={open}
         editing={editing}
         buildings={buildings}
+        machines={machines.map((m) => ({ id: m.id, name: m.name, preferred_supplier_id: m.preferred_supplier_id }))}
         contacts={contacts}
         onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }}
         onSubmit={async (v) => {
           const payload = {
             title: v.title.trim(),
             description: v.description || null,
-            building_id: v.building_id === NONE ? null : v.building_id,
+            building_id: v.link_kind === "bygning" && v.building_id !== NONE ? v.building_id : null,
+            machine_id: v.link_kind === "maskine" && v.machine_id !== NONE ? v.machine_id : null,
             assigned_contact_id: v.assigned_contact_id === NONE ? null : v.assigned_contact_id,
+            preferred_supplier_id: v.preferred_supplier_id === NONE ? null : v.preferred_supplier_id,
             category: v.category || null,
             priority: v.priority,
             status: v.status,
@@ -354,11 +392,12 @@ function VedligeholdPage() {
 }
 
 function TaskDialog({
-  open, editing, buildings, contacts, onOpenChange, onSubmit,
+  open, editing, buildings, machines, contacts, onOpenChange, onSubmit,
 }: {
   open: boolean;
   editing: MaintenanceTaskRow | null;
   buildings: { id: string; name: string }[];
+  machines: { id: string; name: string; preferred_supplier_id: string | null }[];
   contacts: { id: string; name: string }[];
   onOpenChange: (o: boolean) => void;
   onSubmit: (v: FormState) => Promise<void>;
@@ -372,8 +411,11 @@ function TaskDialog({
     setValues(editing ? {
       title: editing.title,
       description: editing.description ?? "",
+      link_kind: editing.machine_id ? "maskine" : editing.building_id ? "bygning" : "ingen",
       building_id: editing.building_id ?? NONE,
+      machine_id: editing.machine_id ?? NONE,
       assigned_contact_id: editing.assigned_contact_id ?? NONE,
+      preferred_supplier_id: editing.preferred_supplier_id ?? NONE,
       category: editing.category ?? "bygning",
       priority: (editing.priority as (typeof PRIORITIES)[number]) ?? "medium",
       status: (editing.status as (typeof STATUSES)[number]) ?? "open",
@@ -385,9 +427,21 @@ function TaskDialog({
     } : empty);
   }
 
+  function onMachinePick(id: string) {
+    const m = machines.find((x) => x.id === id);
+    setValues({
+      ...values,
+      machine_id: id,
+      preferred_supplier_id:
+        values.preferred_supplier_id === NONE && m?.preferred_supplier_id
+          ? m.preferred_supplier_id
+          : values.preferred_supplier_id,
+    });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "Rediger opgave" : "Ny vedligeholdsopgave"}</DialogTitle>
         </DialogHeader>
@@ -403,6 +457,45 @@ function TaskDialog({
             <Label htmlFor="desc">Beskrivelse</Label>
             <Textarea id="desc" rows={2} maxLength={4000} value={values.description} onChange={(e) => setValues({ ...values, description: e.target.value })} />
           </div>
+
+          <div className="space-y-1.5">
+            <Label>Tilknyt til</Label>
+            <RadioGroup
+              value={values.link_kind}
+              onValueChange={(v) => setValues({ ...values, link_kind: v as LinkKind })}
+              className="flex gap-4"
+            >
+              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="bygning" /> Bygning</label>
+              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="maskine" /> Maskine</label>
+              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="ingen" /> Ingen</label>
+            </RadioGroup>
+          </div>
+
+          {values.link_kind === "bygning" && (
+            <div className="space-y-1.5">
+              <Label>Bygning</Label>
+              <Select value={values.building_id} onValueChange={(v) => setValues({ ...values, building_id: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>—</SelectItem>
+                  {buildings.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {values.link_kind === "maskine" && (
+            <div className="space-y-1.5">
+              <Label>Maskine</Label>
+              <Select value={values.machine_id} onValueChange={onMachinePick}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>—</SelectItem>
+                  {machines.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Kategori</Label>
@@ -414,16 +507,17 @@ function TaskDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Bygning</Label>
-              <Select value={values.building_id} onValueChange={(v) => setValues({ ...values, building_id: v })}>
+              <Label>Foretrukken leverandør</Label>
+              <Select value={values.preferred_supplier_id} onValueChange={(v) => setValues({ ...values, preferred_supplier_id: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>—</SelectItem>
-                  {buildings.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                  {contacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label>Prioritet</Label>

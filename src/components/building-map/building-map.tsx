@@ -410,3 +410,24 @@ export function BuildingMapLegend() {
     </div>
   );
 }
+
+function UtilityIconRow({ building }: { building: BuildingWithLease }) {
+  const items: { on: boolean | null | undefined; icon: React.ReactNode; title: string }[] = [
+    { on: building.has_electricity, icon: <Bolt size={13} />, title: "El" },
+    { on: building.has_water, icon: <Droplet size={13} />, title: "Vand" },
+    { on: building.has_heating, icon: <Flame size={13} />, title: "Varme" },
+    { on: building.has_sewage, icon: <Waves size={13} />, title: "Kloak" },
+    { on: building.has_internet, icon: <Wifi size={13} />, title: "Internet" },
+  ];
+  const active = items.filter((i) => i.on);
+  if (active.length === 0) return null;
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 4, color: "hsl(var(--muted-foreground))" }}>
+      {active.map((i) => (
+        <span key={i.title} title={i.title} style={{ display: "inline-flex", alignItems: "center" }}>
+          {i.icon}
+        </span>
+      ))}
+    </div>
+  );
+}

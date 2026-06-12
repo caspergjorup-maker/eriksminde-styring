@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bolt, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
+import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -28,6 +28,17 @@ import {
   type HeatingType,
   type LeaseStatus,
 } from "@/lib/buildings.functions";
+import {
+  UNIT_LEASE_STATUSES,
+  UNIT_LEASE_STATUS_LABEL,
+  UNIT_LEASE_STATUS_TONE,
+  createBuildingUnit,
+  deleteBuildingUnit,
+  listBuildingUnits,
+  updateBuildingUnit,
+  type BuildingUnit,
+  type UnitLeaseStatus,
+} from "@/lib/building-units.functions";
 import { formatDKK, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

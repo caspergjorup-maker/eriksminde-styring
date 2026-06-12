@@ -425,7 +425,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     const drawHandler = new (L as any).Draw.Polygon(map, {
       shapeOptions: { color: "#e94560", weight: 3, fillOpacity: 0.35 },
       allowIntersection: false,
-      showArea: true,
+      showArea: false,
     });
     drawHandler.enable();
     activeDrawHandler.current = drawHandler;

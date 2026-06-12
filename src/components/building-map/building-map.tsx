@@ -261,20 +261,43 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             }}
           >
             <span>{building.type}</span>
-            <span>·</span>
-            <span
-              style={{
-                background: s.bg,
-                color: s.fg,
-                padding: "2px 8px",
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 500,
-              }}
-            >
-              {s.label}
-            </span>
+            {building.lease_status && (
+              <>
+                <span>·</span>
+                <span
+                  title={building.lease_status_note ?? undefined}
+                  style={{
+                    background: LEASE_STATUS_STYLE[building.lease_status].bg,
+                    color: LEASE_STATUS_STYLE[building.lease_status].fg,
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  {LEASE_STATUS_LABEL[building.lease_status]}
+                </span>
+              </>
+            )}
+            {lease && (
+              <>
+                <span>·</span>
+                <span
+                  style={{
+                    background: s.bg,
+                    color: s.fg,
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  {s.label}
+                </span>
+              </>
+            )}
           </div>
+          <UtilityIconRow building={building} />
         </div>
       </div>
 

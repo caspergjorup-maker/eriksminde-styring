@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMatrikelRouteImport } from './routes/api/matrikel'
 import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
+import { Route as AuthenticatedSkovRouteImport } from './routes/_authenticated/skov'
 import { Route as AuthenticatedOverblikRouteImport } from './routes/_authenticated/overblik'
 import { Route as AuthenticatedLeverandoererRouteImport } from './routes/_authenticated/leverandoerer'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
@@ -51,6 +52,11 @@ const AuthenticatedVedligeholdRoute =
     path: '/vedligehold',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSkovRoute = AuthenticatedSkovRouteImport.update({
+  id: '/skov',
+  path: '/skov',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOverblikRoute = AuthenticatedOverblikRouteImport.update({
   id: '/overblik',
   path: '/overblik',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/overblik': typeof AuthenticatedOverblikRoute
+  '/skov': typeof AuthenticatedSkovRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/overblik': typeof AuthenticatedOverblikRoute
+  '/skov': typeof AuthenticatedSkovRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/leverandoerer': typeof AuthenticatedLeverandoererRoute
   '/_authenticated/overblik': typeof AuthenticatedOverblikRoute
+  '/_authenticated/skov': typeof AuthenticatedSkovRoute
   '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/landbrugsjord'
     | '/leverandoerer'
     | '/overblik'
+    | '/skov'
     | '/vedligehold'
     | '/api/matrikel'
     | '/api/dinero/export-invoice'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/landbrugsjord'
     | '/leverandoerer'
     | '/overblik'
+    | '/skov'
     | '/vedligehold'
     | '/api/matrikel'
     | '/api/dinero/export-invoice'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/landbrugsjord'
     | '/_authenticated/leverandoerer'
     | '/_authenticated/overblik'
+    | '/_authenticated/skov'
     | '/_authenticated/vedligehold'
     | '/api/matrikel'
     | '/api/dinero/export-invoice'
@@ -261,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/vedligehold'
       fullPath: '/vedligehold'
       preLoaderRoute: typeof AuthenticatedVedligeholdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/skov': {
+      id: '/_authenticated/skov'
+      path: '/skov'
+      fullPath: '/skov'
+      preLoaderRoute: typeof AuthenticatedSkovRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/overblik': {
@@ -354,6 +373,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedLeverandoererRoute: typeof AuthenticatedLeverandoererRoute
   AuthenticatedOverblikRoute: typeof AuthenticatedOverblikRoute
+  AuthenticatedSkovRoute: typeof AuthenticatedSkovRoute
   AuthenticatedVedligeholdRoute: typeof AuthenticatedVedligeholdRoute
 }
 
@@ -368,6 +388,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedLeverandoererRoute: AuthenticatedLeverandoererRoute,
   AuthenticatedOverblikRoute: AuthenticatedOverblikRoute,
+  AuthenticatedSkovRoute: AuthenticatedSkovRoute,
   AuthenticatedVedligeholdRoute: AuthenticatedVedligeholdRoute,
 }
 

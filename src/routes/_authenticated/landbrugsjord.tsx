@@ -116,6 +116,7 @@ function LandbrugsjordPage() {
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-2.5 font-medium">Forpagter</th>
+              <th className="px-4 py-2.5 font-medium">Marker</th>
               <th className="px-4 py-2.5 font-medium text-right">Areal (ha)</th>
               <th className="px-4 py-2.5 font-medium text-right">Pris/ha</th>
               <th className="px-4 py-2.5 font-medium text-right">Årlig leje</th>

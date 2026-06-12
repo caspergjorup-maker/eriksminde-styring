@@ -53,6 +53,7 @@ export type Database = {
           notes: string | null
           status: string | null
           tenant_id: string | null
+          unit_id: string | null
         }
         Insert: {
           building_id?: string | null
@@ -65,6 +66,7 @@ export type Database = {
           notes?: string | null
           status?: string | null
           tenant_id?: string | null
+          unit_id?: string | null
         }
         Update: {
           building_id?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           notes?: string | null
           status?: string | null
           tenant_id?: string | null
+          unit_id?: string | null
         }
         Relationships: [
           {
@@ -91,6 +94,81 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_leases_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "building_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_units: {
+        Row: {
+          area_m2: number | null
+          building_id: string | null
+          created_at: string
+          description: string | null
+          estimated_monthly_rent: number | null
+          has_electricity: boolean | null
+          has_heating: boolean | null
+          has_internet: boolean | null
+          has_sewage: boolean | null
+          has_water: boolean | null
+          heating_type: string | null
+          id: string
+          lease_status: string | null
+          lease_status_note: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_m2?: number | null
+          building_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_monthly_rent?: number | null
+          has_electricity?: boolean | null
+          has_heating?: boolean | null
+          has_internet?: boolean | null
+          has_sewage?: boolean | null
+          has_water?: boolean | null
+          heating_type?: string | null
+          id?: string
+          lease_status?: string | null
+          lease_status_note?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_m2?: number | null
+          building_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_monthly_rent?: number | null
+          has_electricity?: boolean | null
+          has_heating?: boolean | null
+          has_internet?: boolean | null
+          has_sewage?: boolean | null
+          has_water?: boolean | null
+          heating_type?: string | null
+          id?: string
+          lease_status?: string | null
+          lease_status_note?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
         ]

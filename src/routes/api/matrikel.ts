@@ -23,6 +23,10 @@ export const Route = createFileRoute("/api/matrikel")({
         wfsUrl.searchParams.set("format", "geojson");
         wfsUrl.searchParams.set("srid", "4326");
 
+        const TARGET_PARCELS = new Set([
+          "57", "2cc", "2cb", "2a", "2cf", "2g", "58", "1m", "2cd", "3i", "45b",
+        ]);
+
         let geojson: WfsCollection;
         try {
           const wfsRes = await fetch(wfsUrl.toString());
@@ -54,21 +58,27 @@ export const Route = createFileRoute("/api/matrikel")({
 
         const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string }>;
 
-        geojson.features = (geojson.features ?? []).map((f) => {
-          const props = f.properties as Record<string, unknown>;
-          const matrikelnr = String(props?.matrikelnr ?? "");
-          const match = list.find((p) => p.matrikel_id === matrikelnr) ?? null;
-          return {
-            ...f,
-            properties: {
-              ...props,
-              // Normalisér DAWA-felter til de navne UI'et bruger
-              ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
-              registreretAreal: props.registreretareal ?? props.registreretAreal,
-              parcel: match,
-            },
-          };
-        });
+        geojson.features = (geojson.features ?? [])
+          .filter((f) => {
+            const props = f.properties as Record<string, unknown>;
+            const matrikelnr = String(props?.matrikelnr ?? "");
+            return TARGET_PARCELS.has(matrikelnr);
+          })
+          .map((f) => {
+            const props = f.properties as Record<string, unknown>;
+            const matrikelnr = String(props?.matrikelnr ?? "");
+            const match = list.find((p) => p.matrikel_id === matrikelnr) ?? null;
+            return {
+              ...f,
+              properties: {
+                ...props,
+                // Normalisér DAWA-felter til de navne UI'et bruger
+                ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
+                registreretAreal: props.registreretareal ?? props.registreretAreal,
+                parcel: match,
+              },
+            };
+          });
 
         return Response.json(geojson, {
           headers: { "Cache-Control": "private, max-age=60" },

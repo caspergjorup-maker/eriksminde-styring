@@ -15,10 +15,11 @@ export const Route = createFileRoute("/api/matrikel")({
   server: {
     handlers: {
       GET: async () => {
-        const apiKey = process.env.DATAFORDELER_API_KEY;
-        if (!apiKey) {
+        const username = process.env.DATAFORDELER_USERNAME;
+        const password = process.env.DATAFORDELER_PASSWORD;
+        if (!username || !password) {
           return Response.json(
-            { error: "DATAFORDELER_API_KEY mangler" },
+            { error: "DATAFORDELER_USERNAME/PASSWORD mangler" },
             { status: 500 },
           );
         }
@@ -32,7 +33,8 @@ export const Route = createFileRoute("/api/matrikel")({
         wfsUrl.searchParams.set("TYPENAMES", "mat:Jordstykke");
         wfsUrl.searchParams.set("CQL_FILTER", "ejerlavsnavn='Harre By, Harre'");
         wfsUrl.searchParams.set("OUTPUTFORMAT", "application/json");
-        wfsUrl.searchParams.set("token", apiKey);
+        wfsUrl.searchParams.set("username", username);
+        wfsUrl.searchParams.set("password", password);
 
         let geojson: WfsCollection;
         try {

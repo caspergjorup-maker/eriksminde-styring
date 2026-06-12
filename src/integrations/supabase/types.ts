@@ -668,6 +668,50 @@ export type Database = {
           },
         ]
       }
+      parcels: {
+        Row: {
+          created_at: string
+          ejerlav: string
+          id: string
+          land_lease_id: string | null
+          matrikel_id: string
+          net_area_ha: number | null
+          notes: string | null
+          updated_at: string
+          use_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          ejerlav?: string
+          id?: string
+          land_lease_id?: string | null
+          matrikel_id: string
+          net_area_ha?: number | null
+          notes?: string | null
+          updated_at?: string
+          use_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          ejerlav?: string
+          id?: string
+          land_lease_id?: string | null
+          matrikel_id?: string
+          net_area_ha?: number | null
+          notes?: string | null
+          updated_at?: string
+          use_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcels_land_lease_id_fkey"
+            columns: ["land_lease_id"]
+            isOneToOne: false
+            referencedRelation: "land_leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       straw_inventory: {
         Row: {
           bale_type: string

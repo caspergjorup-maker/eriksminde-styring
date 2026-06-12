@@ -38,6 +38,11 @@ export type UnitLeaseSummary = {
   tenant: { id: string; name: string; phone: string | null; email: string | null } | null;
 };
 
+export type UnitMapKind = "rect" | "polygon";
+export type UnitMapRect = { x: number; y: number; w: number; h: number };
+export type UnitMapPolygon = { points: Array<[number, number]> };
+export type UnitMapGeometry = UnitMapRect | UnitMapPolygon;
+
 export type BuildingUnit = {
   id: string;
   building_id: string | null;
@@ -54,6 +59,9 @@ export type BuildingUnit = {
   has_sewage: boolean | null;
   has_internet: boolean | null;
   notes: string | null;
+  map_kind: UnitMapKind | null;
+  map_geometry: UnitMapGeometry | null;
+  map_color: string | null;
   lease: UnitLeaseSummary | null;
 };
 
@@ -73,6 +81,21 @@ const unitInput = z.object({
   has_internet: z.boolean().nullable().optional(),
   notes: z.string().trim().max(4000).nullable().optional(),
 });
+
+const geometrySchema = z.union([
+  z.object({
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+    w: z.number().min(0).max(100),
+    h: z.number().min(0).max(100),
+  }),
+  z.object({
+    points: z
+      .array(z.tuple([z.number().min(0).max(100), z.number().min(0).max(100)]))
+      .min(3)
+      .max(60),
+  }),
+]);
 
 function pickLease(rows: Array<Record<string, unknown>> | null | undefined): UnitLeaseSummary | null {
   if (!rows || rows.length === 0) return null;
@@ -137,6 +160,28 @@ export const deleteBuildingUnit = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("building_units").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const saveBuildingUnitGeometry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        map_kind: z.enum(["rect", "polygon"]).nullable(),
+        map_geometry: geometrySchema.nullable(),
+        map_color: z.string().trim().max(20).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { id, ...rest } = data;
+    const { error } = await context.supabase
+      .from("building_units")
+      .update(rest as never)
+      .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

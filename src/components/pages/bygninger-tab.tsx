@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Trash2, Waves, Wifi } from "lucide-react";
+import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Shapes, Trash2, Waves, Wifi } from "lucide-react";
 import { toast } from "sonner";
+import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 
 
 import {
@@ -161,6 +162,7 @@ function BuildingsSection({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
   const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
+  const [drawingFor, setDrawingFor] = useState<Building | null>(null);
 
   const unitsByBuilding = new Map<string, BuildingUnit[]>();
   for (const u of units) {
@@ -268,6 +270,12 @@ function BuildingsSection({
                         className="p-1.5 rounded hover:bg-muted text-muted-foreground"
                         title="Tilføj enhed"
                       ><Plus className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => setDrawingFor(b)}
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                        title="Tegn enheder på kort"
+                        disabled={!hasUnits}
+                      ><Shapes className="h-4 w-4" /></button>
                       <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
                     </td>
@@ -342,6 +350,16 @@ function BuildingsSection({
           setEditingUnit(null);
         }}
       />
+
+      {drawingFor && (
+        <BuildingUnitEditor
+          building={drawingFor}
+          units={units}
+          open={drawingFor != null}
+          onOpenChange={(o) => !o && setDrawingFor(null)}
+        />
+      )}
+
 
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>

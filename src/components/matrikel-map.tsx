@@ -68,11 +68,13 @@ export type FieldSummary = {
   use_type: UseType | null;
   notes: string | null;
   matrikler: string[];
+  parcels: { id: string; matrikelnr: string }[];
   totalHa: number;
   leaseholder: string | null;
   contractEnd: string | null;
   annualFee: number | null;
 };
+
 
 export type MatrikelMapHandle = {
   highlightField: (fieldId: string) => void;

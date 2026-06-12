@@ -196,6 +196,15 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             slicedFeatures.push(...feats);
             return;
           }
+          // If any parcel in this matrikel has its own drawn geometry, skip the
+          // bbox-slice fallback — trust the geometry the API emitted per parcel.
+          const hasCustom = feats.some(
+            (f) => (f.properties.parcel as { custom_geometry?: unknown } | null)?.custom_geometry,
+          );
+          if (hasCustom) {
+            slicedFeatures.push(...feats);
+            return;
+          }
           // bbox of the full matrikel
           const [minX, minY, maxX, maxY] = bbox(feats[0] as Feature<Polygon | MultiPolygon>);
           const totalArea = feats.reduce(
@@ -225,6 +234,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             });
           }
         });
+
 
         // Group sliced features by field_id and union per group
         const byField = new Map<string, ParcelFeature[]>();

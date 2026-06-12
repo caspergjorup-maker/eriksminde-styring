@@ -662,12 +662,48 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                 {selectedParcel.parcel.notes}
               </p>
             )}
+
+            {selectedParcel.parcel?.id && (
+              <button
+                onClick={() =>
+                  startDrawing(selectedParcel.parcel!.id, selectedParcel.matrikelnr ?? "?")
+                }
+                className="mt-3 w-full px-3 py-1.5 text-[13px] rounded-md bg-[#1D9E75] text-white hover:opacity-90 transition-opacity"
+              >
+                Tegn geometri for denne mark
+              </button>
+            )}
+          </div>
+        )}
+
+        {editing && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] rounded-lg bg-background border border-border shadow-lg px-4 py-3 flex items-center gap-3">
+            <div className="text-sm">
+              {drawnGeometry
+                ? `Tilpas hjørnerne eller gem polygonen for matr. ${editing.matrikelnr}.`
+                : `Klik på kortet for at tegne polygonen for matr. ${editing.matrikelnr}. Dobbeltklik for at afslutte.`}
+            </div>
+            <button
+              onClick={cancelDrawing}
+              disabled={saving}
+              className="px-3 py-1 text-xs rounded-md border border-border hover:bg-muted"
+            >
+              Annullér
+            </button>
+            <button
+              onClick={commitDrawing}
+              disabled={!drawnGeometry || saving}
+              className="px-3 py-1 text-xs rounded-md bg-[#1D9E75] text-white disabled:opacity-40"
+            >
+              {saving ? "Gemmer…" : "Gem"}
+            </button>
           </div>
         )}
       </div>
     </div>
   );
 });
+
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (

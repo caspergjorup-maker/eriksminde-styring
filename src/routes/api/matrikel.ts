@@ -30,7 +30,11 @@ export const Route = createFileRoute("/api/matrikel")({
         wfsUrl.searchParams.set("SERVICE", "WFS");
         wfsUrl.searchParams.set("VERSION", "2.0.0");
         wfsUrl.searchParams.set("REQUEST", "GetFeature");
-        wfsUrl.searchParams.set("TYPENAMES", "mat:Jordstykke");
+        wfsUrl.searchParams.set("TYPENAMES", "mat:Jordstykke_Gaeldende");
+        wfsUrl.searchParams.set(
+          "NAMESPACES",
+          "xmlns(mat,http://data.gov.dk/schemas/matrikel/1)",
+        );
         wfsUrl.searchParams.set("CQL_FILTER", "ejerlavsnavn='Harre By, Harre'");
         wfsUrl.searchParams.set("OUTPUTFORMAT", "application/json");
         wfsUrl.searchParams.set("username", username);

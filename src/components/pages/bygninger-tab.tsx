@@ -351,6 +351,16 @@ function BuildingsSection({
         }}
       />
 
+      {drawingFor && (
+        <BuildingUnitEditor
+          building={drawingFor}
+          units={units}
+          open={drawingFor != null}
+          onOpenChange={(o) => !o && setDrawingFor(null)}
+        />
+      )}
+
+
       <AlertDialog open={toDelete != null} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -46,7 +46,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/bygninger")({
   component: BygningerPage,

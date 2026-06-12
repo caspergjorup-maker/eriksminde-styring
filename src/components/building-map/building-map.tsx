@@ -62,6 +62,7 @@ export function BuildingMap({
   onSelect,
 }: BuildingMapProps) {
   const { data: buildings } = useSuspenseQuery(buildingsMapQuery);
+  const { data: units } = useSuspenseQuery(buildingUnitsQuery);
   const [selected, setSelected] = useState<BuildingWithLease | null>(null);
 
   const placed = buildings.filter(

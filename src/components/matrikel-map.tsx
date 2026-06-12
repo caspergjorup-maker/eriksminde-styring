@@ -399,6 +399,77 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const startDrawing = (parcelId: string, matrikelnr: string) => {
+    const map = leafletMap.current;
+    if (!map) return;
+    setEditing({ parcelId, matrikelnr });
+    setDrawnGeometry(null);
+    setSelectedParcel(null);
+    setSelectedField(null);
+    if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
+    if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+
+    const fg = new L.FeatureGroup().addTo(map);
+    drawFeatureGroup.current = fg;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const drawHandler = new (L as any).Draw.Polygon(map, {
+      shapeOptions: { color: "#e94560", weight: 3, fillOpacity: 0.35 },
+      allowIntersection: false,
+      showArea: true,
+    });
+    drawHandler.enable();
+    activeDrawHandler.current = drawHandler;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map.once((L as any).Draw.Event.CREATED, (evt: any) => {
+      const layer = evt.layer as L.Polygon;
+      fg.addLayer(layer);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (layer as any).editing?.enable();
+      const geo = layer.toGeoJSON() as Feature<Polygon>;
+      setDrawnGeometry(geo.geometry);
+      layer.on("edit", () => {
+        const g = layer.toGeoJSON() as Feature<Polygon>;
+        setDrawnGeometry(g.geometry);
+      });
+      activeDrawHandler.current = null;
+    });
+  };
+
+  const cancelDrawing = () => {
+    const map = leafletMap.current;
+    if (activeDrawHandler.current) {
+      try { activeDrawHandler.current.disable(); } catch { /* ignore */ }
+      activeDrawHandler.current = null;
+    }
+    if (drawFeatureGroup.current && map) {
+      map.removeLayer(drawFeatureGroup.current);
+      drawFeatureGroup.current = null;
+    }
+    setEditing(null);
+    setDrawnGeometry(null);
+    if (map) {
+      if (viewMode === "fields" && fieldLayer.current) fieldLayer.current.addTo(map);
+      if (viewMode === "parcels" && parcelLayer.current) parcelLayer.current.addTo(map);
+    }
+  };
+
+  const commitDrawing = async () => {
+    if (!editing || !drawnGeometry) return;
+    setSaving(true);
+    try {
+      await saveGeometry({ data: { parcelId: editing.parcelId, geometry: drawnGeometry } });
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      setSaving(false);
+      setError("Kunne ikke gemme geometri.");
+    }
+  };
+
+
+
   return (
     <div>
       <div className="flex gap-2 mb-3">

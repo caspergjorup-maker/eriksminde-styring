@@ -244,7 +244,9 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           const totalHa = features.reduce(
             (s, f) =>
               s +
-              (f.properties.parcel?.field_area_ha ?? f.properties.parcel?.net_area_ha ?? 0),
+              (f.properties.parcel?.field_area_ha ??
+                f.properties.parcel?.net_area_ha ??
+                (f.properties.registreretAreal ? f.properties.registreretAreal / 10000 : 0)),
             0,
           );
           const lease =

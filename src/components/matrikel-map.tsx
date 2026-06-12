@@ -1,6 +1,9 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import union from "@turf/union";
+import { featureCollection } from "@turf/helpers";
+import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
 
@@ -71,16 +74,19 @@ type Props = {
   onFieldsReady?: (fields: FieldSummary[]) => void;
 };
 
+type ParcelFeature = Feature<Polygon | MultiPolygon, FeatureProps>;
+type FieldFeature = Feature<Polygon | MultiPolygon, { field: FieldSummary }>;
+
 export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function MatrikelMap(
   { onFieldsReady },
   ref,
 ) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const leafletMap = useRef<L.Map | null>(null);
-  const layersByFeature = useRef<Map<L.Layer, FeatureProps>>(new Map());
-  const allLayers = useRef<L.Path[]>([]);
-  const featuresRef = useRef<FeatureProps[]>([]);
-  const viewModeRef = useRef<"fields" | "parcels">("fields");
+  const parcelLayer = useRef<L.GeoJSON | null>(null);
+  const fieldLayer = useRef<L.GeoJSON | null>(null);
+  const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
+  const parcelLayers = useRef<L.Path[]>([]);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
@@ -88,86 +94,61 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const colorFor = (p: Parcel | null | undefined) => {
-    if (!p) return "#888";
-    if (viewModeRef.current === "fields") {
-      return (
-        (p.field?.use_type && USE_TYPE_COLORS[p.field.use_type]) ||
-        (p.use_type && USE_TYPE_COLORS[p.use_type]) ||
-        "#aaa"
-      );
-    }
-    return (p.use_type && USE_TYPE_COLORS[p.use_type]) || "#888";
-  };
-
-  const resetStyles = () => {
-    allLayers.current.forEach((lyr) => {
-      const props = layersByFeature.current.get(lyr) ?? null;
-      lyr.setStyle({
-        color: colorFor(props?.parcel),
-        fillColor: colorFor(props?.parcel),
-        fillOpacity: 0.35,
-        weight: 2,
-        opacity: 0.9,
-      });
+  const resetParcelStyles = () => {
+    parcelLayers.current.forEach((lyr) => {
+      const feature = (lyr as unknown as { feature?: ParcelFeature }).feature;
+      const color = feature?.properties.parcel?.use_type
+        ? USE_TYPE_COLORS[feature.properties.parcel.use_type]
+        : "#888";
+      lyr.setStyle({ color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 });
     });
   };
 
-  const buildFieldSummary = (fieldId: string): FieldSummary | null => {
-    const matches = featuresRef.current.filter((f) => f.parcel?.field_id === fieldId);
-    if (matches.length === 0) return null;
-    const field = matches[0].parcel?.field ?? null;
-    if (!field) return null;
-    const totalHa = matches.reduce((s, f) => s + (f.parcel?.net_area_ha ?? 0), 0);
-    const lease = matches.find((m) => m.parcel?.land_leases)?.parcel?.land_leases ?? null;
-    return {
-      id: field.id,
-      name: field.name,
-      use_type: field.use_type,
-      notes: field.notes,
-      matrikler: matches.map((m) => m.matrikelnr ?? "?"),
-      totalHa: Number(totalHa.toFixed(2)),
-      leaseholder: lease?.leaseholder?.name ?? null,
-      contractEnd: lease?.contract_end ?? null,
-      annualFee: lease?.annual_fee ?? null,
-    };
+  const resetFieldStyles = () => {
+    fieldLayersById.current.forEach((lyr) => {
+      const feature = (lyr as unknown as { feature?: FieldFeature }).feature;
+      const ut = feature?.properties.field.use_type;
+      const color = ut ? USE_TYPE_COLORS[ut] : "#aaa";
+      lyr.setStyle({ color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 });
+    });
   };
 
   const highlightField = (fieldId: string) => {
-    resetStyles();
-    allLayers.current.forEach((lyr) => {
-      const props = layersByFeature.current.get(lyr);
-      if (props?.parcel?.field_id === fieldId) {
-        lyr.setStyle({ fillOpacity: 0.62, weight: 3 });
-      }
-    });
-    const summary = buildFieldSummary(fieldId);
-    if (summary) setSelectedField(summary);
-    setSelectedParcel(null);
-
-    // Zoom to field bounds
-    const group: L.Layer[] = [];
-    allLayers.current.forEach((lyr) => {
-      const props = layersByFeature.current.get(lyr);
-      if (props?.parcel?.field_id === fieldId) group.push(lyr);
-    });
-    if (group.length > 0 && leafletMap.current) {
+    if (viewMode !== "fields") setViewMode("fields");
+    resetFieldStyles();
+    const lyr = fieldLayersById.current.get(fieldId);
+    if (lyr) {
+      lyr.setStyle({ fillOpacity: 0.62, weight: 3 });
+      const feature = (lyr as unknown as { feature?: FieldFeature }).feature;
+      if (feature) setSelectedField(feature.properties.field);
       try {
-        const bounds = L.featureGroup(group as L.Layer[]).getBounds();
-        if (bounds.isValid()) leafletMap.current.fitBounds(bounds, { padding: [30, 30] });
+        const bounds = (lyr as unknown as L.Polygon).getBounds();
+        if (bounds.isValid() && leafletMap.current)
+          leafletMap.current.fitBounds(bounds, { padding: [30, 30] });
       } catch {
         /* ignore */
       }
     }
+    setSelectedParcel(null);
   };
 
-  useImperativeHandle(ref, () => ({ highlightField }), []);
+  useImperativeHandle(ref, () => ({ highlightField }));
 
+  // Swap layers when viewMode changes
   useEffect(() => {
-    viewModeRef.current = viewMode;
-    resetStyles();
-    setSelectedParcel(null);
-    setSelectedField(null);
+    const map = leafletMap.current;
+    if (!map) return;
+    if (viewMode === "fields") {
+      if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
+      if (fieldLayer.current && !map.hasLayer(fieldLayer.current)) fieldLayer.current.addTo(map);
+      resetFieldStyles();
+      setSelectedParcel(null);
+    } else {
+      if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+      if (parcelLayer.current && !map.hasLayer(parcelLayer.current)) parcelLayer.current.addTo(map);
+      resetParcelStyles();
+      setSelectedField(null);
+    }
   }, [viewMode]);
 
   useEffect(() => {
@@ -187,71 +168,141 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((geojson) => {
+      .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[] }) => {
         if (ignored) return;
         setLoading(false);
 
-        const layer = L.geoJSON(geojson, {
-          style: (feature) => {
-            const p = (feature?.properties?.parcel ?? null) as Parcel | null;
-            const color = colorFor(p);
-            return {
-              color,
-              fillColor: color,
-              fillOpacity: 0.35,
-              weight: 2,
-              opacity: 0.9,
+        // Group features by field_id and union per group
+        const byField = new Map<string, ParcelFeature[]>();
+        const ungrouped: ParcelFeature[] = [];
+        for (const f of geojson.features) {
+          const fid = f.properties.parcel?.field_id;
+          if (fid) {
+            const arr = byField.get(fid) ?? [];
+            arr.push(f);
+            byField.set(fid, arr);
+          } else {
+            ungrouped.push(f);
+          }
+        }
+
+        const fieldFeatures: FieldFeature[] = [];
+        const summaries: FieldSummary[] = [];
+
+        byField.forEach((features, fieldId) => {
+          const fieldMeta = features[0].properties.parcel?.field;
+          if (!fieldMeta) return;
+          const totalHa = features.reduce(
+            (s, f) => s + (f.properties.parcel?.net_area_ha ?? 0),
+            0,
+          );
+          const lease =
+            features.find((m) => m.properties.parcel?.land_leases)?.properties.parcel
+              ?.land_leases ?? null;
+          const summary: FieldSummary = {
+            id: fieldId,
+            name: fieldMeta.name,
+            use_type: fieldMeta.use_type,
+            notes: fieldMeta.notes,
+            matrikler: features.map((m) => m.properties.matrikelnr ?? "?"),
+            totalHa: Number(totalHa.toFixed(2)),
+            leaseholder: lease?.leaseholder?.name ?? null,
+            contractEnd: lease?.contract_end ?? null,
+            annualFee: lease?.annual_fee ?? null,
+          };
+          summaries.push(summary);
+
+          let merged: Feature<Polygon | MultiPolygon> | null;
+          if (features.length === 1) {
+            merged = {
+              type: "Feature",
+              geometry: features[0].geometry,
+              properties: {},
             };
+          } else {
+            try {
+              const fc = featureCollection(
+                features.map((f) => ({
+                  type: "Feature" as const,
+                  geometry: f.geometry,
+                  properties: {},
+                })),
+              );
+              merged = union(fc) as Feature<Polygon | MultiPolygon> | null;
+            } catch (err) {
+              console.error("turf union failed for field", fieldId, err);
+              merged = null;
+            }
+          }
+
+          if (!merged) return;
+          fieldFeatures.push({
+            type: "Feature",
+            geometry: merged.geometry,
+            properties: { field: summary },
+          });
+        });
+
+        summaries.sort((a, b) => a.name.localeCompare(b.name, "da"));
+
+        // Parcel layer (matrikler view)
+        parcelLayer.current = L.geoJSON(geojson as unknown as GeoJSON.GeoJsonObject, {
+          style: (feature) => {
+            const p = (feature?.properties as FeatureProps | undefined)?.parcel ?? null;
+            const color = p?.use_type ? USE_TYPE_COLORS[p.use_type] : "#888";
+            return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
           },
           onEachFeature: (feature, lyr) => {
             const p = feature.properties as FeatureProps;
-            featuresRef.current.push(p);
-            layersByFeature.current.set(lyr, p);
-            allLayers.current.push(lyr as L.Path);
-
-            const tooltipFn = () => {
-              const ha = p.parcel?.net_area_ha != null ? `${p.parcel.net_area_ha} ha` : "—";
-              if (viewModeRef.current === "fields" && p.parcel?.field?.name) {
-                return `${p.parcel.field.name} · Matr. ${p.matrikelnr ?? "?"}`;
-              }
-              return `Matr. ${p.matrikelnr ?? "?"} · ${ha}`;
-            };
-            lyr.bindTooltip(tooltipFn(), { sticky: true });
-            lyr.on("mouseover", () => lyr.getTooltip()?.setContent(tooltipFn()));
-
+            parcelLayers.current.push(lyr as L.Path);
+            const ha = p.parcel?.net_area_ha != null ? `${p.parcel.net_area_ha} ha` : "—";
+            lyr.bindTooltip(`Matr. ${p.matrikelnr ?? "?"} · ${ha}`, { sticky: true });
             lyr.on("click", () => {
-              if (viewModeRef.current === "fields" && p.parcel?.field_id) {
-                highlightField(p.parcel.field_id);
-              } else {
-                resetStyles();
-                (lyr as L.Path).setStyle({ fillOpacity: 0.6, weight: 3 });
-                setSelectedParcel(p);
-                setSelectedField(null);
-              }
+              resetParcelStyles();
+              (lyr as L.Path).setStyle({ fillOpacity: 0.6, weight: 3 });
+              setSelectedParcel(p);
+              setSelectedField(null);
             });
           },
-        }).addTo(map);
+        });
+
+        // Field layer (merged polygons)
+        fieldLayer.current = L.geoJSON(
+          { type: "FeatureCollection", features: fieldFeatures } as GeoJSON.GeoJsonObject,
+          {
+            style: (feature) => {
+              const f = (feature?.properties as { field?: FieldSummary } | undefined)?.field;
+              const color = f?.use_type ? USE_TYPE_COLORS[f.use_type] : "#aaa";
+              return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
+            },
+            onEachFeature: (feature, lyr) => {
+              const summary = (feature.properties as { field: FieldSummary }).field;
+              fieldLayersById.current.set(summary.id, lyr as L.Path);
+              lyr.bindTooltip(`${summary.name} · ${summary.totalHa} ha`, { sticky: true });
+              lyr.on("click", () => {
+                resetFieldStyles();
+                (lyr as L.Path).setStyle({ fillOpacity: 0.62, weight: 3 });
+                setSelectedField(summary);
+                setSelectedParcel(null);
+              });
+            },
+          },
+        );
+
+        // Start in fields view
+        fieldLayer.current.addTo(map);
 
         try {
-          const bounds = layer.getBounds();
+          const bounds = (fieldLayer.current as L.GeoJSON).getBounds();
           if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
         } catch {
           /* ignore */
         }
 
-        // Build field summaries
-        if (onFieldsReady) {
-          const fieldIds = new Set<string>();
-          featuresRef.current.forEach((f) => {
-            if (f.parcel?.field_id) fieldIds.add(f.parcel.field_id);
-          });
-          const summaries: FieldSummary[] = [];
-          fieldIds.forEach((id) => {
-            const s = buildFieldSummary(id);
-            if (s) summaries.push(s);
-          });
-          summaries.sort((a, b) => a.name.localeCompare(b.name, "da"));
-          onFieldsReady(summaries);
+        onFieldsReady?.(summaries);
+
+        if (ungrouped.length > 0) {
+          console.warn(`${ungrouped.length} parcel(s) without field_id`);
         }
       })
       .catch((err) => {
@@ -265,9 +316,10 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       ignored = true;
       map.remove();
       leafletMap.current = null;
-      layersByFeature.current = new Map();
-      allLayers.current = [];
-      featuresRef.current = [];
+      parcelLayer.current = null;
+      fieldLayer.current = null;
+      fieldLayersById.current = new Map();
+      parcelLayers.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -300,7 +352,6 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       <div className="relative w-full h-[70vh] rounded-lg overflow-hidden border border-border bg-muted">
         <div ref={mapRef} className="absolute inset-0" />
 
-        {/* Legende */}
         <div className="absolute top-3 right-3 z-[400] rounded-md bg-background/95 backdrop-blur p-3 shadow-sm border border-border text-xs space-y-1.5">
           {(Object.entries(USE_TYPE_LABELS) as [UseType, string][]).map(([key, label]) => (
             <div key={key} className="flex items-center gap-2">
@@ -344,13 +395,15 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium">{selectedField.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {selectedField.use_type ? USE_TYPE_LABELS[selectedField.use_type] : "Ikke registreret"}
+                  {selectedField.use_type
+                    ? USE_TYPE_LABELS[selectedField.use_type]
+                    : "Ikke registreret"}
                 </div>
               </div>
               <button
                 onClick={() => {
                   setSelectedField(null);
-                  resetStyles();
+                  resetFieldStyles();
                 }}
                 className="text-muted-foreground hover:text-foreground text-sm leading-none"
                 aria-label="Luk"
@@ -406,7 +459,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               <button
                 onClick={() => {
                   setSelectedParcel(null);
-                  resetStyles();
+                  resetParcelStyles();
                 }}
                 className="text-muted-foreground hover:text-foreground text-sm leading-none"
                 aria-label="Luk"

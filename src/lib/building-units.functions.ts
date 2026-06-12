@@ -163,3 +163,25 @@ export const deleteBuildingUnit = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const saveBuildingUnitGeometry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        map_kind: z.enum(["rect", "polygon"]).nullable(),
+        map_geometry: geometrySchema.nullable(),
+        map_color: z.string().trim().max(20).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { id, ...rest } = data;
+    const { error } = await context.supabase
+      .from("building_units")
+      .update(rest as never)
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

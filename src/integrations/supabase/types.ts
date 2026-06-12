@@ -97,23 +97,47 @@ export type Database = {
       }
       buildings: {
         Row: {
+          building_nr: string | null
           created_at: string
           description: string | null
           id: string
+          map_color: string | null
+          map_h: number | null
+          map_section: string | null
+          map_shape: string | null
+          map_w: number | null
+          map_x: number | null
+          map_y: number | null
           name: string
           type: string
         }
         Insert: {
+          building_nr?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          map_color?: string | null
+          map_h?: number | null
+          map_section?: string | null
+          map_shape?: string | null
+          map_w?: number | null
+          map_x?: number | null
+          map_y?: number | null
           name: string
           type: string
         }
         Update: {
+          building_nr?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          map_color?: string | null
+          map_h?: number | null
+          map_section?: string | null
+          map_shape?: string | null
+          map_w?: number | null
+          map_x?: number | null
+          map_y?: number | null
           name?: string
           type?: string
         }

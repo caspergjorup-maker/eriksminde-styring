@@ -310,6 +310,13 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             leaseholder: lease?.leaseholder?.name ?? null,
             contractEnd: lease?.contract_end ?? null,
             annualFee: lease?.annual_fee ?? null,
+            lease_area_ha: fieldMeta.lease_area_ha ?? null,
+            lease_price_per_ha: fieldMeta.lease_price_per_ha ?? null,
+            soil_type: fieldMeta.soil_type ?? null,
+            is_drained: fieldMeta.is_drained ?? null,
+            has_irrigation: fieldMeta.has_irrigation ?? null,
+            eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
+            non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
           };
           summaries.push(summary);
 

@@ -115,18 +115,7 @@ export function BygningerPage() {
   const { data: tenants = [] } = useQuery({ queryKey: ["building-tenants"], queryFn: () => listT() });
 
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Bygninger</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Bygninger og lejemål</p>
-      </div>
-
-      <Suspense fallback={null}>
-        <div className="bg-card border border-border rounded-xl p-4">
-          <BuildingMap scale={0.6} interactive={false} showPanel={false} />
-        </div>
-      </Suspense>
-
+    <div className="space-y-8">
       <BuildingsSection buildings={buildings} loading={lb} qc={qc} />
       <LeasesSection
         leases={leases}

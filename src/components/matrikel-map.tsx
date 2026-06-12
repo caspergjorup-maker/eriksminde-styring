@@ -2,6 +2,8 @@ import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "re
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import union from "@turf/union";
+import bbox from "@turf/bbox";
+import bboxClip from "@turf/bbox-clip";
 import { featureCollection } from "@turf/helpers";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 
@@ -173,10 +175,56 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         if (ignored) return;
         setLoading(false);
 
-        // Group features by field_id and union per group
+        // Detect split matrikler (same matrikelnr appearing in multiple fields)
+        // and slice their geometry proportionally along the N/S axis.
+        const byMatrikel = new Map<string, ParcelFeature[]>();
+        for (const f of geojson.features) {
+          const mnr = f.properties.matrikelnr ?? "?";
+          const arr = byMatrikel.get(mnr) ?? [];
+          arr.push(f);
+          byMatrikel.set(mnr, arr);
+        }
+
+        const slicedFeatures: ParcelFeature[] = [];
+        byMatrikel.forEach((feats) => {
+          if (feats.length <= 1) {
+            slicedFeatures.push(...feats);
+            return;
+          }
+          // bbox of the full matrikel
+          const [minX, minY, maxX, maxY] = bbox(feats[0] as Feature<Polygon | MultiPolygon>);
+          const totalArea = feats.reduce(
+            (s, f) => s + (f.properties.parcel?.field_area_ha ?? 0),
+            0,
+          );
+          // Sort: Syd (south) first → lowest latitude band
+          const ordered = [...feats].sort((a, b) => {
+            const an = a.properties.parcel?.field?.name?.toLowerCase() ?? "";
+            const bn = b.properties.parcel?.field?.name?.toLowerCase() ?? "";
+            const aSyd = an.includes("syd") ? 0 : an.includes("nord") ? 2 : 1;
+            const bSyd = bn.includes("syd") ? 0 : bn.includes("nord") ? 2 : 1;
+            return aSyd - bSyd;
+          });
+          let cursorY = minY;
+          for (const f of ordered) {
+            const share = totalArea > 0 ? (f.properties.parcel?.field_area_ha ?? 0) / totalArea : 1 / ordered.length;
+            const sliceTop = cursorY + (maxY - minY) * share;
+            const clipped = bboxClip(
+              f as Feature<Polygon | MultiPolygon>,
+              [minX, cursorY, maxX, sliceTop],
+            ) as Feature<Polygon | MultiPolygon>;
+            cursorY = sliceTop;
+            slicedFeatures.push({
+              ...f,
+              geometry: clipped.geometry,
+            });
+          }
+        });
+
+        // Group sliced features by field_id and union per group
         const byField = new Map<string, ParcelFeature[]>();
         const ungrouped: ParcelFeature[] = [];
-        for (const f of geojson.features) {
+        for (const f of slicedFeatures) {
           const fid = f.properties.parcel?.field_id;
           if (fid) {
             const arr = byField.get(fid) ?? [];

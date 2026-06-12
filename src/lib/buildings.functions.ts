@@ -67,6 +67,8 @@ export type BuildingLease = {
   id: string;
   building_id: string | null;
   building_name: string | null;
+  unit_id: string | null;
+  unit_name: string | null;
   tenant_id: string | null;
   tenant_name: string | null;
   monthly_rent: number;
@@ -123,6 +125,7 @@ const buildingInput = z.object({
 
 const leaseInput = z.object({
   building_id: z.string().uuid().nullable(),
+  unit_id: z.string().uuid().nullable().optional(),
   tenant_id: z.string().uuid().nullable(),
   monthly_rent: z.number().min(0).max(10_000_000),
   deposit: z.number().min(0).max(10_000_000),
@@ -217,13 +220,17 @@ export const listBuildingLeases = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<BuildingLease[]> => {
     const { data, error } = await context.supabase
       .from("building_leases")
-      .select("id, building_id, tenant_id, monthly_rent, deposit, contract_start, contract_end, status, notes, buildings:building_id(name), contacts:tenant_id(name)")
+      .select(
+        "id, building_id, unit_id, tenant_id, monthly_rent, deposit, contract_start, contract_end, status, notes, buildings:building_id(name), building_units:unit_id(name), contacts:tenant_id(name)",
+      )
       .order("contract_end", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({
       id: r.id,
       building_id: r.building_id,
       building_name: (r.buildings as { name?: string } | null)?.name ?? null,
+      unit_id: (r as { unit_id?: string | null }).unit_id ?? null,
+      unit_name: (r.building_units as { name?: string } | null)?.name ?? null,
       tenant_id: r.tenant_id,
       tenant_name: (r.contacts as { name?: string } | null)?.name ?? null,
       monthly_rent: Number(r.monthly_rent ?? 0),

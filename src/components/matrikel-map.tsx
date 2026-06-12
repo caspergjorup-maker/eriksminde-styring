@@ -282,6 +282,13 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             use_type: fieldMeta.use_type,
             notes: fieldMeta.notes,
             matrikler: features.map((m) => m.properties.matrikelnr ?? "?"),
+            parcels: features
+              .map((m) => ({
+                id: m.properties.parcel?.id ?? "",
+                matrikelnr: m.properties.matrikelnr ?? "?",
+              }))
+              .filter((p) => p.id),
+
             totalHa: Number(totalHa.toFixed(2)),
             leaseholder: lease?.leaseholder?.name ?? null,
             contractEnd: lease?.contract_end ?? null,

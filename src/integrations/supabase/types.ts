@@ -315,6 +315,33 @@ export type Database = {
           },
         ]
       }
+      fields: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          use_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          use_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          use_type?: string | null
+        }
+        Relationships: []
+      }
       forest_activities: {
         Row: {
           activity_date: string | null
@@ -672,6 +699,7 @@ export type Database = {
         Row: {
           created_at: string
           ejerlav: string
+          field_id: string | null
           id: string
           land_lease_id: string | null
           matrikel_id: string
@@ -683,6 +711,7 @@ export type Database = {
         Insert: {
           created_at?: string
           ejerlav?: string
+          field_id?: string | null
           id?: string
           land_lease_id?: string | null
           matrikel_id: string
@@ -694,6 +723,7 @@ export type Database = {
         Update: {
           created_at?: string
           ejerlav?: string
+          field_id?: string | null
           id?: string
           land_lease_id?: string | null
           matrikel_id?: string
@@ -703,6 +733,13 @@ export type Database = {
           use_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "parcels_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "parcels_land_lease_id_fkey"
             columns: ["land_lease_id"]

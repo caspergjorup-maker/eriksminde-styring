@@ -28,6 +28,11 @@ export const buildingsMapQuery = queryOptions({
   queryFn: () => listBuildingsWithLeases(),
 });
 
+export const buildingUnitsQuery = queryOptions({
+  queryKey: ["building-units"],
+  queryFn: () => listBuildingUnits(),
+});
+
 function getBorderColor(lease: BuildingMapLease | null): string {
   if (!lease) return "transparent";
   if (lease.status === "vacant") return "#378ADD";

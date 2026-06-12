@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ContactsPage } from "@/components/contacts/contacts-page";
 
-export const Route = createFileRoute("/_authenticated/kontakter/leverandoerer")({
+export const Route = createFileRoute("/_authenticated/leverandoerer")({
   component: () => (
     <ContactsPage
       kind="suppliers"

@@ -14,25 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMatrikelRouteImport } from './routes/api/matrikel'
 import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
-import { Route as AuthenticatedMatrikelkortRouteImport } from './routes/_authenticated/matrikelkort'
-import { Route as AuthenticatedMarkerRouteImport } from './routes/_authenticated/marker'
-import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
+import { Route as AuthenticatedOverblikRouteImport } from './routes/_authenticated/overblik'
+import { Route as AuthenticatedLeverandoererRouteImport } from './routes/_authenticated/leverandoerer'
+import { Route as AuthenticatedKunderRouteImport } from './routes/_authenticated/kunder'
+import { Route as AuthenticatedJagtlejeRouteImport } from './routes/_authenticated/jagtleje'
+import { Route as AuthenticatedFakturakladderRouteImport } from './routes/_authenticated/fakturakladder'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedBygningsplanRouteImport } from './routes/_authenticated/bygningsplan'
-import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
+import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as ApiDineroExportInvoiceRouteImport } from './routes/api/dinero/export-invoice'
-import { Route as AuthenticatedSkovOverblikRouteImport } from './routes/_authenticated/skov.overblik'
-import { Route as AuthenticatedSkovJagtlejeRouteImport } from './routes/_authenticated/skov.jagtleje'
-import { Route as AuthenticatedSkovHugstRouteImport } from './routes/_authenticated/skov.hugst'
-import { Route as AuthenticatedOekonomiOverblikRouteImport } from './routes/_authenticated/oekonomi.overblik'
-import { Route as AuthenticatedOekonomiFakturaerRouteImport } from './routes/_authenticated/oekonomi.fakturaer'
-import { Route as AuthenticatedOekonomiBudgetRouteImport } from './routes/_authenticated/oekonomi.budget'
-import { Route as AuthenticatedKontakterLeverandoererRouteImport } from './routes/_authenticated/kontakter.leverandoerer'
-import { Route as AuthenticatedKontakterKunderRouteImport } from './routes/_authenticated/kontakter.kunder'
-import { Route as AuthenticatedHalmSalgRouteImport } from './routes/_authenticated/halm.salg'
-import { Route as AuthenticatedHalmOekonomiRouteImport } from './routes/_authenticated/halm.oekonomi'
-import { Route as AuthenticatedHalmLagerRouteImport } from './routes/_authenticated/halm.lager'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -59,21 +48,31 @@ const AuthenticatedVedligeholdRoute =
     path: '/vedligehold',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMatrikelkortRoute =
-  AuthenticatedMatrikelkortRouteImport.update({
-    id: '/matrikelkort',
-    path: '/matrikelkort',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMarkerRoute = AuthenticatedMarkerRouteImport.update({
-  id: '/marker',
-  path: '/marker',
+const AuthenticatedOverblikRoute = AuthenticatedOverblikRouteImport.update({
+  id: '/overblik',
+  path: '/overblik',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLandbrugsjordRoute =
-  AuthenticatedLandbrugsjordRouteImport.update({
-    id: '/landbrugsjord',
-    path: '/landbrugsjord',
+const AuthenticatedLeverandoererRoute =
+  AuthenticatedLeverandoererRouteImport.update({
+    id: '/leverandoerer',
+    path: '/leverandoerer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKunderRoute = AuthenticatedKunderRouteImport.update({
+  id: '/kunder',
+  path: '/kunder',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJagtlejeRoute = AuthenticatedJagtlejeRouteImport.update({
+  id: '/jagtleje',
+  path: '/jagtleje',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFakturakladderRoute =
+  AuthenticatedFakturakladderRouteImport.update({
+    id: '/fakturakladder',
+    path: '/fakturakladder',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDokumenterRoute = AuthenticatedDokumenterRouteImport.update({
@@ -81,20 +80,9 @@ const AuthenticatedDokumenterRoute = AuthenticatedDokumenterRouteImport.update({
   path: '/dokumenter',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBygningsplanRoute =
-  AuthenticatedBygningsplanRouteImport.update({
-    id: '/bygningsplan',
-    path: '/bygningsplan',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedBygningerRoute = AuthenticatedBygningerRouteImport.update({
-  id: '/bygninger',
-  path: '/bygninger',
+const AuthenticatedBudgetRoute = AuthenticatedBudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiDineroExportInvoiceRoute = ApiDineroExportInvoiceRouteImport.update({
@@ -102,118 +90,33 @@ const ApiDineroExportInvoiceRoute = ApiDineroExportInvoiceRouteImport.update({
   path: '/api/dinero/export-invoice',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSkovOverblikRoute =
-  AuthenticatedSkovOverblikRouteImport.update({
-    id: '/skov/overblik',
-    path: '/skov/overblik',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSkovJagtlejeRoute =
-  AuthenticatedSkovJagtlejeRouteImport.update({
-    id: '/skov/jagtleje',
-    path: '/skov/jagtleje',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSkovHugstRoute = AuthenticatedSkovHugstRouteImport.update({
-  id: '/skov/hugst',
-  path: '/skov/hugst',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOekonomiOverblikRoute =
-  AuthenticatedOekonomiOverblikRouteImport.update({
-    id: '/oekonomi/overblik',
-    path: '/oekonomi/overblik',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedOekonomiFakturaerRoute =
-  AuthenticatedOekonomiFakturaerRouteImport.update({
-    id: '/oekonomi/fakturaer',
-    path: '/oekonomi/fakturaer',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedOekonomiBudgetRoute =
-  AuthenticatedOekonomiBudgetRouteImport.update({
-    id: '/oekonomi/budget',
-    path: '/oekonomi/budget',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedKontakterLeverandoererRoute =
-  AuthenticatedKontakterLeverandoererRouteImport.update({
-    id: '/kontakter/leverandoerer',
-    path: '/kontakter/leverandoerer',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedKontakterKunderRoute =
-  AuthenticatedKontakterKunderRouteImport.update({
-    id: '/kontakter/kunder',
-    path: '/kontakter/kunder',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedHalmSalgRoute = AuthenticatedHalmSalgRouteImport.update({
-  id: '/halm/salg',
-  path: '/halm/salg',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHalmOekonomiRoute =
-  AuthenticatedHalmOekonomiRouteImport.update({
-    id: '/halm/oekonomi',
-    path: '/halm/oekonomi',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedHalmLagerRoute = AuthenticatedHalmLagerRouteImport.update({
-  id: '/halm/lager',
-  path: '/halm/lager',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/bygninger': typeof AuthenticatedBygningerRoute
-  '/bygningsplan': typeof AuthenticatedBygningsplanRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
-  '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
-  '/marker': typeof AuthenticatedMarkerRoute
-  '/matrikelkort': typeof AuthenticatedMatrikelkortRoute
+  '/fakturakladder': typeof AuthenticatedFakturakladderRoute
+  '/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/kunder': typeof AuthenticatedKunderRoute
+  '/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/overblik': typeof AuthenticatedOverblikRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/halm/lager': typeof AuthenticatedHalmLagerRoute
-  '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
-  '/halm/salg': typeof AuthenticatedHalmSalgRoute
-  '/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
-  '/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
-  '/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
-  '/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
-  '/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
-  '/skov/hugst': typeof AuthenticatedSkovHugstRoute
-  '/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
-  '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/bygninger': typeof AuthenticatedBygningerRoute
-  '/bygningsplan': typeof AuthenticatedBygningsplanRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
-  '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
-  '/marker': typeof AuthenticatedMarkerRoute
-  '/matrikelkort': typeof AuthenticatedMatrikelkortRoute
+  '/fakturakladder': typeof AuthenticatedFakturakladderRoute
+  '/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/kunder': typeof AuthenticatedKunderRoute
+  '/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/overblik': typeof AuthenticatedOverblikRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/halm/lager': typeof AuthenticatedHalmLagerRoute
-  '/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
-  '/halm/salg': typeof AuthenticatedHalmSalgRoute
-  '/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
-  '/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
-  '/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
-  '/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
-  '/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
-  '/skov/hugst': typeof AuthenticatedSkovHugstRoute
-  '/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
-  '/skov/overblik': typeof AuthenticatedSkovOverblikRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRoutesById {
@@ -221,26 +124,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/bygninger': typeof AuthenticatedBygningerRoute
-  '/_authenticated/bygningsplan': typeof AuthenticatedBygningsplanRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
-  '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
-  '/_authenticated/marker': typeof AuthenticatedMarkerRoute
-  '/_authenticated/matrikelkort': typeof AuthenticatedMatrikelkortRoute
+  '/_authenticated/fakturakladder': typeof AuthenticatedFakturakladderRoute
+  '/_authenticated/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/_authenticated/kunder': typeof AuthenticatedKunderRoute
+  '/_authenticated/leverandoerer': typeof AuthenticatedLeverandoererRoute
+  '/_authenticated/overblik': typeof AuthenticatedOverblikRoute
   '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/_authenticated/halm/lager': typeof AuthenticatedHalmLagerRoute
-  '/_authenticated/halm/oekonomi': typeof AuthenticatedHalmOekonomiRoute
-  '/_authenticated/halm/salg': typeof AuthenticatedHalmSalgRoute
-  '/_authenticated/kontakter/kunder': typeof AuthenticatedKontakterKunderRoute
-  '/_authenticated/kontakter/leverandoerer': typeof AuthenticatedKontakterLeverandoererRoute
-  '/_authenticated/oekonomi/budget': typeof AuthenticatedOekonomiBudgetRoute
-  '/_authenticated/oekonomi/fakturaer': typeof AuthenticatedOekonomiFakturaerRoute
-  '/_authenticated/oekonomi/overblik': typeof AuthenticatedOekonomiOverblikRoute
-  '/_authenticated/skov/hugst': typeof AuthenticatedSkovHugstRoute
-  '/_authenticated/skov/jagtleje': typeof AuthenticatedSkovJagtlejeRoute
-  '/_authenticated/skov/overblik': typeof AuthenticatedSkovOverblikRoute
   '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRouteTypes {
@@ -248,77 +140,44 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/bygninger'
-    | '/bygningsplan'
-    | '/dashboard'
+    | '/budget'
     | '/dokumenter'
-    | '/landbrugsjord'
-    | '/marker'
-    | '/matrikelkort'
+    | '/fakturakladder'
+    | '/jagtleje'
+    | '/kunder'
+    | '/leverandoerer'
+    | '/overblik'
     | '/vedligehold'
     | '/api/matrikel'
-    | '/halm/lager'
-    | '/halm/oekonomi'
-    | '/halm/salg'
-    | '/kontakter/kunder'
-    | '/kontakter/leverandoerer'
-    | '/oekonomi/budget'
-    | '/oekonomi/fakturaer'
-    | '/oekonomi/overblik'
-    | '/skov/hugst'
-    | '/skov/jagtleje'
-    | '/skov/overblik'
     | '/api/dinero/export-invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/bygninger'
-    | '/bygningsplan'
-    | '/dashboard'
+    | '/budget'
     | '/dokumenter'
-    | '/landbrugsjord'
-    | '/marker'
-    | '/matrikelkort'
+    | '/fakturakladder'
+    | '/jagtleje'
+    | '/kunder'
+    | '/leverandoerer'
+    | '/overblik'
     | '/vedligehold'
     | '/api/matrikel'
-    | '/halm/lager'
-    | '/halm/oekonomi'
-    | '/halm/salg'
-    | '/kontakter/kunder'
-    | '/kontakter/leverandoerer'
-    | '/oekonomi/budget'
-    | '/oekonomi/fakturaer'
-    | '/oekonomi/overblik'
-    | '/skov/hugst'
-    | '/skov/jagtleje'
-    | '/skov/overblik'
     | '/api/dinero/export-invoice'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/_authenticated/bygninger'
-    | '/_authenticated/bygningsplan'
-    | '/_authenticated/dashboard'
+    | '/_authenticated/budget'
     | '/_authenticated/dokumenter'
-    | '/_authenticated/landbrugsjord'
-    | '/_authenticated/marker'
-    | '/_authenticated/matrikelkort'
+    | '/_authenticated/fakturakladder'
+    | '/_authenticated/jagtleje'
+    | '/_authenticated/kunder'
+    | '/_authenticated/leverandoerer'
+    | '/_authenticated/overblik'
     | '/_authenticated/vedligehold'
     | '/api/matrikel'
-    | '/_authenticated/halm/lager'
-    | '/_authenticated/halm/oekonomi'
-    | '/_authenticated/halm/salg'
-    | '/_authenticated/kontakter/kunder'
-    | '/_authenticated/kontakter/leverandoerer'
-    | '/_authenticated/oekonomi/budget'
-    | '/_authenticated/oekonomi/fakturaer'
-    | '/_authenticated/oekonomi/overblik'
-    | '/_authenticated/skov/hugst'
-    | '/_authenticated/skov/jagtleje'
-    | '/_authenticated/skov/overblik'
     | '/api/dinero/export-invoice'
   fileRoutesById: FileRoutesById
 }
@@ -367,25 +226,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVedligeholdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/matrikelkort': {
-      id: '/_authenticated/matrikelkort'
-      path: '/matrikelkort'
-      fullPath: '/matrikelkort'
-      preLoaderRoute: typeof AuthenticatedMatrikelkortRouteImport
+    '/_authenticated/overblik': {
+      id: '/_authenticated/overblik'
+      path: '/overblik'
+      fullPath: '/overblik'
+      preLoaderRoute: typeof AuthenticatedOverblikRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/marker': {
-      id: '/_authenticated/marker'
-      path: '/marker'
-      fullPath: '/marker'
-      preLoaderRoute: typeof AuthenticatedMarkerRouteImport
+    '/_authenticated/leverandoerer': {
+      id: '/_authenticated/leverandoerer'
+      path: '/leverandoerer'
+      fullPath: '/leverandoerer'
+      preLoaderRoute: typeof AuthenticatedLeverandoererRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/landbrugsjord': {
-      id: '/_authenticated/landbrugsjord'
-      path: '/landbrugsjord'
-      fullPath: '/landbrugsjord'
-      preLoaderRoute: typeof AuthenticatedLandbrugsjordRouteImport
+    '/_authenticated/kunder': {
+      id: '/_authenticated/kunder'
+      path: '/kunder'
+      fullPath: '/kunder'
+      preLoaderRoute: typeof AuthenticatedKunderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/jagtleje': {
+      id: '/_authenticated/jagtleje'
+      path: '/jagtleje'
+      fullPath: '/jagtleje'
+      preLoaderRoute: typeof AuthenticatedJagtlejeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fakturakladder': {
+      id: '/_authenticated/fakturakladder'
+      path: '/fakturakladder'
+      fullPath: '/fakturakladder'
+      preLoaderRoute: typeof AuthenticatedFakturakladderRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dokumenter': {
@@ -395,25 +268,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDokumenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bygningsplan': {
-      id: '/_authenticated/bygningsplan'
-      path: '/bygningsplan'
-      fullPath: '/bygningsplan'
-      preLoaderRoute: typeof AuthenticatedBygningsplanRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bygninger': {
-      id: '/_authenticated/bygninger'
-      path: '/bygninger'
-      fullPath: '/bygninger'
-      preLoaderRoute: typeof AuthenticatedBygningerRouteImport
+    '/_authenticated/budget': {
+      id: '/_authenticated/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof AuthenticatedBudgetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/dinero/export-invoice': {
@@ -423,129 +282,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDineroExportInvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/skov/overblik': {
-      id: '/_authenticated/skov/overblik'
-      path: '/skov/overblik'
-      fullPath: '/skov/overblik'
-      preLoaderRoute: typeof AuthenticatedSkovOverblikRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/skov/jagtleje': {
-      id: '/_authenticated/skov/jagtleje'
-      path: '/skov/jagtleje'
-      fullPath: '/skov/jagtleje'
-      preLoaderRoute: typeof AuthenticatedSkovJagtlejeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/skov/hugst': {
-      id: '/_authenticated/skov/hugst'
-      path: '/skov/hugst'
-      fullPath: '/skov/hugst'
-      preLoaderRoute: typeof AuthenticatedSkovHugstRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/oekonomi/overblik': {
-      id: '/_authenticated/oekonomi/overblik'
-      path: '/oekonomi/overblik'
-      fullPath: '/oekonomi/overblik'
-      preLoaderRoute: typeof AuthenticatedOekonomiOverblikRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/oekonomi/fakturaer': {
-      id: '/_authenticated/oekonomi/fakturaer'
-      path: '/oekonomi/fakturaer'
-      fullPath: '/oekonomi/fakturaer'
-      preLoaderRoute: typeof AuthenticatedOekonomiFakturaerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/oekonomi/budget': {
-      id: '/_authenticated/oekonomi/budget'
-      path: '/oekonomi/budget'
-      fullPath: '/oekonomi/budget'
-      preLoaderRoute: typeof AuthenticatedOekonomiBudgetRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/kontakter/leverandoerer': {
-      id: '/_authenticated/kontakter/leverandoerer'
-      path: '/kontakter/leverandoerer'
-      fullPath: '/kontakter/leverandoerer'
-      preLoaderRoute: typeof AuthenticatedKontakterLeverandoererRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/kontakter/kunder': {
-      id: '/_authenticated/kontakter/kunder'
-      path: '/kontakter/kunder'
-      fullPath: '/kontakter/kunder'
-      preLoaderRoute: typeof AuthenticatedKontakterKunderRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/halm/salg': {
-      id: '/_authenticated/halm/salg'
-      path: '/halm/salg'
-      fullPath: '/halm/salg'
-      preLoaderRoute: typeof AuthenticatedHalmSalgRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/halm/oekonomi': {
-      id: '/_authenticated/halm/oekonomi'
-      path: '/halm/oekonomi'
-      fullPath: '/halm/oekonomi'
-      preLoaderRoute: typeof AuthenticatedHalmOekonomiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/halm/lager': {
-      id: '/_authenticated/halm/lager'
-      path: '/halm/lager'
-      fullPath: '/halm/lager'
-      preLoaderRoute: typeof AuthenticatedHalmLagerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedBygningerRoute: typeof AuthenticatedBygningerRoute
-  AuthenticatedBygningsplanRoute: typeof AuthenticatedBygningsplanRoute
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
-  AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
-  AuthenticatedMarkerRoute: typeof AuthenticatedMarkerRoute
-  AuthenticatedMatrikelkortRoute: typeof AuthenticatedMatrikelkortRoute
+  AuthenticatedFakturakladderRoute: typeof AuthenticatedFakturakladderRoute
+  AuthenticatedJagtlejeRoute: typeof AuthenticatedJagtlejeRoute
+  AuthenticatedKunderRoute: typeof AuthenticatedKunderRoute
+  AuthenticatedLeverandoererRoute: typeof AuthenticatedLeverandoererRoute
+  AuthenticatedOverblikRoute: typeof AuthenticatedOverblikRoute
   AuthenticatedVedligeholdRoute: typeof AuthenticatedVedligeholdRoute
-  AuthenticatedHalmLagerRoute: typeof AuthenticatedHalmLagerRoute
-  AuthenticatedHalmOekonomiRoute: typeof AuthenticatedHalmOekonomiRoute
-  AuthenticatedHalmSalgRoute: typeof AuthenticatedHalmSalgRoute
-  AuthenticatedKontakterKunderRoute: typeof AuthenticatedKontakterKunderRoute
-  AuthenticatedKontakterLeverandoererRoute: typeof AuthenticatedKontakterLeverandoererRoute
-  AuthenticatedOekonomiBudgetRoute: typeof AuthenticatedOekonomiBudgetRoute
-  AuthenticatedOekonomiFakturaerRoute: typeof AuthenticatedOekonomiFakturaerRoute
-  AuthenticatedOekonomiOverblikRoute: typeof AuthenticatedOekonomiOverblikRoute
-  AuthenticatedSkovHugstRoute: typeof AuthenticatedSkovHugstRoute
-  AuthenticatedSkovJagtlejeRoute: typeof AuthenticatedSkovJagtlejeRoute
-  AuthenticatedSkovOverblikRoute: typeof AuthenticatedSkovOverblikRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedBygningerRoute: AuthenticatedBygningerRoute,
-  AuthenticatedBygningsplanRoute: AuthenticatedBygningsplanRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
-  AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
-  AuthenticatedMarkerRoute: AuthenticatedMarkerRoute,
-  AuthenticatedMatrikelkortRoute: AuthenticatedMatrikelkortRoute,
+  AuthenticatedFakturakladderRoute: AuthenticatedFakturakladderRoute,
+  AuthenticatedJagtlejeRoute: AuthenticatedJagtlejeRoute,
+  AuthenticatedKunderRoute: AuthenticatedKunderRoute,
+  AuthenticatedLeverandoererRoute: AuthenticatedLeverandoererRoute,
+  AuthenticatedOverblikRoute: AuthenticatedOverblikRoute,
   AuthenticatedVedligeholdRoute: AuthenticatedVedligeholdRoute,
-  AuthenticatedHalmLagerRoute: AuthenticatedHalmLagerRoute,
-  AuthenticatedHalmOekonomiRoute: AuthenticatedHalmOekonomiRoute,
-  AuthenticatedHalmSalgRoute: AuthenticatedHalmSalgRoute,
-  AuthenticatedKontakterKunderRoute: AuthenticatedKontakterKunderRoute,
-  AuthenticatedKontakterLeverandoererRoute:
-    AuthenticatedKontakterLeverandoererRoute,
-  AuthenticatedOekonomiBudgetRoute: AuthenticatedOekonomiBudgetRoute,
-  AuthenticatedOekonomiFakturaerRoute: AuthenticatedOekonomiFakturaerRoute,
-  AuthenticatedOekonomiOverblikRoute: AuthenticatedOekonomiOverblikRoute,
-  AuthenticatedSkovHugstRoute: AuthenticatedSkovHugstRoute,
-  AuthenticatedSkovJagtlejeRoute: AuthenticatedSkovJagtlejeRoute,
-  AuthenticatedSkovOverblikRoute: AuthenticatedSkovOverblikRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

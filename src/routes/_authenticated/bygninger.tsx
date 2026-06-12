@@ -45,6 +45,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bygninger")({
   component: BygningerPage,
@@ -60,6 +62,36 @@ const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
   vaerksted: "Værksted",
   smedie: "Smedie",
   garage: "Garage",
+};
+
+const CONDITION_LABEL: Record<BuildingCondition, string> = {
+  god: "God",
+  vedligeholdelse_nødvendig: "Vedligeholdelse nødvendig",
+  renovering_nødvendig: "Renovering nødvendig",
+};
+
+const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
+  udlejet: "Udlejet",
+  ledig: "Ledig",
+  ikke_klar: "Ikke klar endnu",
+  intern_brug: "Intern brug",
+  udlejes_ikke: "Udlejes ikke",
+};
+
+export const LEASE_STATUS_TONE: Record<BuildingLeaseStatus, string> = {
+  udlejet: "bg-emerald-100 text-emerald-900",
+  ledig: "bg-blue-100 text-blue-900",
+  ikke_klar: "bg-yellow-100 text-yellow-900",
+  intern_brug: "bg-teal-100 text-teal-900",
+  udlejes_ikke: "bg-gray-200 text-gray-800",
+};
+
+const HEATING_LABEL: Record<HeatingType, string> = {
+  fjernvarme: "Fjernvarme",
+  olie: "Olie",
+  varmepumpe: "Varmepumpe",
+  elvarme: "Elvarme",
+  ingen: "Ingen",
 };
 
 const STATUS_LABEL: Record<LeaseStatus, string> = {

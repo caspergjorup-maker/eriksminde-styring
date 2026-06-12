@@ -68,11 +68,13 @@ export type FieldSummary = {
   use_type: UseType | null;
   notes: string | null;
   matrikler: string[];
+  parcels: { id: string; matrikelnr: string }[];
   totalHa: number;
   leaseholder: string | null;
   contractEnd: string | null;
   annualFee: number | null;
 };
+
 
 export type MatrikelMapHandle = {
   highlightField: (fieldId: string) => void;
@@ -280,6 +282,13 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             use_type: fieldMeta.use_type,
             notes: fieldMeta.notes,
             matrikler: features.map((m) => m.properties.matrikelnr ?? "?"),
+            parcels: features
+              .map((m) => ({
+                id: m.properties.parcel?.id ?? "",
+                matrikelnr: m.properties.matrikelnr ?? "?",
+              }))
+              .filter((p) => p.id),
+
             totalHa: Number(totalHa.toFixed(2)),
             leaseholder: lease?.leaseholder?.name ?? null,
             contractEnd: lease?.contract_end ?? null,
@@ -575,8 +584,28 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                 {selectedField.notes}
               </p>
             )}
+
+            {selectedField.parcels.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">
+                  Tegn geometri
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedField.parcels.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => startDrawing(p.id, p.matrikelnr)}
+                      className="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted"
+                    >
+                      Matr. {p.matrikelnr}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
+
 
         {selectedParcel && (
           <div className="absolute bottom-3 left-3 right-3 z-[450] md:right-auto md:w-96 rounded-lg bg-background border border-border shadow-lg p-4">
@@ -662,18 +691,8 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                 {selectedParcel.parcel.notes}
               </p>
             )}
-
-            {selectedParcel.parcel?.id && (
-              <button
-                onClick={() =>
-                  startDrawing(selectedParcel.parcel!.id, selectedParcel.matrikelnr ?? "?")
-                }
-                className="mt-3 w-full px-3 py-1.5 text-[13px] rounded-md bg-[#1D9E75] text-white hover:opacity-90 transition-opacity"
-              >
-                Tegn geometri for denne mark
-              </button>
-            )}
           </div>
+
         )}
 
         {editing && (

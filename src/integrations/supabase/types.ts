@@ -121,6 +121,9 @@ export type Database = {
           id: string
           lease_status: string | null
           lease_status_note: string | null
+          map_color: string | null
+          map_geometry: Json | null
+          map_kind: string | null
           name: string
           notes: string | null
           updated_at: string
@@ -140,6 +143,9 @@ export type Database = {
           id?: string
           lease_status?: string | null
           lease_status_note?: string | null
+          map_color?: string | null
+          map_geometry?: Json | null
+          map_kind?: string | null
           name: string
           notes?: string | null
           updated_at?: string
@@ -159,6 +165,9 @@ export type Database = {
           id?: string
           lease_status?: string | null
           lease_status_note?: string | null
+          map_color?: string | null
+          map_geometry?: Json | null
+          map_kind?: string | null
           name?: string
           notes?: string | null
           updated_at?: string

@@ -616,9 +616,36 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             <div className="mt-3 grid grid-cols-2 gap-2">
               <MetricCard label="Samlet areal" value={`${selectedField.totalHa} ha`} />
               <MetricCard label="Matrikler" value={selectedField.matrikler.join(", ")} />
+              <MetricCard
+                label="Forpagtningsareal"
+                value={selectedField.lease_area_ha != null ? `${selectedField.lease_area_ha} ha` : "—"}
+              />
+              <MetricCard
+                label="Støtteberettiget"
+                value={selectedField.eligible_area_ha != null ? `${selectedField.eligible_area_ha} ha` : "—"}
+              />
+              <MetricCard
+                label="Pris pr. ha"
+                value={
+                  selectedField.lease_price_per_ha != null
+                    ? `${selectedField.lease_price_per_ha.toLocaleString("da-DK")} kr`
+                    : "—"
+                }
+              />
+              <MetricCard
+                label="Årlig afgift"
+                value={
+                  selectedField.lease_area_ha != null && selectedField.lease_price_per_ha != null
+                    ? `${(selectedField.lease_area_ha * selectedField.lease_price_per_ha).toLocaleString("da-DK")} kr`
+                    : "—"
+                }
+              />
+              <MetricCard label="Jordtype" value={selectedField.soil_type ?? "—"} />
+              <MetricCard label="Drænlagt" value={selectedField.is_drained ? "Ja" : "Nej"} />
+              <MetricCard label="Vandingsret" value={selectedField.has_irrigation ? "Ja" : "Nej"} />
               <MetricCard label="Forpagter" value={selectedField.leaseholder ?? "—"} />
               <MetricCard
-                label="Årlig leje"
+                label="Årlig leje (kontrakt)"
                 value={selectedField.annualFee != null ? formatDKK(selectedField.annualFee) : "—"}
               />
               <MetricCard

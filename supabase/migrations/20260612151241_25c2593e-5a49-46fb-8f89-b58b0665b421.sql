@@ -1,0 +1,1 @@
+ALTER TABLE public.parcels DROP CONSTRAINT IF EXISTS parcels_matrikel_id_ejerlav_key;

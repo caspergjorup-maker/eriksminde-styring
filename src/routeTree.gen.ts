@@ -21,6 +21,7 @@ import { Route as AuthenticatedKunderRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedJagtlejeRouteImport } from './routes/_authenticated/jagtleje'
 import { Route as AuthenticatedFakturakladderRouteImport } from './routes/_authenticated/fakturakladder'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
+import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as ApiDineroExportInvoiceRouteImport } from './routes/api/dinero/export-invoice'
 
@@ -87,6 +88,11 @@ const AuthenticatedDokumenterRoute = AuthenticatedDokumenterRouteImport.update({
   path: '/dokumenter',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBygningerRoute = AuthenticatedBygningerRouteImport.update({
+  id: '/bygninger',
+  path: '/bygninger',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBudgetRoute = AuthenticatedBudgetRouteImport.update({
   id: '/budget',
   path: '/budget',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/budget': typeof AuthenticatedBudgetRoute
+  '/bygninger': typeof AuthenticatedBygningerRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/budget': typeof AuthenticatedBudgetRoute
+  '/bygninger': typeof AuthenticatedBygningerRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/budget': typeof AuthenticatedBudgetRoute
+  '/_authenticated/bygninger': typeof AuthenticatedBygningerRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
   '/_authenticated/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/_authenticated/jagtleje': typeof AuthenticatedJagtlejeRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/budget'
+    | '/bygninger'
     | '/dokumenter'
     | '/fakturakladder'
     | '/jagtleje'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/budget'
+    | '/bygninger'
     | '/dokumenter'
     | '/fakturakladder'
     | '/jagtleje'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/budget'
+    | '/_authenticated/bygninger'
     | '/_authenticated/dokumenter'
     | '/_authenticated/fakturakladder'
     | '/_authenticated/jagtleje'
@@ -288,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDokumenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bygninger': {
+      id: '/_authenticated/bygninger'
+      path: '/bygninger'
+      fullPath: '/bygninger'
+      preLoaderRoute: typeof AuthenticatedBygningerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/budget': {
       id: '/_authenticated/budget'
       path: '/budget'
@@ -307,6 +326,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
+  AuthenticatedBygningerRoute: typeof AuthenticatedBygningerRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
   AuthenticatedFakturakladderRoute: typeof AuthenticatedFakturakladderRoute
   AuthenticatedJagtlejeRoute: typeof AuthenticatedJagtlejeRoute
@@ -319,6 +339,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
+  AuthenticatedBygningerRoute: AuthenticatedBygningerRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
   AuthenticatedFakturakladderRoute: AuthenticatedFakturakladderRoute,
   AuthenticatedJagtlejeRoute: AuthenticatedJagtlejeRoute,

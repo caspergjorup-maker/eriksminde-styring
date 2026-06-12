@@ -270,6 +270,12 @@ function BuildingsSection({
                         className="p-1.5 rounded hover:bg-muted text-muted-foreground"
                         title="Tilføj enhed"
                       ><Plus className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => setDrawingFor(b)}
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                        title="Tegn enheder på kort"
+                        disabled={!hasUnits}
+                      ><Shapes className="h-4 w-4" /></button>
                       <button onClick={() => setEditing(b)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => setToDelete(b)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>
                     </td>

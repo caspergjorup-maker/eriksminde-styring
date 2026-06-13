@@ -31,6 +31,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
+const FIELD_COLUMNS: FilterColumn<FieldRow>[] = [
+  { key: "name", label: "Mark", sortable: true, sortValue: (f) => f.name },
+  { key: "matrikel", label: "Matrikel", sortable: true, sortValue: (f) => f.matrikler.join(", ") },
+  {
+    key: "use_type",
+    label: "Type",
+    type: "enum",
+    get: (f) => f.use_type ?? "",
+    options: [
+      { value: "omdrift", label: "Omdrift" },
+      { value: "skov", label: "Skov" },
+      { value: "gaard", label: "Gårdsareal" },
+      { value: "", label: "(ingen)" },
+    ],
+    sortable: true,
+    sortValue: (f) => f.use_type ?? "",
+  },
+  { key: "totalHa", label: "Matrikelareal (ha)", type: "number", get: (f) => f.totalHa, sortable: true, sortValue: (f) => f.totalHa },
+  { key: "lease_area_ha", label: "Forpagtningsareal (ha)", type: "number", get: (f) => f.lease_area_ha, sortable: true, sortValue: (f) => f.lease_area_ha },
+  { key: "eligible_area_ha", label: "Støtteberettiget (ha)", type: "number", get: (f) => f.eligible_area_ha, sortable: true, sortValue: (f) => f.eligible_area_ha },
+  { key: "lease_price_per_ha", label: "Pris/ha (kr)", type: "number", get: (f) => f.lease_price_per_ha, sortable: true, sortValue: (f) => f.lease_price_per_ha },
+  {
+    key: "annual",
+    label: "Årlig afgift (kr)",
+    type: "number",
+    get: (f) => (f.lease_area_ha != null && f.lease_price_per_ha != null ? f.lease_area_ha * f.lease_price_per_ha : null),
+    sortable: true,
+    sortValue: (f) => (f.lease_area_ha != null && f.lease_price_per_ha != null ? f.lease_area_ha * f.lease_price_per_ha : null),
+  },
+  {
+    key: "soil_type",
+    label: "Jordtype",
+    type: "enum",
+    get: (f) => f.soil_type ?? "",
+    sortable: true,
+    sortValue: (f) => f.soil_type ?? "",
+  },
+  {
+    key: "is_drained",
+    label: "Drænet",
+    type: "enum",
+    get: (f) => (f.is_drained ? "Ja" : "Nej"),
+    options: [
+      { value: "Ja", label: "Ja" },
+      { value: "Nej", label: "Nej" },
+    ],
+  },
+];
 
 const NONE = "__none__";
 

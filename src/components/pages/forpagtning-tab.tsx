@@ -138,17 +138,19 @@ export function LandbrugsjordPage() {
         </Button>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg forpagter, mark, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Forpagter</th>
+              <SortableHeader label="Forpagter" sortKey="leaseholder" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Marker</th>
-              <th className="px-4 py-2.5 font-medium text-right">Areal (ha)</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/ha</th>
-              <th className="px-4 py-2.5 font-medium text-right">Årlig leje</th>
+              <SortableHeader label="Areal (ha)" sortKey="area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/ha" sortKey="price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Årlig leje" sortKey="annual_fee" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
-              <th className="px-4 py-2.5 font-medium">Udløb</th>
+              <SortableHeader label="Udløb" sortKey="contract_end" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

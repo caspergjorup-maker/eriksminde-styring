@@ -143,15 +143,17 @@ export function HalmLagerPage() {
         </div>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg balletype, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Balletype</th>
-              <th className="px-4 py-2.5 font-medium">Høstår</th>
-              <th className="px-4 py-2.5 font-medium text-right">Antal</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/stk</th>
-              <th className="px-4 py-2.5 font-medium text-right">Værdi</th>
+              <SortableHeader label="Balletype" sortKey="bale_type" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Høstår" sortKey="harvest_year" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Antal" sortKey="quantity" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/stk" sortKey="price_per_unit" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Værdi" sortKey="value" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Noter</th>
               <th className="px-4 py-2.5 w-24"></th>
             </tr>

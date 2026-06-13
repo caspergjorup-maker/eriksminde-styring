@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { Pencil, MapPin } from "lucide-react";
+import { Pencil, MapPin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -11,7 +11,17 @@ import {
   USE_TYPE_LABELS,
   type FieldRow,
 } from "@/lib/use-matrikel";
-import { SOIL_TYPES, updateField } from "@/lib/fields.functions";
+import { SOIL_TYPES, updateField, deleteField } from "@/lib/fields.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

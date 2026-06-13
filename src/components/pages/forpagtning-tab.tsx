@@ -41,6 +41,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
+const LEASE_COLUMNS: FilterColumn<LandLease>[] = [
+  {
+    key: "leaseholder",
+    label: "Forpagter",
+    type: "enum",
+    get: (r) => r.leaseholder_name ?? "",
+    sortable: true,
+    sortValue: (r) => r.leaseholder_name ?? "",
+  },
+  { key: "area_ha", label: "Areal (ha)", type: "number", get: (r) => r.area_ha, sortable: true, sortValue: (r) => r.area_ha },
+  { key: "price_per_ha", label: "Pris/ha", type: "number", get: (r) => r.price_per_ha, sortable: true, sortValue: (r) => r.price_per_ha },
+  { key: "annual_fee", label: "Årlig leje", type: "number", get: (r) => r.annual_fee ?? null, sortable: true, sortValue: (r) => r.annual_fee ?? null },
+  { key: "contract_end", label: "Udløb", sortable: true, sortValue: (r) => r.contract_end ?? "" },
+];
 
 
 const NONE = "__none__";

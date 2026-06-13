@@ -240,7 +240,7 @@ function BuildingsSection({
             {!loading && filteredBuildings.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
-            {buildings.map((b) => {
+            {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];
               const isExpanded = expanded.has(b.id);
               const hasUnits = bUnits.length > 0;

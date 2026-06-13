@@ -205,19 +205,21 @@ export function MarkerPage() {
         </Button>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg mark, matrikel, jordtype…" />
+
       <div className="rounded-lg border border-border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="text-left px-3 py-2 font-medium">Mark</th>
-              <th className="text-left px-3 py-2 font-medium">Matrikel</th>
-              <th className="text-left px-3 py-2 font-medium">Type</th>
-              <th className="text-right px-3 py-2 font-medium">Matrikelareal</th>
-              <th className="text-right px-3 py-2 font-medium">Forpagtningsareal</th>
-              <th className="text-right px-3 py-2 font-medium">Støtteberettiget</th>
-              <th className="text-right px-3 py-2 font-medium">Pris/ha</th>
-              <th className="text-right px-3 py-2 font-medium">Årlig afgift</th>
-              <th className="text-left px-3 py-2 font-medium">Jordtype</th>
+              <SortableHeader label="Mark" sortKey="name" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Støtteberettiget" sortKey="eligible_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Pris/ha" sortKey="lease_price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Årlig afgift" sortKey="annual" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Jordtype" sortKey="soil_type" sort={filters.sort} onToggle={filters.toggleSort} />
               <th className="text-left px-3 py-2 font-medium">Drænet</th>
               <th className="px-3 py-2 w-12"></th>
             </tr>

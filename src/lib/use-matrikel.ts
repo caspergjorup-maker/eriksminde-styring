@@ -128,6 +128,7 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
         registreretAreaHa: regHa,
         netAreaHa: p.net_area_ha,
         fieldAreaHa: p.field_area_ha,
+        fieldId: p.field_id ?? null,
         fieldName,
         fieldNames: fieldName ? [fieldName] : [],
         notes: p.notes,

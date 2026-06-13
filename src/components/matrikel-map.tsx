@@ -1,9 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-draw";
-import "leaflet-draw/dist/leaflet.draw.css";
-import { useServerFn } from "@tanstack/react-start";
 import union from "@turf/union";
 import bbox from "@turf/bbox";
 import bboxClip from "@turf/bbox-clip";
@@ -11,7 +8,6 @@ import { featureCollection } from "@turf/helpers";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
-import { saveParcelGeometry } from "@/lib/parcels.functions";
 
 
 type UseType = "omdrift" | "skov" | "gaard";

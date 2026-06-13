@@ -671,7 +671,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         </button>
         <div className="flex-1" />
         <button
-          onClick={startDrawNewField}
+          onClick={() => startDrawNewField()}
           disabled={!!editingField}
           className="px-3.5 py-1.5 text-[13px] rounded-md bg-[#1D9E75] text-white hover:opacity-90 disabled:opacity-40"
         >

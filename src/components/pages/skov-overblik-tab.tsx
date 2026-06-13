@@ -89,10 +89,24 @@ export function SkovOverblikPage() {
   const update = useServerFn(updateForestParcel);
   const remove = useServerFn(deleteForestParcel);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["forest-parcels"],
     queryFn: () => list(),
   });
+  const cols: FilterColumn<ForestParcelRow>[] = [
+    { key: "name", label: "Navn", sortable: true, sortValue: (r) => r.name },
+    { key: "tree_species", label: "Træart", type: "enum", get: (r) => r.tree_species ?? "", options: TREE_SPECIES.map((t) => ({ value: t, label: TREE_SPECIES_LABEL[t] })), sortable: true, sortValue: (r) => r.tree_species ?? "" },
+    { key: "area_ha", label: "Areal (ha)", type: "number", get: (r) => r.area_ha != null ? Number(r.area_ha) : null, sortable: true, sortValue: (r) => r.area_ha != null ? Number(r.area_ha) : null },
+    { key: "age", label: "Alder", type: "number", get: (r) => r.average_age_years, sortable: true, sortValue: (r) => r.average_age_years },
+    { key: "harvest", label: "Hugst fra (år)", type: "number", get: (r) => r.estimated_harvest_year_from, sortable: true, sortValue: (r) => r.estimated_harvest_year_from },
+    { key: "status", label: "Status", type: "enum", get: (r) => r.status ?? "", options: PARCEL_STATUS.map((t) => ({ value: t, label: PARCEL_STATUS_LABEL[t] })), sortable: true, sortValue: (r) => r.status ?? "" },
+  ];
+  const filters = useTableFilters({
+    rows: allRows,
+    columns: cols,
+    searchFields: [(r) => r.name, (r) => r.notes ?? ""],
+  });
+  const rows = filters.rows;
 
   const [editing, setEditing] = useState<ForestParcelRow | null>(null);
   const [creating, setCreating] = useState(false);

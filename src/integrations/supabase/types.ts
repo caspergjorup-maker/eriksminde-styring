@@ -417,6 +417,7 @@ export type Database = {
         Row: {
           created_at: string
           eligible_area_ha: number | null
+          geometry: Json | null
           has_irrigation: boolean
           id: string
           is_drained: boolean
@@ -432,6 +433,7 @@ export type Database = {
         Insert: {
           created_at?: string
           eligible_area_ha?: number | null
+          geometry?: Json | null
           has_irrigation?: boolean
           id?: string
           is_drained?: boolean
@@ -447,6 +449,7 @@ export type Database = {
         Update: {
           created_at?: string
           eligible_area_ha?: number | null
+          geometry?: Json | null
           has_irrigation?: boolean
           id?: string
           is_drained?: boolean

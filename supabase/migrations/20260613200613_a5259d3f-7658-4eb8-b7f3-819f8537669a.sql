@@ -1,0 +1,1 @@
+ALTER TABLE public.fields ADD COLUMN IF NOT EXISTS geometry jsonb;

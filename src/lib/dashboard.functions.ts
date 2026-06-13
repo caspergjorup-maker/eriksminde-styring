@@ -17,6 +17,7 @@ export type DashboardSummary = {
   pendingBuildingLeases: Array<{ id: string; building: string; tenant: string }>;
   readyInvoices: Array<{ id: string; invoice_number: string | null; total_amount: number; contact: string | null }>;
   budgetProgress: Array<{ category: string; budget: number; realized: number }>;
+  openTasks: Array<{ id: string; title: string; priority: string; due_date: string | null; assignee: string | null }>;
 };
 
 export const getDashboardSummary = createServerFn({ method: "GET" })

@@ -114,9 +114,24 @@ export function HugstPage() {
     return Array.from(s).sort((a, b) => b - a);
   }, [rows]);
 
-  const filtered = yearFilter === "all"
+  const cols: FilterColumn<ForestActivityRow>[] = [
+    { key: "activity_date", label: "Dato", sortable: true, sortValue: (r) => r.activity_date ?? "" },
+    { key: "activity_type", label: "Aktivitet", type: "enum", get: (r) => r.activity_type, options: ACTIVITY_TYPES.map((t) => ({ value: t, label: ACTIVITY_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.activity_type },
+    { key: "parcel", label: "Parcel", type: "enum", get: (r) => r.parcel_name ?? "", sortable: true, sortValue: (r) => r.parcel_name ?? "" },
+    { key: "contractor", label: "Entreprenør", type: "enum", get: (r) => r.contractor_name ?? "", sortable: true, sortValue: (r) => r.contractor_name ?? "" },
+    { key: "volume_m3", label: "Volumen m³", type: "number", get: (r) => r.volume_m3 != null ? Number(r.volume_m3) : null, sortable: true, sortValue: (r) => r.volume_m3 != null ? Number(r.volume_m3) : null },
+    { key: "cost", label: "Omkostning", type: "number", get: (r) => r.cost != null ? Number(r.cost) : null, sortable: true, sortValue: (r) => r.cost != null ? Number(r.cost) : null },
+    { key: "revenue", label: "Indtægt", type: "number", get: (r) => r.revenue != null ? Number(r.revenue) : null, sortable: true, sortValue: (r) => r.revenue != null ? Number(r.revenue) : null },
+  ];
+  const baseFiltered = yearFilter === "all"
     ? rows
     : rows.filter((r) => r.activity_date && new Date(r.activity_date).getFullYear() === Number(yearFilter));
+  const tableFilters = useTableFilters({
+    rows: baseFiltered,
+    columns: cols,
+    searchFields: [(r) => r.parcel_name ?? "", (r) => r.contractor_name ?? "", (r) => r.notes ?? ""],
+  });
+  const filtered = tableFilters.rows;
 
   const totalCost = filtered.reduce((s, r) => s + Number(r.cost ?? 0), 0);
   const totalRevenue = filtered.reduce((s, r) => s + Number(r.revenue ?? 0), 0);

@@ -182,10 +182,38 @@ function DashboardPage() {
                 <Badge tone="blue">Klar</Badge>
               </Link>
             ))}
+            {(data?.openTasks ?? []).map((t) => {
+              const days = t.due_date ? (daysUntil(t.due_date) ?? 0) : null;
+              const tone =
+                t.priority === "critical"
+                  ? "red"
+                  : t.priority === "high"
+                    ? "yellow"
+                    : "blue";
+              return (
+                <Link
+                  key={`task-${t.id}`}
+                  to="/opgaver"
+                  className="flex items-center justify-between py-1.5 -mx-2 px-2 rounded-md hover:bg-muted/60 transition-colors"
+                >
+                  <div>
+                    <div className="text-sm font-medium">{t.title}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t.assignee ?? "Ingen ansvarlig"}
+                      {t.due_date ? ` · Forfalder ${formatDate(t.due_date)}` : ""}
+                    </div>
+                  </div>
+                  <Badge tone={tone}>
+                    {days !== null ? `${days} dage` : t.priority}
+                  </Badge>
+                </Link>
+              );
+            })}
             {!isLoading &&
               (data?.upcomingContracts.length ?? 0) === 0 &&
               (data?.pendingBuildingLeases.length ?? 0) === 0 &&
-              (data?.readyInvoices.length ?? 0) === 0 && (
+              (data?.readyInvoices.length ?? 0) === 0 &&
+              (data?.openTasks.length ?? 0) === 0 && (
                 <p className="text-sm text-muted-foreground">Ingen opgaver lige nu.</p>
               )}
           </div>

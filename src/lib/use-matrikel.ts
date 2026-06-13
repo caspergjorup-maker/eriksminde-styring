@@ -77,6 +77,7 @@ export type MatrikelRow = {
   netAreaHa: number | null;
   fieldAreaHa: number | null;
   fieldName: string | null;
+  fieldNames: string[];
   leaseholder: string | null;
   contractEnd: string | null;
   annualFee: number | null;
@@ -89,8 +90,7 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
   const gj = (await r.json()) as { features: Feature[] };
 
   const byField = new Map<string, Feature[]>();
-  const seenParcels = new Set<string>();
-  const matrikler: MatrikelRow[] = [];
+  const matrikelByKey = new Map<string, MatrikelRow>();
 
   for (const f of gj.features ?? []) {
     const p = f.properties.parcel;
@@ -100,27 +100,42 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       arr.push(f);
       byField.set(p.field_id, arr);
     }
-    if (!seenParcels.has(p.id)) {
-      seenParcels.add(p.id);
-      matrikler.push({
+    const key = `${p.matrikel_id}__${p.ejerlav}`;
+    const existing = matrikelByKey.get(key);
+    const fieldName = p.field?.name ?? null;
+    const regHa =
+      f.properties.registreretAreal != null
+        ? Number((f.properties.registreretAreal / 10000).toFixed(2))
+        : null;
+    if (!existing) {
+      matrikelByKey.set(key, {
         parcelId: p.id,
         matrikelnr: p.matrikel_id,
         ejerlav: p.ejerlav,
         use_type: p.use_type,
-        registreretAreaHa:
-          f.properties.registreretAreal != null
-            ? Number((f.properties.registreretAreal / 10000).toFixed(2))
-            : null,
+        registreretAreaHa: regHa,
         netAreaHa: p.net_area_ha,
         fieldAreaHa: p.field_area_ha,
-        fieldName: p.field?.name ?? null,
+        fieldName,
+        fieldNames: fieldName ? [fieldName] : [],
         leaseholder: p.land_leases?.leaseholder?.name ?? null,
         contractEnd: p.land_leases?.contract_end ?? null,
         annualFee: p.land_leases?.annual_fee ?? null,
         notes: p.notes,
       });
+    } else {
+      if (fieldName && !existing.fieldNames.includes(fieldName)) {
+        existing.fieldNames.push(fieldName);
+      }
+      existing.fieldAreaHa = (existing.fieldAreaHa ?? 0) + (p.field_area_ha ?? 0);
+      if (!existing.leaseholder && p.land_leases?.leaseholder?.name) {
+        existing.leaseholder = p.land_leases.leaseholder.name;
+        existing.contractEnd = p.land_leases.contract_end ?? null;
+        existing.annualFee = p.land_leases.annual_fee ?? null;
+      }
     }
   }
+  const matrikler: MatrikelRow[] = Array.from(matrikelByKey.values());
 
   const fields: FieldRow[] = [];
   byField.forEach((features, fieldId) => {

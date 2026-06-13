@@ -68,7 +68,7 @@ export function MatriklerPage() {
                     "—"
                   )}
                 </td>
-                <td className="px-3 py-2 text-xs">{m.fieldName ?? "—"}</td>
+                <td className="px-3 py-2 text-xs">{m.fieldNames.length > 0 ? m.fieldNames.join(", ") : "—"}</td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {m.registreretAreaHa != null ? `${m.registreretAreaHa} ha` : "—"}
                 </td>

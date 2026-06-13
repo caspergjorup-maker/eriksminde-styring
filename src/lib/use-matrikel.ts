@@ -76,6 +76,7 @@ export type MatrikelRow = {
   registreretAreaHa: number | null;
   netAreaHa: number | null;
   fieldAreaHa: number | null;
+  fieldId: string | null;
   fieldName: string | null;
   fieldNames: string[];
   notes: string | null;
@@ -127,6 +128,7 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
         registreretAreaHa: regHa,
         netAreaHa: p.net_area_ha,
         fieldAreaHa: p.field_area_ha,
+        fieldId: p.field_id ?? null,
         fieldName,
         fieldNames: fieldName ? [fieldName] : [],
         notes: p.notes,

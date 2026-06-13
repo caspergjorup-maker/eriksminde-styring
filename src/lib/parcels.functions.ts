@@ -24,3 +24,23 @@ export const saveParcelGeometry = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const USE_TYPES = ["omdrift", "skov", "gaard"] as const;
+
+const UpdateParcelSchema = z.object({
+  id: z.string().uuid(),
+  use_type: z.enum(USE_TYPES).nullable(),
+  field_id: z.string().uuid().nullable(),
+  net_area_ha: z.number().min(0).max(100000).nullable(),
+  notes: z.string().trim().max(2000).nullable(),
+});
+
+export const updateParcel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => UpdateParcelSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { id, ...rest } = data;
+    const { error } = await context.supabase.from("parcels").update(rest).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

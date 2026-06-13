@@ -321,7 +321,11 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           summaries.push(summary);
 
           let merged: Feature<Polygon | MultiPolygon> | null;
-          if (features.length === 1) {
+          // Prefer the field's own saved geometry over a union of parcel shapes
+          const savedGeom = (features[0].properties.parcel?.field as { geometry?: Polygon | MultiPolygon } | undefined)?.geometry;
+          if (savedGeom && (savedGeom.type === "Polygon" || savedGeom.type === "MultiPolygon")) {
+            merged = { type: "Feature", geometry: savedGeom, properties: {} };
+          } else if (features.length === 1) {
             merged = {
               type: "Feature",
               geometry: features[0].geometry,

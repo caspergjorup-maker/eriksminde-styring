@@ -129,9 +129,6 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
         fieldAreaHa: p.field_area_ha,
         fieldName,
         fieldNames: fieldName ? [fieldName] : [],
-        leaseholder: p.land_leases?.leaseholder?.name ?? null,
-        contractEnd: p.land_leases?.contract_end ?? null,
-        annualFee: p.land_leases?.annual_fee ?? null,
         notes: p.notes,
       });
     } else {
@@ -139,11 +136,6 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
         existing.fieldNames.push(fieldName);
       }
       existing.fieldAreaHa = (existing.fieldAreaHa ?? 0) + (p.field_area_ha ?? 0);
-      if (!existing.leaseholder && p.land_leases?.leaseholder?.name) {
-        existing.leaseholder = p.land_leases.leaseholder.name;
-        existing.contractEnd = p.land_leases.contract_end ?? null;
-        existing.annualFee = p.land_leases.annual_fee ?? null;
-      }
     }
   }
   const matrikler: MatrikelRow[] = Array.from(matrikelByKey.values());

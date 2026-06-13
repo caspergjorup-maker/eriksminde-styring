@@ -1,16 +1,15 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  MatrikelMap,
-  type FieldSummary,
-  type MatrikelMapHandle,
+  useMatrikelData,
   USE_TYPE_COLORS,
   USE_TYPE_LABELS,
-} from "@/components/matrikel-map";
+  type FieldRow,
+} from "@/lib/use-matrikel";
 import { SOIL_TYPES, updateField } from "@/lib/fields.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +52,7 @@ type FormState = {
   notes: string;
 };
 
-function fromField(f: FieldSummary): FormState {
+function fromField(f: FieldRow): FormState {
   return {
     name: f.name,
     use_type: f.use_type,
@@ -73,28 +72,19 @@ function fmtKr(n: number | null | undefined) {
 }
 
 export function MarkerPage() {
-  const mapRef = useRef<MatrikelMapHandle>(null);
-  const [fields, setFields] = useState<FieldSummary[]>([]);
-  const [editing, setEditing] = useState<FieldSummary | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const { data, isLoading, error } = useMatrikelData();
+  const fields = data?.fields ?? [];
+  const [editing, setEditing] = useState<FieldRow | null>(null);
   const qc = useQueryClient();
-
-  const handleRowClick = (id: string) => {
-    mapRef.current?.highlightField(id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-lg font-medium mb-1">Marker</h1>
       <p className="text-sm text-muted-foreground mb-5">
-        Skift mellem mark- og matrikelvisning. Klik på en mark for at se areal, forpagter og
-        kontraktoplysninger.
+        Oversigt over marker, arealer og forpagtning. Brug fanen "Kort" for kortvisning.
       </p>
 
-      <MatrikelMap key={reloadKey} ref={mapRef} onFieldsReady={setFields} />
-
-      <div className="mt-6 rounded-lg border border-border overflow-x-auto">
+      <div className="rounded-lg border border-border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -112,10 +102,24 @@ export function MarkerPage() {
             </tr>
           </thead>
           <tbody>
-            {fields.length === 0 && (
+            {isLoading && (
               <tr>
                 <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser marker…
+                </td>
+              </tr>
+            )}
+            {error && !isLoading && (
+              <tr>
+                <td colSpan={11} className="px-3 py-6 text-center text-destructive text-xs">
+                  Kunne ikke hente marker.
+                </td>
+              </tr>
+            )}
+            {!isLoading && !error && fields.length === 0 && (
+              <tr>
+                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                  Ingen marker fundet.
                 </td>
               </tr>
             )}
@@ -125,11 +129,7 @@ export function MarkerPage() {
                   ? f.lease_area_ha * f.lease_price_per_ha
                   : null;
               return (
-                <tr
-                  key={f.id}
-                  onClick={() => handleRowClick(f.id)}
-                  className="border-t border-border cursor-pointer hover:bg-muted/40 transition-colors"
-                >
+                <tr key={f.id} className="border-t border-border hover:bg-muted/40 transition-colors">
                   <td className="px-3 py-2 font-medium">{f.name}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">{f.matrikler.join(", ")}</td>
                   <td className="px-3 py-2">
@@ -157,10 +157,7 @@ export function MarkerPage() {
                   <td className="px-3 py-2 text-xs">{f.is_drained ? "Ja" : "Nej"}</td>
                   <td className="px-3 py-2 text-right">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditing(f);
-                      }}
+                      onClick={() => setEditing(f)}
                       className="p-1.5 rounded hover:bg-muted"
                       aria-label="Rediger"
                     >
@@ -178,8 +175,7 @@ export function MarkerPage() {
         editing={editing}
         onOpenChange={(o) => { if (!o) setEditing(null); }}
         onSaved={() => {
-          qc.invalidateQueries();
-          setReloadKey((k) => k + 1);
+          qc.invalidateQueries({ queryKey: ["matrikel-data"] });
           setEditing(null);
         }}
       />
@@ -190,7 +186,7 @@ export function MarkerPage() {
 function FieldDialog({
   editing, onOpenChange, onSaved,
 }: {
-  editing: FieldSummary | null;
+  editing: FieldRow | null;
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {
@@ -247,7 +243,6 @@ function FieldDialog({
             onSubmit={(e) => { e.preventDefault(); mut.mutate(); }}
             className="space-y-6"
           >
-            {/* Generelt */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Generelt</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -288,7 +283,6 @@ function FieldDialog({
               </div>
             </section>
 
-            {/* Arealer */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Arealer</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -318,7 +312,6 @@ function FieldDialog({
               </div>
             </section>
 
-            {/* Forpagtning & økonomi */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Forpagtning & økonomi</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -335,7 +328,6 @@ function FieldDialog({
               </div>
             </section>
 
-            {/* Jordbund */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Jordbund</h3>
               <div className="space-y-1.5">
@@ -365,7 +357,6 @@ function FieldDialog({
               </div>
             </section>
 
-            {/* Noter */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Noter</h3>
               <div className="space-y-1.5">

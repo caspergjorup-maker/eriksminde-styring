@@ -1,0 +1,188 @@
+import { useQuery } from "@tanstack/react-query";
+
+export type UseType = "omdrift" | "skov" | "gaard";
+
+type Leaseholder = { name?: string | null; phone?: string | null; email?: string | null };
+type Lease = {
+  annual_fee?: number | null;
+  price_per_ha?: number | null;
+  area_ha?: number | null;
+  contract_start?: string | null;
+  contract_end?: string | null;
+  leaseholder?: Leaseholder | null;
+};
+type Field = {
+  id: string;
+  name: string;
+  use_type: UseType | null;
+  notes: string | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
+};
+type Parcel = {
+  id: string;
+  matrikel_id: string;
+  ejerlav: string;
+  use_type: UseType | null;
+  net_area_ha: number | null;
+  field_area_ha: number | null;
+  notes: string | null;
+  field_id?: string | null;
+  field?: Field | null;
+  land_leases?: Lease | null;
+};
+
+type Feature = {
+  type: "Feature";
+  properties: {
+    matrikelnr?: string;
+    ejerlavsnavn?: string;
+    registreretAreal?: number;
+    parcel: Parcel | null;
+  };
+  geometry: unknown;
+};
+
+export type FieldRow = {
+  id: string;
+  name: string;
+  use_type: UseType | null;
+  notes: string | null;
+  matrikler: string[];
+  parcels: { id: string; matrikelnr: string }[];
+  totalHa: number;
+  leaseholder: string | null;
+  contractEnd: string | null;
+  annualFee: number | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
+};
+
+export type MatrikelRow = {
+  parcelId: string;
+  matrikelnr: string;
+  ejerlav: string;
+  use_type: UseType | null;
+  registreretAreaHa: number | null;
+  netAreaHa: number | null;
+  fieldAreaHa: number | null;
+  fieldName: string | null;
+  leaseholder: string | null;
+  contractEnd: string | null;
+  annualFee: number | null;
+  notes: string | null;
+};
+
+async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: MatrikelRow[] }> {
+  const r = await fetch("/api/matrikel");
+  if (!r.ok) throw new Error(`Kunne ikke hente matrikeldata (HTTP ${r.status})`);
+  const gj = (await r.json()) as { features: Feature[] };
+
+  const byField = new Map<string, Feature[]>();
+  const seenParcels = new Set<string>();
+  const matrikler: MatrikelRow[] = [];
+
+  for (const f of gj.features ?? []) {
+    const p = f.properties.parcel;
+    if (!p) continue;
+    if (p.field_id) {
+      const arr = byField.get(p.field_id) ?? [];
+      arr.push(f);
+      byField.set(p.field_id, arr);
+    }
+    if (!seenParcels.has(p.id)) {
+      seenParcels.add(p.id);
+      matrikler.push({
+        parcelId: p.id,
+        matrikelnr: p.matrikel_id,
+        ejerlav: p.ejerlav,
+        use_type: p.use_type,
+        registreretAreaHa:
+          f.properties.registreretAreal != null
+            ? Number((f.properties.registreretAreal / 10000).toFixed(2))
+            : null,
+        netAreaHa: p.net_area_ha,
+        fieldAreaHa: p.field_area_ha,
+        fieldName: p.field?.name ?? null,
+        leaseholder: p.land_leases?.leaseholder?.name ?? null,
+        contractEnd: p.land_leases?.contract_end ?? null,
+        annualFee: p.land_leases?.annual_fee ?? null,
+        notes: p.notes,
+      });
+    }
+  }
+
+  const fields: FieldRow[] = [];
+  byField.forEach((features, fieldId) => {
+    const fieldMeta = features[0].properties.parcel?.field;
+    if (!fieldMeta) return;
+    const totalHa = features.reduce(
+      (s, f) =>
+        s +
+        (f.properties.parcel?.field_area_ha ??
+          f.properties.parcel?.net_area_ha ??
+          (f.properties.registreretAreal ? f.properties.registreretAreal / 10000 : 0)),
+      0,
+    );
+    const lease =
+      features.find((m) => m.properties.parcel?.land_leases)?.properties.parcel?.land_leases ??
+      null;
+    fields.push({
+      id: fieldId,
+      name: fieldMeta.name,
+      use_type: fieldMeta.use_type,
+      notes: fieldMeta.notes,
+      matrikler: features.map((m) => m.properties.matrikelnr ?? "?"),
+      parcels: features
+        .map((m) => ({
+          id: m.properties.parcel?.id ?? "",
+          matrikelnr: m.properties.matrikelnr ?? "?",
+        }))
+        .filter((p) => p.id),
+      totalHa: Number(totalHa.toFixed(2)),
+      leaseholder: lease?.leaseholder?.name ?? null,
+      contractEnd: lease?.contract_end ?? null,
+      annualFee: lease?.annual_fee ?? null,
+      lease_area_ha: fieldMeta.lease_area_ha ?? null,
+      lease_price_per_ha: fieldMeta.lease_price_per_ha ?? null,
+      soil_type: fieldMeta.soil_type ?? null,
+      is_drained: fieldMeta.is_drained ?? null,
+      has_irrigation: fieldMeta.has_irrigation ?? null,
+      eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
+      non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
+    });
+  });
+
+  fields.sort((a, b) => a.name.localeCompare(b.name, "da"));
+  matrikler.sort((a, b) => a.matrikelnr.localeCompare(b.matrikelnr, "da", { numeric: true }));
+  return { fields, matrikler };
+}
+
+export function useMatrikelData() {
+  return useQuery({
+    queryKey: ["matrikel-data"],
+    queryFn: fetchMatrikel,
+    staleTime: 60_000,
+  });
+}
+
+export const USE_TYPE_COLORS: Record<UseType, string> = {
+  omdrift: "#1D9E75",
+  skov: "#085041",
+  gaard: "#378ADD",
+};
+export const USE_TYPE_LABELS: Record<UseType, string> = {
+  omdrift: "Omdriftsjord",
+  skov: "Skov / natur",
+  gaard: "Gårdsareal",
+};

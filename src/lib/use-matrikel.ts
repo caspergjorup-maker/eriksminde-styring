@@ -76,6 +76,7 @@ export type MatrikelRow = {
   registreretAreaHa: number | null;
   netAreaHa: number | null;
   fieldAreaHa: number | null;
+  fieldId: string | null;
   fieldName: string | null;
   fieldNames: string[];
   notes: string | null;

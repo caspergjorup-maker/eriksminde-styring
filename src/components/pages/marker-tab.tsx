@@ -387,6 +387,14 @@ export function MarkerPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={() => setDeleting(f)}
+                        className="p-1.5 rounded hover:bg-muted text-destructive"
+                        aria-label="Slet mark"
+                        title="Slet mark"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>

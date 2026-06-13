@@ -75,14 +75,67 @@ export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
   const fields = data?.fields ?? [];
   const [editing, setEditing] = useState<FieldRow | null>(null);
+  const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();
+  const update = useServerFn(updateField);
+
+  type UpdatePayload = {
+    id: string;
+    name: string;
+    use_type: "omdrift" | "skov" | "gaard" | null;
+    lease_area_ha: number | null;
+    lease_price_per_ha: number | null;
+    eligible_area_ha: number | null;
+    non_eligible_area_ha: number | null;
+    soil_type: string | null;
+    is_drained: boolean;
+    has_irrigation: boolean;
+    notes: string | null;
+  };
+  const saveMut = useMutation({
+    mutationFn: (payload: UpdatePayload) => update({ data: payload }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["matrikel-data"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function patchField(f: FieldRow, patch: Partial<FormState>) {
+    const base = fromField(f);
+    const merged = { ...base, ...patch };
+    const numOrNull = (s: string) => (s.trim() === "" ? null : Number(s));
+    saveMut.mutate({
+      id: f.id,
+      name: merged.name.trim() || f.name,
+      use_type: merged.use_type,
+      lease_area_ha: numOrNull(merged.lease_area_ha),
+      lease_price_per_ha: numOrNull(merged.lease_price_per_ha),
+      eligible_area_ha: numOrNull(merged.eligible_area_ha),
+      non_eligible_area_ha: numOrNull(merged.non_eligible_area_ha),
+      soil_type: merged.soil_type,
+      is_drained: merged.is_drained,
+      has_irrigation: merged.has_irrigation,
+      notes: merged.notes.trim() || null,
+    });
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-lg font-medium mb-1">Marker</h1>
-      <p className="text-sm text-muted-foreground mb-5">
-        Oversigt over marker, arealer og forpagtning. Brug fanen "Kort" for kortvisning.
-      </p>
+      <div className="flex items-start justify-between mb-5 gap-4">
+        <div>
+          <h1 className="text-lg font-medium mb-1">Marker</h1>
+          <p className="text-sm text-muted-foreground">
+            Oversigt over marker, arealer og forpagtning. Brug fanen "Kort" for kortvisning.
+          </p>
+        </div>
+        <Button
+          variant={tableEdit ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTableEdit((v) => !v)}
+        >
+          {tableEdit ? "Færdig" : "Rediger i tabel"}
+        </Button>
+      </div>
 
       <div className="rounded-lg border border-border overflow-x-auto">
         <table className="w-full text-sm">
@@ -130,10 +183,33 @@ export function MarkerPage() {
                   : null;
               return (
                 <tr key={f.id} className="border-t border-border hover:bg-muted/40 transition-colors">
-                  <td className="px-3 py-2 font-medium">{f.name}</td>
+                  <td className="px-3 py-2 font-medium">
+                    {tableEdit ? (
+                      <InlineText
+                        key={f.name}
+                        value={f.name}
+                        onCommit={(v) => { if (v && v !== f.name) patchField(f, { name: v }); }}
+                      />
+                    ) : f.name}
+                  </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">{f.matrikler.join(", ")}</td>
                   <td className="px-3 py-2">
-                    {f.use_type ? (
+                    {tableEdit ? (
+                      <Select
+                        value={f.use_type ?? NONE}
+                        onValueChange={(v) =>
+                          patchField(f, { use_type: v === NONE ? null : (v as FormState["use_type"]) })
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NONE}>—</SelectItem>
+                          {USE_TYPE_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : f.use_type ? (
                       <span
                         className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] text-white"
                         style={{ background: USE_TYPE_COLORS[f.use_type] }}
@@ -146,15 +222,57 @@ export function MarkerPage() {
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{f.totalHa} ha</td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {f.lease_area_ha != null ? `${f.lease_area_ha} ha` : "—"}
+                    {tableEdit ? (
+                      <InlineNumber
+                        key={String(f.lease_area_ha)}
+                        value={f.lease_area_ha}
+                        onCommit={(v) => { if (v !== f.lease_area_ha) patchField(f, { lease_area_ha: v == null ? "" : String(v) }); }}
+                      />
+                    ) : f.lease_area_ha != null ? `${f.lease_area_ha} ha` : "—"}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {f.eligible_area_ha != null ? `${f.eligible_area_ha} ha` : "—"}
+                    {tableEdit ? (
+                      <InlineNumber
+                        key={String(f.eligible_area_ha)}
+                        value={f.eligible_area_ha}
+                        onCommit={(v) => { if (v !== f.eligible_area_ha) patchField(f, { eligible_area_ha: v == null ? "" : String(v) }); }}
+                      />
+                    ) : f.eligible_area_ha != null ? `${f.eligible_area_ha} ha` : "—"}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{fmtKr(f.lease_price_per_ha)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {tableEdit ? (
+                      <InlineNumber
+                        key={String(f.lease_price_per_ha)}
+                        value={f.lease_price_per_ha}
+                        onCommit={(v) => { if (v !== f.lease_price_per_ha) patchField(f, { lease_price_per_ha: v == null ? "" : String(v) }); }}
+                      />
+                    ) : fmtKr(f.lease_price_per_ha)}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums font-medium">{fmtKr(annual)}</td>
-                  <td className="px-3 py-2 text-xs">{f.soil_type ?? "—"}</td>
-                  <td className="px-3 py-2 text-xs">{f.is_drained ? "Ja" : "Nej"}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {tableEdit ? (
+                      <Select
+                        value={f.soil_type ?? NONE}
+                        onValueChange={(v) => patchField(f, { soil_type: v === NONE ? null : v })}
+                      >
+                        <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NONE}>—</SelectItem>
+                          {SOIL_TYPES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (f.soil_type ?? "—")}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {tableEdit ? (
+                      <Switch
+                        checked={!!f.is_drained}
+                        onCheckedChange={(v) => patchField(f, { is_drained: v })}
+                      />
+                    ) : f.is_drained ? "Ja" : "Nej"}
+                  </td>
                   <td className="px-3 py-2 text-right">
                     <button
                       onClick={() => setEditing(f)}
@@ -206,6 +324,33 @@ export function MarkerPage() {
         }}
       />
     </div>
+  );
+}
+
+function InlineText({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const [v, setV] = useState(value);
+  return (
+    <Input
+      value={v}
+      onChange={(e) => setV(e.target.value)}
+      onBlur={() => onCommit(v.trim())}
+      className="h-8"
+    />
+  );
+}
+
+function InlineNumber({ value, onCommit }: { value: number | null | undefined; onCommit: (v: number | null) => void }) {
+  const [v, setV] = useState(value != null ? String(value) : "");
+  return (
+    <Input
+      type="number"
+      step="0.01"
+      min="0"
+      value={v}
+      onChange={(e) => setV(e.target.value)}
+      onBlur={() => onCommit(v.trim() === "" ? null : Number(v))}
+      className="h-8 text-right"
+    />
   );
 }
 

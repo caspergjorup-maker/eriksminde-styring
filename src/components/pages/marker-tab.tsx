@@ -152,10 +152,22 @@ export function MarkerPage() {
   });
   const fields = filters.rows;
   const [editing, setEditing] = useState<FieldRow | null>(null);
+  const [deleting, setDeleting] = useState<FieldRow | null>(null);
   const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();
   const update = useServerFn(updateField);
+  const del = useServerFn(deleteField);
   const navigate = useNavigate();
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => del({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Mark slettet");
+      qc.invalidateQueries({ queryKey: ["matrikel-data"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   type UpdatePayload = {
     id: string;

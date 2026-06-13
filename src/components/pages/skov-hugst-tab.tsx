@@ -185,17 +185,19 @@ export function HugstPage() {
         </div>
       </div>
 
+      <TableToolbar api={tableFilters} searchPlaceholder="Søg parcel, entreprenør, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Dato</th>
-              <th className="px-4 py-2.5 font-medium">Aktivitet</th>
-              <th className="px-4 py-2.5 font-medium">Parcel</th>
-              <th className="px-4 py-2.5 font-medium">Entreprenør</th>
-              <th className="px-4 py-2.5 font-medium text-right">Volumen m³</th>
-              <th className="px-4 py-2.5 font-medium text-right">Omkostning</th>
-              <th className="px-4 py-2.5 font-medium text-right">Indtægt</th>
+              <SortableHeader label="Dato" sortKey="activity_date" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Aktivitet" sortKey="activity_type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Parcel" sortKey="parcel" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Entreprenør" sortKey="contractor" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Volumen m³" sortKey="volume_m3" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Omkostning" sortKey="cost" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Indtægt" sortKey="revenue" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

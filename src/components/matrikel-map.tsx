@@ -674,24 +674,6 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               </p>
             )}
 
-            {selectedField.parcels.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-border">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">
-                  Tegn geometri
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedField.parcels.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => startDrawing(p.id, p.matrikelnr)}
-                      className="px-2.5 py-1 text-xs rounded-md border border-border hover:bg-muted"
-                    >
-                      Matr. {p.matrikelnr}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

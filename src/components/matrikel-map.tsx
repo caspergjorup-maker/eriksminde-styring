@@ -633,7 +633,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSaving(true);
     try {
       if (editingField.id == null) {
-        await createFieldFn({ data: { name: editingField.name, use_type: null, geometry: drawnGeometry } });
+        await createFieldFn({ data: { name: editingField.name, use_type: null, geometry: drawnGeometry, parcelId: editingField.parcelId ?? null } });
       } else {
         await saveGeometryFn({ data: { fieldId: editingField.id, geometry: drawnGeometry } });
       }

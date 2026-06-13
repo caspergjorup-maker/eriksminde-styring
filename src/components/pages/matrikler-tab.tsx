@@ -1,5 +1,4 @@
 import { useMatrikelData, USE_TYPE_COLORS, USE_TYPE_LABELS } from "@/lib/use-matrikel";
-import { formatDKK, formatDate } from "@/lib/format";
 
 export function MatriklerPage() {
   const { data, isLoading, error } = useMatrikelData();

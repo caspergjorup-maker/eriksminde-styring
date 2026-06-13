@@ -56,6 +56,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
 
 
 
@@ -193,6 +199,20 @@ function BuildingsSection({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const buildingCols: FilterColumn<Building>[] = [
+    { key: "name", label: "Navn", sortable: true, sortValue: (b) => b.name },
+    { key: "type", label: "Type", type: "enum", get: (b) => b.type, options: BUILDING_TYPES.map((t) => ({ value: t, label: BUILDING_TYPE_LABEL[t] ?? t })), sortable: true, sortValue: (b) => b.type },
+    { key: "area_m2_gross", label: "Areal (m²)", type: "number", get: (b) => b.area_m2_gross, sortable: true, sortValue: (b) => b.area_m2_gross },
+    { key: "condition", label: "Stand", type: "enum", get: (b) => b.condition ?? "", options: BUILDING_CONDITIONS.map((c) => ({ value: c, label: CONDITION_LABEL[c] ?? c })), sortable: true, sortValue: (b) => b.condition ?? "" },
+    { key: "lease_status", label: "Status", type: "enum", get: (b) => b.lease_status ?? "", options: BUILDING_LEASE_STATUSES.map((s) => ({ value: s, label: LEASE_STATUS_LABEL[s] ?? s })) },
+  ];
+  const tableFilters = useTableFilters({
+    rows: buildings,
+    columns: buildingCols,
+    searchFields: [(b) => b.name, (b) => BUILDING_TYPE_LABEL[b.type] ?? b.type],
+  });
+  const filteredBuildings = tableFilters.rows;
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -201,14 +221,15 @@ function BuildingsSection({
           <Plus className="h-4 w-4 mr-1" /> Ny bygning
         </Button>
       </div>
+      <TableToolbar api={tableFilters} searchPlaceholder="Søg bygning…" />
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Navn</th>
-              <th className="px-4 py-2.5 font-medium">Type</th>
-              <th className="px-4 py-2.5 font-medium">Areal</th>
-              <th className="px-4 py-2.5 font-medium">Stand</th>
+              <SortableHeader label="Navn" sortKey="name" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Type" sortKey="type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Areal" sortKey="area_m2_gross" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Stand" sortKey="condition" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Forsyning</th>
               <th className="px-4 py-2.5 font-medium">Status / lejer</th>
               <th className="px-4 py-2.5 w-32"></th>
@@ -216,10 +237,10 @@ function BuildingsSection({
           </thead>
           <tbody className="divide-y divide-border">
             {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
-            {!loading && buildings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen bygninger endnu.</td></tr>
+            {!loading && filteredBuildings.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
-            {buildings.map((b) => {
+            {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];
               const isExpanded = expanded.has(b.id);
               const hasUnits = bUnits.length > 0;
@@ -710,6 +731,21 @@ function LeasesSection({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const leaseCols: FilterColumn<BuildingLease>[] = [
+    { key: "building", label: "Bygning", type: "enum", get: (l) => l.building_name ?? "", sortable: true, sortValue: (l) => l.building_name ?? "" },
+    { key: "tenant", label: "Lejer", type: "enum", get: (l) => l.tenant_name ?? "", sortable: true, sortValue: (l) => l.tenant_name ?? "" },
+    { key: "monthly_rent", label: "Mdl. leje", type: "number", get: (l) => l.monthly_rent, sortable: true, sortValue: (l) => l.monthly_rent },
+    { key: "deposit", label: "Depositum", type: "number", get: (l) => l.deposit, sortable: true, sortValue: (l) => l.deposit },
+    { key: "contract_end", label: "Slut", sortable: true, sortValue: (l) => l.contract_end ?? "" },
+    { key: "status", label: "Status", type: "enum", get: (l) => l.status, options: LEASE_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] ?? s })), sortable: true, sortValue: (l) => l.status },
+  ];
+  const leaseFilters = useTableFilters({
+    rows: leases,
+    columns: leaseCols,
+    searchFields: [(l) => l.building_name ?? "", (l) => l.unit_name ?? "", (l) => l.tenant_name ?? "", (l) => l.notes ?? ""],
+  });
+  const filteredLeases = leaseFilters.rows;
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -718,25 +754,26 @@ function LeasesSection({
           <Plus className="h-4 w-4 mr-1" /> Nyt lejemål
         </Button>
       </div>
+      <TableToolbar api={leaseFilters} searchPlaceholder="Søg bygning, lejer, noter…" />
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Bygning</th>
-              <th className="px-4 py-2.5 font-medium">Lejer</th>
-              <th className="px-4 py-2.5 font-medium text-right">Mdl. leje</th>
-              <th className="px-4 py-2.5 font-medium text-right">Depositum</th>
+              <SortableHeader label="Bygning" sortKey="building" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Lejer" sortKey="tenant" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Mdl. leje" sortKey="monthly_rent" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Depositum" sortKey="deposit" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
+              <SortableHeader label="Status" sortKey="status" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
-            {!loading && leases.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen lejemål endnu.</td></tr>
+            {!loading && filteredLeases.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{leases.length === 0 ? "Ingen lejemål endnu." : "Ingen lejemål matcher filtrene."}</td></tr>
             )}
-            {leases.map((l) => (
+            {filteredLeases.map((l) => (
               <tr key={l.id} className="hover:bg-muted/30">
                 <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}{l.unit_name ? <span className="text-xs text-muted-foreground"> · {l.unit_name}</span> : null}</td>
                 <td className="px-4 py-2.5">{l.tenant_name ?? "—"}</td>

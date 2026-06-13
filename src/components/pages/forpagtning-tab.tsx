@@ -41,6 +41,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
+const LEASE_COLUMNS: FilterColumn<LandLease>[] = [
+  {
+    key: "leaseholder",
+    label: "Forpagter",
+    type: "enum",
+    get: (r) => r.leaseholder_name ?? "",
+    sortable: true,
+    sortValue: (r) => r.leaseholder_name ?? "",
+  },
+  { key: "area_ha", label: "Areal (ha)", type: "number", get: (r) => r.area_ha, sortable: true, sortValue: (r) => r.area_ha },
+  { key: "price_per_ha", label: "Pris/ha", type: "number", get: (r) => r.price_per_ha, sortable: true, sortValue: (r) => r.price_per_ha },
+  { key: "annual_fee", label: "Årlig leje", type: "number", get: (r) => r.annual_fee ?? null, sortable: true, sortValue: (r) => r.annual_fee ?? null },
+  { key: "contract_end", label: "Udløb", sortable: true, sortValue: (r) => r.contract_end ?? "" },
+];
 
 
 const NONE = "__none__";
@@ -71,10 +92,20 @@ export function LandbrugsjordPage() {
   const update = useServerFn(updateLandLease);
   const remove = useServerFn(deleteLandLease);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["land-leases"],
     queryFn: () => list(),
   });
+  const filters = useTableFilters({
+    rows: allRows,
+    columns: LEASE_COLUMNS,
+    searchFields: [
+      (r) => r.leaseholder_name ?? "",
+      (r) => r.field_names.join(" "),
+      (r) => r.notes ?? "",
+    ],
+  });
+  const rows = filters.rows;
   const { data: holders = [] } = useQuery({
     queryKey: ["contacts-leaseholders"],
     queryFn: () => leaseholders(),
@@ -107,17 +138,19 @@ export function LandbrugsjordPage() {
         </Button>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg forpagter, mark, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Forpagter</th>
+              <SortableHeader label="Forpagter" sortKey="leaseholder" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Marker</th>
-              <th className="px-4 py-2.5 font-medium text-right">Areal (ha)</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/ha</th>
-              <th className="px-4 py-2.5 font-medium text-right">Årlig leje</th>
+              <SortableHeader label="Areal (ha)" sortKey="area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/ha" sortKey="price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Årlig leje" sortKey="annual_fee" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
-              <th className="px-4 py-2.5 font-medium">Udløb</th>
+              <SortableHeader label="Udløb" sortKey="contract_end" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

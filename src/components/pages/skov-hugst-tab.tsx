@@ -44,6 +44,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 type FormState = {
@@ -107,9 +114,24 @@ export function HugstPage() {
     return Array.from(s).sort((a, b) => b - a);
   }, [rows]);
 
-  const filtered = yearFilter === "all"
+  const cols: FilterColumn<ForestActivityRow>[] = [
+    { key: "activity_date", label: "Dato", sortable: true, sortValue: (r) => r.activity_date ?? "" },
+    { key: "activity_type", label: "Aktivitet", type: "enum", get: (r) => r.activity_type, options: ACTIVITY_TYPES.map((t) => ({ value: t, label: ACTIVITY_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.activity_type },
+    { key: "parcel", label: "Parcel", type: "enum", get: (r) => r.parcel_name ?? "", sortable: true, sortValue: (r) => r.parcel_name ?? "" },
+    { key: "contractor", label: "Entreprenør", type: "enum", get: (r) => r.contractor_name ?? "", sortable: true, sortValue: (r) => r.contractor_name ?? "" },
+    { key: "volume_m3", label: "Volumen m³", type: "number", get: (r) => r.volume_m3 != null ? Number(r.volume_m3) : null, sortable: true, sortValue: (r) => r.volume_m3 != null ? Number(r.volume_m3) : null },
+    { key: "cost", label: "Omkostning", type: "number", get: (r) => r.cost != null ? Number(r.cost) : null, sortable: true, sortValue: (r) => r.cost != null ? Number(r.cost) : null },
+    { key: "revenue", label: "Indtægt", type: "number", get: (r) => r.revenue != null ? Number(r.revenue) : null, sortable: true, sortValue: (r) => r.revenue != null ? Number(r.revenue) : null },
+  ];
+  const baseFiltered = yearFilter === "all"
     ? rows
     : rows.filter((r) => r.activity_date && new Date(r.activity_date).getFullYear() === Number(yearFilter));
+  const tableFilters = useTableFilters({
+    rows: baseFiltered,
+    columns: cols,
+    searchFields: [(r) => r.parcel_name ?? "", (r) => r.contractor_name ?? "", (r) => r.notes ?? ""],
+  });
+  const filtered = tableFilters.rows;
 
   const totalCost = filtered.reduce((s, r) => s + Number(r.cost ?? 0), 0);
   const totalRevenue = filtered.reduce((s, r) => s + Number(r.revenue ?? 0), 0);
@@ -163,17 +185,19 @@ export function HugstPage() {
         </div>
       </div>
 
+      <TableToolbar api={tableFilters} searchPlaceholder="Søg parcel, entreprenør, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Dato</th>
-              <th className="px-4 py-2.5 font-medium">Aktivitet</th>
-              <th className="px-4 py-2.5 font-medium">Parcel</th>
-              <th className="px-4 py-2.5 font-medium">Entreprenør</th>
-              <th className="px-4 py-2.5 font-medium text-right">Volumen m³</th>
-              <th className="px-4 py-2.5 font-medium text-right">Omkostning</th>
-              <th className="px-4 py-2.5 font-medium text-right">Indtægt</th>
+              <SortableHeader label="Dato" sortKey="activity_date" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Aktivitet" sortKey="activity_type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Parcel" sortKey="parcel" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Entreprenør" sortKey="contractor" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Volumen m³" sortKey="volume_m3" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Omkostning" sortKey="cost" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Indtægt" sortKey="revenue" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

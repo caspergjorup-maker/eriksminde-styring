@@ -42,6 +42,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 type FormState = {
@@ -71,10 +78,24 @@ export function HalmLagerPage() {
   const update = useServerFn(updateStrawInventory);
   const remove = useServerFn(deleteStrawInventory);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["straw-inventory"],
     queryFn: () => list(),
   });
+
+  const columns: FilterColumn<StrawInventoryRow>[] = [
+    { key: "bale_type", label: "Balletype", type: "enum", get: (r) => r.bale_type, options: BALE_TYPES.map((t) => ({ value: t, label: BALE_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.bale_type },
+    { key: "harvest_year", label: "Høstår", type: "enum", get: (r) => String(r.harvest_year ?? ""), sortable: true, sortValue: (r) => r.harvest_year ?? 0 },
+    { key: "quantity", label: "Antal", type: "number", get: (r) => r.quantity, sortable: true, sortValue: (r) => r.quantity },
+    { key: "price_per_unit", label: "Pris/stk", type: "number", get: (r) => Number(r.price_per_unit), sortable: true, sortValue: (r) => Number(r.price_per_unit) },
+    { key: "value", label: "Værdi", type: "number", get: (r) => r.quantity * Number(r.price_per_unit), sortable: true, sortValue: (r) => r.quantity * Number(r.price_per_unit) },
+  ];
+  const filters = useTableFilters({
+    rows: allRows,
+    columns,
+    searchFields: [(r) => labelFor(r.bale_type), (r) => r.notes ?? ""],
+  });
+  const rows = filters.rows;
 
   const [editing, setEditing] = useState<StrawInventoryRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -122,15 +143,17 @@ export function HalmLagerPage() {
         </div>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg balletype, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Balletype</th>
-              <th className="px-4 py-2.5 font-medium">Høstår</th>
-              <th className="px-4 py-2.5 font-medium text-right">Antal</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/stk</th>
-              <th className="px-4 py-2.5 font-medium text-right">Værdi</th>
+              <SortableHeader label="Balletype" sortKey="bale_type" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Høstår" sortKey="harvest_year" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Antal" sortKey="quantity" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/stk" sortKey="price_per_unit" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Værdi" sortKey="value" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Noter</th>
               <th className="px-4 py-2.5 w-24"></th>
             </tr>

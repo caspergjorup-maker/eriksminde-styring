@@ -44,6 +44,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 type FormState = {
@@ -82,10 +89,24 @@ export function SkovOverblikPage() {
   const update = useServerFn(updateForestParcel);
   const remove = useServerFn(deleteForestParcel);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["forest-parcels"],
     queryFn: () => list(),
   });
+  const cols: FilterColumn<ForestParcelRow>[] = [
+    { key: "name", label: "Navn", sortable: true, sortValue: (r) => r.name },
+    { key: "tree_species", label: "Træart", type: "enum", get: (r) => r.tree_species ?? "", options: TREE_SPECIES.map((t) => ({ value: t, label: TREE_SPECIES_LABEL[t] })), sortable: true, sortValue: (r) => r.tree_species ?? "" },
+    { key: "area_ha", label: "Areal (ha)", type: "number", get: (r) => r.area_ha != null ? Number(r.area_ha) : null, sortable: true, sortValue: (r) => r.area_ha != null ? Number(r.area_ha) : null },
+    { key: "age", label: "Alder", type: "number", get: (r) => r.average_age_years, sortable: true, sortValue: (r) => r.average_age_years },
+    { key: "harvest", label: "Hugst fra (år)", type: "number", get: (r) => r.estimated_harvest_year_from, sortable: true, sortValue: (r) => r.estimated_harvest_year_from },
+    { key: "status", label: "Status", type: "enum", get: (r) => r.status ?? "", options: PARCEL_STATUS.map((t) => ({ value: t, label: PARCEL_STATUS_LABEL[t] })), sortable: true, sortValue: (r) => r.status ?? "" },
+  ];
+  const filters = useTableFilters({
+    rows: allRows,
+    columns: cols,
+    searchFields: [(r) => r.name, (r) => r.notes ?? ""],
+  });
+  const rows = filters.rows;
 
   const [editing, setEditing] = useState<ForestParcelRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -133,16 +154,18 @@ export function SkovOverblikPage() {
         </div>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg parcel, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Navn</th>
-              <th className="px-4 py-2.5 font-medium">Træart</th>
-              <th className="px-4 py-2.5 font-medium text-right">Areal (ha)</th>
-              <th className="px-4 py-2.5 font-medium text-right">Alder</th>
-              <th className="px-4 py-2.5 font-medium">Hugst (år)</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
+              <SortableHeader label="Navn" sortKey="name" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Træart" sortKey="tree_species" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Areal (ha)" sortKey="area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Alder" sortKey="age" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Hugst (år)" sortKey="harvest" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Status" sortKey="status" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

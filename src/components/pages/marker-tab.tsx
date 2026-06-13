@@ -31,6 +31,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
+const FIELD_COLUMNS: FilterColumn<FieldRow>[] = [
+  { key: "name", label: "Mark", sortable: true, sortValue: (f) => f.name },
+  { key: "matrikel", label: "Matrikel", sortable: true, sortValue: (f) => f.matrikler.join(", ") },
+  {
+    key: "use_type",
+    label: "Type",
+    type: "enum",
+    get: (f) => f.use_type ?? "",
+    options: [
+      { value: "omdrift", label: "Omdrift" },
+      { value: "skov", label: "Skov" },
+      { value: "gaard", label: "Gårdsareal" },
+      { value: "", label: "(ingen)" },
+    ],
+    sortable: true,
+    sortValue: (f) => f.use_type ?? "",
+  },
+  { key: "totalHa", label: "Matrikelareal (ha)", type: "number", get: (f) => f.totalHa, sortable: true, sortValue: (f) => f.totalHa },
+  { key: "lease_area_ha", label: "Forpagtningsareal (ha)", type: "number", get: (f) => f.lease_area_ha, sortable: true, sortValue: (f) => f.lease_area_ha },
+  { key: "eligible_area_ha", label: "Støtteberettiget (ha)", type: "number", get: (f) => f.eligible_area_ha, sortable: true, sortValue: (f) => f.eligible_area_ha },
+  { key: "lease_price_per_ha", label: "Pris/ha (kr)", type: "number", get: (f) => f.lease_price_per_ha, sortable: true, sortValue: (f) => f.lease_price_per_ha },
+  {
+    key: "annual",
+    label: "Årlig afgift (kr)",
+    type: "number",
+    get: (f) => (f.lease_area_ha != null && f.lease_price_per_ha != null ? f.lease_area_ha * f.lease_price_per_ha : null),
+    sortable: true,
+    sortValue: (f) => (f.lease_area_ha != null && f.lease_price_per_ha != null ? f.lease_area_ha * f.lease_price_per_ha : null),
+  },
+  {
+    key: "soil_type",
+    label: "Jordtype",
+    type: "enum",
+    get: (f) => f.soil_type ?? "",
+    sortable: true,
+    sortValue: (f) => f.soil_type ?? "",
+  },
+  {
+    key: "is_drained",
+    label: "Drænet",
+    type: "enum",
+    get: (f) => (f.is_drained ? "Ja" : "Nej"),
+    options: [
+      { value: "Ja", label: "Ja" },
+      { value: "Nej", label: "Nej" },
+    ],
+  },
+];
 
 const NONE = "__none__";
 
@@ -74,7 +129,18 @@ function fmtKr(n: number | null | undefined) {
 
 export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
-  const fields = data?.fields ?? [];
+  const allFields = data?.fields ?? [];
+  const filters = useTableFilters({
+    rows: allFields,
+    columns: FIELD_COLUMNS,
+    searchFields: [
+      (f) => f.name,
+      (f) => f.matrikler.join(" "),
+      (f) => f.notes ?? "",
+      (f) => f.soil_type ?? "",
+    ],
+  });
+  const fields = filters.rows;
   const [editing, setEditing] = useState<FieldRow | null>(null);
   const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();
@@ -139,19 +205,21 @@ export function MarkerPage() {
         </Button>
       </div>
 
+      <TableToolbar api={filters} searchPlaceholder="Søg mark, matrikel, jordtype…" />
+
       <div className="rounded-lg border border-border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="text-left px-3 py-2 font-medium">Mark</th>
-              <th className="text-left px-3 py-2 font-medium">Matrikel</th>
-              <th className="text-left px-3 py-2 font-medium">Type</th>
-              <th className="text-right px-3 py-2 font-medium">Matrikelareal</th>
-              <th className="text-right px-3 py-2 font-medium">Forpagtningsareal</th>
-              <th className="text-right px-3 py-2 font-medium">Støtteberettiget</th>
-              <th className="text-right px-3 py-2 font-medium">Pris/ha</th>
-              <th className="text-right px-3 py-2 font-medium">Årlig afgift</th>
-              <th className="text-left px-3 py-2 font-medium">Jordtype</th>
+              <SortableHeader label="Mark" sortKey="name" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
+              <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Støtteberettiget" sortKey="eligible_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Pris/ha" sortKey="lease_price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Årlig afgift" sortKey="annual" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Jordtype" sortKey="soil_type" sort={filters.sort} onToggle={filters.toggleSort} />
               <th className="text-left px-3 py-2 font-medium">Drænet</th>
               <th className="px-3 py-2 w-12"></th>
             </tr>

@@ -44,6 +44,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 const NONE = "__none__";
@@ -82,10 +89,25 @@ export function HalmSalgPage() {
 
   const [filter, setFilter] = useState<"all" | "in" | "out">("all");
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["straw-movements", filter],
     queryFn: () => list({ data: { direction: filter } }),
   });
+  const movementCols: FilterColumn<StrawMovementRow>[] = [
+    { key: "movement_date", label: "Dato", sortable: true, sortValue: (r) => r.movement_date ?? "" },
+    { key: "direction", label: "Retning", type: "enum", get: (r) => r.direction, options: [{ value: "out", label: "Salg" }, { value: "in", label: "Køb" }], sortable: true, sortValue: (r) => r.direction },
+    { key: "bale_type", label: "Balletype", type: "enum", get: (r) => r.bale_type, options: BALE_TYPES.map((t) => ({ value: t, label: BALE_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.bale_type },
+    { key: "contact", label: "Kontakt", type: "enum", get: (r) => r.contact_name ?? "", sortable: true, sortValue: (r) => r.contact_name ?? "" },
+    { key: "quantity", label: "Antal", type: "number", get: (r) => r.quantity, sortable: true, sortValue: (r) => r.quantity },
+    { key: "unit_price", label: "Pris/stk", type: "number", get: (r) => Number(r.unit_price), sortable: true, sortValue: (r) => Number(r.unit_price) },
+    { key: "total_amount", label: "Beløb", type: "number", get: (r) => Number(r.total_amount ?? 0), sortable: true, sortValue: (r) => Number(r.total_amount ?? 0) },
+  ];
+  const tableFilters = useTableFilters({
+    rows: allRows,
+    columns: movementCols,
+    searchFields: [(r) => r.contact_name ?? "", (r) => labelFor(r.bale_type), (r) => r.notes ?? ""],
+  });
+  const rows = tableFilters.rows;
   const { data: contacts = [] } = useQuery({
     queryKey: ["straw-contacts"],
     queryFn: () => contactsFn(),
@@ -145,17 +167,19 @@ export function HalmSalgPage() {
         </TabsList>
       </Tabs>
 
+      <TableToolbar api={tableFilters} searchPlaceholder="Søg kontakt, balletype, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Dato</th>
-              <th className="px-4 py-2.5 font-medium">Retning</th>
-              <th className="px-4 py-2.5 font-medium">Balletype</th>
-              <th className="px-4 py-2.5 font-medium">Kontakt</th>
-              <th className="px-4 py-2.5 font-medium text-right">Antal</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/stk</th>
-              <th className="px-4 py-2.5 font-medium text-right">Beløb</th>
+              <SortableHeader label="Dato" sortKey="movement_date" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Retning" sortKey="direction" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Balletype" sortKey="bale_type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Kontakt" sortKey="contact" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Antal" sortKey="quantity" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/stk" sortKey="unit_price" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Beløb" sortKey="total_amount" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

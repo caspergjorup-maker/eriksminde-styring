@@ -11,7 +11,7 @@ export function MatriklerPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-lg font-medium mb-1">Matrikler</h1>
       <p className="text-sm text-muted-foreground mb-5">
-        Oversigt over matrikler fra Datafordeler med tilknyttede marker og forpagtninger.
+        Oversigt over matrikler fra Datafordeler med tilknyttede marker.
       </p>
 
       <div className="rounded-lg border border-border overflow-x-auto">

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { Pencil, MapPin } from "lucide-react";
+import { Pencil, MapPin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -11,7 +11,17 @@ import {
   USE_TYPE_LABELS,
   type FieldRow,
 } from "@/lib/use-matrikel";
-import { SOIL_TYPES, updateField } from "@/lib/fields.functions";
+import { SOIL_TYPES, updateField, deleteField } from "@/lib/fields.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,10 +152,22 @@ export function MarkerPage() {
   });
   const fields = filters.rows;
   const [editing, setEditing] = useState<FieldRow | null>(null);
+  const [deleting, setDeleting] = useState<FieldRow | null>(null);
   const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();
   const update = useServerFn(updateField);
+  const del = useServerFn(deleteField);
   const navigate = useNavigate();
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => del({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Mark slettet");
+      qc.invalidateQueries({ queryKey: ["matrikel-data"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   type UpdatePayload = {
     id: string;
@@ -365,6 +387,14 @@ export function MarkerPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={() => setDeleting(f)}
+                        className="p-1.5 rounded hover:bg-muted text-destructive"
+                        aria-label="Slet mark"
+                        title="Slet mark"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -408,6 +438,29 @@ export function MarkerPage() {
           setEditing(null);
         }}
       />
+
+      <AlertDialog open={deleting != null} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slet mark "{deleting?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && deleting.parcels.length > 0
+                ? `Marken er knyttet til ${deleting.parcels.length} matrikel-parcel(ler). Tilknytningen fjernes, men matriklerne bevares.`
+                : "Denne handling kan ikke fortrydes."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Annuller</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMut.isPending}
+              onClick={(e) => { e.preventDefault(); if (deleting) deleteMut.mutate(deleting.id); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? "Sletter…" : "Slet"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

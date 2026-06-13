@@ -42,3 +42,14 @@ export const updateField = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const DeleteSchema = z.object({ id: z.string().uuid() });
+
+export const deleteField = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => DeleteSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("fields").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

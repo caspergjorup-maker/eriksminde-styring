@@ -11,7 +11,7 @@ import { featureCollection } from "@turf/helpers";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
-import { saveFieldGeometry } from "@/lib/fields-geometry.functions";
+import { saveFieldGeometry, createField } from "@/lib/fields-geometry.functions";
 
 
 type UseType = "omdrift" | "skov" | "gaard";
@@ -122,10 +122,11 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<{ id: string; name: string } | null>(null);
+  const [editingField, setEditingField] = useState<{ id: string | null; name: string }  | null>(null);
   const [drawnGeometry, setDrawnGeometry] = useState<Polygon | MultiPolygon | null>(null);
   const [saving, setSaving] = useState(false);
   const saveGeometryFn = useServerFn(saveFieldGeometry);
+  const createFieldFn = useServerFn(createField);
 
 
   const resetParcelStyles = () => {
@@ -538,11 +539,63 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     }
   };
 
+  const startDrawNewField = () => {
+    const name = window.prompt("Navn på den nye mark:");
+    if (!name || !name.trim()) return;
+    // Reuse startDrawField's setup, but with a null id to signal "create"
+    const map = leafletMap.current;
+    if (!map) return;
+    setEditingField({ id: null, name: name.trim() });
+    setDrawnGeometry(null);
+    setSelectedParcel(null);
+    setSelectedField(null);
+    if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
+    if (rawGeojson.current) {
+      backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
+        interactive: false,
+        style: () => ({ color: "#1f2937", weight: 1.5, opacity: 0.85, dashArray: "4 3", fill: false }),
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties as FeatureProps;
+          (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });
+        },
+      }).addTo(map);
+    }
+    const fg = new L.FeatureGroup().addTo(map);
+    drawFeatureGroup.current = fg;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const drawHandler = new (L as any).Draw.Polygon(map, {
+      shapeOptions: { color: "#1D9E75", weight: 3, fillOpacity: 0.35 },
+      allowIntersection: false,
+      showArea: false,
+    });
+    drawHandler.enable();
+    activeDrawHandler.current = drawHandler;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map.once((L as any).Draw.Event.CREATED, (evt: any) => {
+      const layer = evt.layer as L.Polygon;
+      fg.addLayer(layer);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (layer as any).editing?.enable();
+      const geo = layer.toGeoJSON() as Feature<Polygon>;
+      setDrawnGeometry(geo.geometry);
+      layer.on("edit", () => {
+        const g = layer.toGeoJSON() as Feature<Polygon>;
+        setDrawnGeometry(g.geometry);
+      });
+      activeDrawHandler.current = null;
+    });
+  };
+
   const commitDrawing = async () => {
     if (!editingField || !drawnGeometry) return;
     setSaving(true);
     try {
-      await saveGeometryFn({ data: { fieldId: editingField.id, geometry: drawnGeometry } });
+      if (editingField.id == null) {
+        await createFieldFn({ data: { name: editingField.name, use_type: null, geometry: drawnGeometry } });
+      } else {
+        await saveGeometryFn({ data: { fieldId: editingField.id, geometry: drawnGeometry } });
+      }
       window.location.reload();
     } catch (e) {
       console.error(e);

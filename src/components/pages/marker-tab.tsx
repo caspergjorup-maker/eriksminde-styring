@@ -129,7 +129,18 @@ function fmtKr(n: number | null | undefined) {
 
 export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
-  const fields = data?.fields ?? [];
+  const allFields = data?.fields ?? [];
+  const filters = useTableFilters({
+    rows: allFields,
+    columns: FIELD_COLUMNS,
+    searchFields: [
+      (f) => f.name,
+      (f) => f.matrikler.join(" "),
+      (f) => f.notes ?? "",
+      (f) => f.soil_type ?? "",
+    ],
+  });
+  const fields = filters.rows;
   const [editing, setEditing] = useState<FieldRow | null>(null);
   const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();

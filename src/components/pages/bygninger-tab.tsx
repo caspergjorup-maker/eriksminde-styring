@@ -56,6 +56,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
 
 
 

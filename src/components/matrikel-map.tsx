@@ -203,7 +203,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[] }) => {
+      .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[]; allFields?: Array<{ id: string; name: string; use_type: UseType | null; geometry: Polygon | MultiPolygon | null; lease_area_ha: number | null; lease_price_per_ha: number | null; soil_type: string | null; is_drained: boolean | null; has_irrigation: boolean | null; eligible_area_ha: number | null; non_eligible_area_ha: number | null; notes: string | null }> }) => {
         if (ignored) return;
         rawGeojson.current = geojson;
         setLoading(false);
@@ -371,6 +371,38 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             properties: { field: summary },
           });
         });
+
+        // Add orphan fields (no parcel link) that have their own geometry
+        const linkedIds = new Set(summaries.map((s) => s.id));
+        for (const af of geojson.allFields ?? []) {
+          if (linkedIds.has(af.id)) continue;
+          if (!af.geometry || (af.geometry.type !== "Polygon" && af.geometry.type !== "MultiPolygon")) continue;
+          const summary: FieldSummary = {
+            id: af.id,
+            name: af.name,
+            use_type: af.use_type,
+            notes: af.notes,
+            matrikler: [],
+            parcels: [],
+            totalHa: 0,
+            leaseholder: null,
+            contractEnd: null,
+            annualFee: null,
+            lease_area_ha: af.lease_area_ha,
+            lease_price_per_ha: af.lease_price_per_ha,
+            soil_type: af.soil_type,
+            is_drained: af.is_drained,
+            has_irrigation: af.has_irrigation,
+            eligible_area_ha: af.eligible_area_ha,
+            non_eligible_area_ha: af.non_eligible_area_ha,
+          };
+          summaries.push(summary);
+          fieldFeatures.push({
+            type: "Feature",
+            geometry: af.geometry,
+            properties: { field: summary },
+          });
+        }
 
         summaries.sort((a, b) => a.name.localeCompare(b.name, "da"));
 

@@ -343,7 +343,22 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             }
           }
 
-          if (!merged) return;
+          if (!merged) {
+            // Fallback: build a MultiPolygon manually so disjoint or
+            // union-incompatible geometries still render.
+            const polys: number[][][][] = [];
+            for (const f of features) {
+              const g = f.geometry as Polygon | MultiPolygon;
+              if (g.type === "Polygon") polys.push(g.coordinates);
+              else if (g.type === "MultiPolygon") polys.push(...g.coordinates);
+            }
+            if (polys.length === 0) return;
+            merged = {
+              type: "Feature",
+              geometry: { type: "MultiPolygon", coordinates: polys },
+              properties: {},
+            };
+          }
           fieldFeatures.push({
             type: "Feature",
             geometry: merged.geometry,

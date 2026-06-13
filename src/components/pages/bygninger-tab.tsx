@@ -731,6 +731,21 @@ function LeasesSection({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const leaseCols: FilterColumn<BuildingLease>[] = [
+    { key: "building", label: "Bygning", type: "enum", get: (l) => l.building_name ?? "", sortable: true, sortValue: (l) => l.building_name ?? "" },
+    { key: "tenant", label: "Lejer", type: "enum", get: (l) => l.tenant_name ?? "", sortable: true, sortValue: (l) => l.tenant_name ?? "" },
+    { key: "monthly_rent", label: "Mdl. leje", type: "number", get: (l) => l.monthly_rent, sortable: true, sortValue: (l) => l.monthly_rent },
+    { key: "deposit", label: "Depositum", type: "number", get: (l) => l.deposit, sortable: true, sortValue: (l) => l.deposit },
+    { key: "contract_end", label: "Slut", sortable: true, sortValue: (l) => l.contract_end ?? "" },
+    { key: "status", label: "Status", type: "enum", get: (l) => l.status, options: LEASE_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] ?? s })), sortable: true, sortValue: (l) => l.status },
+  ];
+  const leaseFilters = useTableFilters({
+    rows: leases,
+    columns: leaseCols,
+    searchFields: [(l) => l.building_name ?? "", (l) => l.unit_name ?? "", (l) => l.tenant_name ?? "", (l) => l.notes ?? ""],
+  });
+  const filteredLeases = leaseFilters.rows;
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -739,25 +754,26 @@ function LeasesSection({
           <Plus className="h-4 w-4 mr-1" /> Nyt lejemål
         </Button>
       </div>
+      <TableToolbar api={leaseFilters} searchPlaceholder="Søg bygning, lejer, noter…" />
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Bygning</th>
-              <th className="px-4 py-2.5 font-medium">Lejer</th>
-              <th className="px-4 py-2.5 font-medium text-right">Mdl. leje</th>
-              <th className="px-4 py-2.5 font-medium text-right">Depositum</th>
+              <SortableHeader label="Bygning" sortKey="building" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Lejer" sortKey="tenant" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Mdl. leje" sortKey="monthly_rent" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Depositum" sortKey="deposit" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
+              <SortableHeader label="Status" sortKey="status" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
-            {!loading && leases.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen lejemål endnu.</td></tr>
+            {!loading && filteredLeases.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{leases.length === 0 ? "Ingen lejemål endnu." : "Ingen lejemål matcher filtrene."}</td></tr>
             )}
-            {leases.map((l) => (
+            {filteredLeases.map((l) => (
               <tr key={l.id} className="hover:bg-muted/30">
                 <td className="px-4 py-2.5 font-medium">{l.building_name ?? "—"}{l.unit_name ? <span className="text-xs text-muted-foreground"> · {l.unit_name}</span> : null}</td>
                 <td className="px-4 py-2.5">{l.tenant_name ?? "—"}</td>

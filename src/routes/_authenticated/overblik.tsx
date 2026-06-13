@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -130,8 +130,18 @@ function DashboardPage() {
             {(data?.upcomingContracts ?? []).map((c) => {
               const days = daysUntil(c.contract_end) ?? 0;
               const tone = days < 30 ? "red" : days < 60 ? "yellow" : "blue";
+              const to =
+                c.kind === "land"
+                  ? "/landbrugsjord"
+                  : c.kind === "building"
+                    ? "/bygninger"
+                    : "/jagtleje";
               return (
-                <div key={c.id} className="flex items-center justify-between py-1.5">
+                <Link
+                  key={c.id}
+                  to={to}
+                  className="flex items-center justify-between py-1.5 -mx-2 px-2 rounded-md hover:bg-muted/60 transition-colors"
+                >
                   <div>
                     <div className="text-sm font-medium">{c.label}</div>
                     <div className="text-xs text-muted-foreground">
@@ -139,20 +149,28 @@ function DashboardPage() {
                     </div>
                   </div>
                   <Badge tone={tone}>{days} dage</Badge>
-                </div>
+                </Link>
               );
             })}
             {(data?.pendingBuildingLeases ?? []).map((p) => (
-              <div key={`pend-${p.id}`} className="flex items-center justify-between py-1.5">
+              <Link
+                key={`pend-${p.id}`}
+                to="/bygninger"
+                className="flex items-center justify-between py-1.5 -mx-2 px-2 rounded-md hover:bg-muted/60 transition-colors"
+              >
                 <div>
                   <div className="text-sm font-medium">Ubetalt leje — {p.building}</div>
                   <div className="text-xs text-muted-foreground">{p.tenant}</div>
                 </div>
                 <Badge tone="yellow">Afventer</Badge>
-              </div>
+              </Link>
             ))}
             {(data?.readyInvoices ?? []).map((r) => (
-              <div key={`inv-${r.id}`} className="flex items-center justify-between py-1.5">
+              <Link
+                key={`inv-${r.id}`}
+                to="/fakturakladder"
+                className="flex items-center justify-between py-1.5 -mx-2 px-2 rounded-md hover:bg-muted/60 transition-colors"
+              >
                 <div>
                   <div className="text-sm font-medium">
                     Faktura klar {r.invoice_number ? `#${r.invoice_number}` : ""}
@@ -162,7 +180,7 @@ function DashboardPage() {
                   </div>
                 </div>
                 <Badge tone="blue">Klar</Badge>
-              </div>
+              </Link>
             ))}
             {!isLoading &&
               (data?.upcomingContracts.length ?? 0) === 0 &&

@@ -29,21 +29,21 @@ export function MatriklerPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser matrikler…
                 </td>
               </tr>
             )}
             {error && !isLoading && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-destructive text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-destructive text-xs">
                   Kunne ikke hente matrikler.
                 </td>
               </tr>
             )}
             {!isLoading && !error && matrikler.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Ingen matrikler fundet.
                 </td>
               </tr>
@@ -71,11 +71,6 @@ export function MatriklerPage() {
                 <td className="px-3 py-2 text-right tabular-nums">
                   {m.netAreaHa != null ? `${m.netAreaHa} ha` : "—"}
                 </td>
-                <td className="px-3 py-2 text-xs">{m.leaseholder ?? "—"}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {m.annualFee != null ? formatDKK(m.annualFee) : "—"}
-                </td>
-                <td className="px-3 py-2 text-xs">{formatDate(m.contractEnd) ?? "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -85,11 +80,6 @@ export function MatriklerPage() {
                 <td className="px-3 py-2" colSpan={4}>I alt ({matrikler.length})</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalRegistreret.toFixed(2)} ha</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalNet.toFixed(2)} ha</td>
-                <td className="px-3 py-2"></td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {formatDKK(matrikler.reduce((s, m) => s + (m.annualFee ?? 0), 0))}
-                </td>
-                <td></td>
               </tr>
             </tfoot>
           )}

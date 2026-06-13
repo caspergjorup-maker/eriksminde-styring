@@ -78,9 +78,6 @@ export type MatrikelRow = {
   fieldAreaHa: number | null;
   fieldName: string | null;
   fieldNames: string[];
-  leaseholder: string | null;
-  contractEnd: string | null;
-  annualFee: number | null;
   notes: string | null;
 };
 

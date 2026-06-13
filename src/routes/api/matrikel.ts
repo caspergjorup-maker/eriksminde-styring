@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/matrikel")({
           .from("parcels")
           .select(
             `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, field_id, custom_geometry,
-             field:field_id ( id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha ),
+             field:field_id ( id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha, geometry ),
              land_leases:land_lease_id (
                annual_fee, price_per_ha, area_ha, contract_start, contract_end,
                leaseholder:leaseholder_id ( name, phone, email )

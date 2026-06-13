@@ -1,6 +1,9 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-draw";
+import "leaflet-draw/dist/leaflet.draw.css";
+import { useServerFn } from "@tanstack/react-start";
 import union from "@turf/union";
 import bbox from "@turf/bbox";
 import bboxClip from "@turf/bbox-clip";
@@ -8,6 +11,7 @@ import { featureCollection } from "@turf/helpers";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
+import { saveFieldGeometry } from "@/lib/fields-geometry.functions";
 
 
 type UseType = "omdrift" | "skov" | "gaard";
@@ -88,6 +92,7 @@ export type FieldSummary = {
 
 export type MatrikelMapHandle = {
   highlightField: (fieldId: string) => void;
+  startDrawField: (fieldId: string) => void;
 };
 
 type Props = {
@@ -108,12 +113,18 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
   const parcelLayers = useRef<L.Path[]>([]);
   const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
+  const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
+  const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<{ id: string; name: string } | null>(null);
+  const [drawnGeometry, setDrawnGeometry] = useState<Polygon | MultiPolygon | null>(null);
+  const [saving, setSaving] = useState(false);
+  const saveGeometryFn = useServerFn(saveFieldGeometry);
 
 
   const resetParcelStyles = () => {
@@ -154,7 +165,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
   };
 
-  useImperativeHandle(ref, () => ({ highlightField }));
+  useImperativeHandle(ref, () => ({ highlightField, startDrawField }));
 
   // Swap layers when viewMode changes
   useEffect(() => {
@@ -310,7 +321,11 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           summaries.push(summary);
 
           let merged: Feature<Polygon | MultiPolygon> | null;
-          if (features.length === 1) {
+          // Prefer the field's own saved geometry over a union of parcel shapes
+          const savedGeom = (features[0].properties.parcel?.field as { geometry?: Polygon | MultiPolygon } | undefined)?.geometry;
+          if (savedGeom && (savedGeom.type === "Polygon" || savedGeom.type === "MultiPolygon")) {
+            merged = { type: "Feature", geometry: savedGeom, properties: {} };
+          } else if (features.length === 1) {
             merged = {
               type: "Feature",
               geometry: features[0].geometry,
@@ -436,7 +451,82 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const startDrawField = (fieldId: string) => {
+    const map = leafletMap.current;
+    if (!map) return;
+    // Find field name from existing fields
+    let name = "Mark";
+    fieldLayersById.current.forEach((lyr, id) => {
+      if (id === fieldId) {
+        const f = (lyr as unknown as { feature?: FieldFeature }).feature;
+        if (f?.properties.field?.name) name = f.properties.field.name;
+      }
+    });
+    setEditingField({ id: fieldId, name });
+    setDrawnGeometry(null);
+    setSelectedParcel(null);
+    setSelectedField(null);
+    if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
 
+    const fg = new L.FeatureGroup().addTo(map);
+    drawFeatureGroup.current = fg;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const drawHandler = new (L as any).Draw.Polygon(map, {
+      shapeOptions: { color: "#1D9E75", weight: 3, fillOpacity: 0.35 },
+      allowIntersection: false,
+      showArea: false,
+    });
+    drawHandler.enable();
+    activeDrawHandler.current = drawHandler;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map.once((L as any).Draw.Event.CREATED, (evt: any) => {
+      const layer = evt.layer as L.Polygon;
+      fg.addLayer(layer);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (layer as any).editing?.enable();
+      const geo = layer.toGeoJSON() as Feature<Polygon>;
+      setDrawnGeometry(geo.geometry);
+      layer.on("edit", () => {
+        const g = layer.toGeoJSON() as Feature<Polygon>;
+        setDrawnGeometry(g.geometry);
+      });
+      activeDrawHandler.current = null;
+    });
+  };
+
+  const cancelDrawing = () => {
+    const map = leafletMap.current;
+    if (activeDrawHandler.current) {
+      try { activeDrawHandler.current.disable(); } catch { /* ignore */ }
+      activeDrawHandler.current = null;
+    }
+    if (drawFeatureGroup.current && map) {
+      map.removeLayer(drawFeatureGroup.current);
+      drawFeatureGroup.current = null;
+    }
+    setEditingField(null);
+    setDrawnGeometry(null);
+    if (map) {
+      if (viewMode === "fields" && fieldLayer.current) fieldLayer.current.addTo(map);
+      if (viewMode === "parcels" && parcelLayer.current) parcelLayer.current.addTo(map);
+    }
+  };
+
+  const commitDrawing = async () => {
+    if (!editingField || !drawnGeometry) return;
+    setSaving(true);
+    try {
+      await saveGeometryFn({ data: { fieldId: editingField.id, geometry: drawnGeometry } });
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      setSaving(false);
+      setError("Kunne ikke gemme geometri.");
+    }
+  };
 
 
   return (
@@ -572,6 +662,38 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               </p>
             )}
 
+            <div className="mt-3 pt-3 border-t border-border flex justify-end">
+              <button
+                onClick={() => startDrawField(selectedField.id)}
+                className="px-3 py-1.5 text-xs rounded-md bg-[#1D9E75] text-white hover:opacity-90"
+              >
+                Tegn / rediger geometri
+              </button>
+            </div>
+          </div>
+        )}
+
+        {editingField && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] rounded-lg bg-background border border-border shadow-lg px-4 py-3 flex items-center gap-3">
+            <div className="text-sm">
+              {drawnGeometry
+                ? `Tilpas hjørnerne eller gem polygonen for "${editingField.name}".`
+                : `Klik på kortet for at tegne "${editingField.name}". Dobbeltklik for at afslutte.`}
+            </div>
+            <button
+              onClick={cancelDrawing}
+              disabled={saving}
+              className="px-3 py-1 text-xs rounded-md border border-border hover:bg-muted"
+            >
+              Annullér
+            </button>
+            <button
+              onClick={commitDrawing}
+              disabled={!drawnGeometry || saving}
+              className="px-3 py-1 text-xs rounded-md bg-[#1D9E75] text-white disabled:opacity-40"
+            >
+              {saving ? "Gemmer…" : "Gem"}
+            </button>
           </div>
         )}
 

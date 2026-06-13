@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Pencil, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -78,6 +79,7 @@ export function MarkerPage() {
   const [tableEdit, setTableEdit] = useState(false);
   const qc = useQueryClient();
   const update = useServerFn(updateField);
+  const navigate = useNavigate();
 
   type UpdatePayload = {
     id: string;
@@ -274,13 +276,28 @@ export function MarkerPage() {
                     ) : f.is_drained ? "Ja" : "Nej"}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <button
-                      onClick={() => setEditing(f)}
-                      className="p-1.5 rounded hover:bg-muted"
-                      aria-label="Rediger"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() =>
+                          navigate({
+                            to: "/landbrugsjord",
+                            search: { tab: "kort", drawField: f.id },
+                          })
+                        }
+                        className="p-1.5 rounded hover:bg-muted"
+                        aria-label="Tegn på kort"
+                        title="Tegn på kort"
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditing(f)}
+                        className="p-1.5 rounded hover:bg-muted"
+                        aria-label="Rediger"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

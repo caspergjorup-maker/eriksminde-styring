@@ -1,6 +1,9 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-draw";
+import "leaflet-draw/dist/leaflet.draw.css";
+import { useServerFn } from "@tanstack/react-start";
 import union from "@turf/union";
 import bbox from "@turf/bbox";
 import bboxClip from "@turf/bbox-clip";
@@ -8,6 +11,7 @@ import { featureCollection } from "@turf/helpers";
 import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
+import { saveFieldGeometry } from "@/lib/fields-geometry.functions";
 
 
 type UseType = "omdrift" | "skov" | "gaard";
@@ -88,6 +92,7 @@ export type FieldSummary = {
 
 export type MatrikelMapHandle = {
   highlightField: (fieldId: string) => void;
+  startDrawField: (fieldId: string) => void;
 };
 
 type Props = {
@@ -108,12 +113,18 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
   const parcelLayers = useRef<L.Path[]>([]);
   const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
+  const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
+  const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<{ id: string; name: string } | null>(null);
+  const [drawnGeometry, setDrawnGeometry] = useState<Polygon | MultiPolygon | null>(null);
+  const [saving, setSaving] = useState(false);
+  const saveGeometryFn = useServerFn(saveFieldGeometry);
 
 
   const resetParcelStyles = () => {

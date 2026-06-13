@@ -1,5 +1,4 @@
 import { useMatrikelData, USE_TYPE_COLORS, USE_TYPE_LABELS } from "@/lib/use-matrikel";
-import { formatDKK, formatDate } from "@/lib/format";
 
 export function MatriklerPage() {
   const { data, isLoading, error } = useMatrikelData();
@@ -12,7 +11,7 @@ export function MatriklerPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-lg font-medium mb-1">Matrikler</h1>
       <p className="text-sm text-muted-foreground mb-5">
-        Oversigt over matrikler fra Datafordeler med tilknyttede marker og forpagtninger.
+        Oversigt over matrikler fra Datafordeler med tilknyttede marker.
       </p>
 
       <div className="rounded-lg border border-border overflow-x-auto">
@@ -25,29 +24,26 @@ export function MatriklerPage() {
               <th className="text-left px-3 py-2 font-medium">Mark</th>
               <th className="text-right px-3 py-2 font-medium">Registreret areal</th>
               <th className="text-right px-3 py-2 font-medium">Nettoareal</th>
-              <th className="text-left px-3 py-2 font-medium">Forpagter</th>
-              <th className="text-right px-3 py-2 font-medium">Årlig leje</th>
-              <th className="text-left px-3 py-2 font-medium">Kontrakt slut</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser matrikler…
                 </td>
               </tr>
             )}
             {error && !isLoading && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-destructive text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-destructive text-xs">
                   Kunne ikke hente matrikler.
                 </td>
               </tr>
             )}
             {!isLoading && !error && matrikler.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Ingen matrikler fundet.
                 </td>
               </tr>
@@ -75,11 +71,6 @@ export function MatriklerPage() {
                 <td className="px-3 py-2 text-right tabular-nums">
                   {m.netAreaHa != null ? `${m.netAreaHa} ha` : "—"}
                 </td>
-                <td className="px-3 py-2 text-xs">{m.leaseholder ?? "—"}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {m.annualFee != null ? formatDKK(m.annualFee) : "—"}
-                </td>
-                <td className="px-3 py-2 text-xs">{formatDate(m.contractEnd) ?? "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -89,11 +80,6 @@ export function MatriklerPage() {
                 <td className="px-3 py-2" colSpan={4}>I alt ({matrikler.length})</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalRegistreret.toFixed(2)} ha</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalNet.toFixed(2)} ha</td>
-                <td className="px-3 py-2"></td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {formatDKK(matrikler.reduce((s, m) => s + (m.annualFee ?? 0), 0))}
-                </td>
-                <td></td>
               </tr>
             </tfoot>
           )}

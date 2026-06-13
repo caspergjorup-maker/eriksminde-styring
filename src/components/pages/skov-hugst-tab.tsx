@@ -44,6 +44,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 type FormState = {

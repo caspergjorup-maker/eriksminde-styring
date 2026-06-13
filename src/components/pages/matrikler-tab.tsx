@@ -24,9 +24,6 @@ export function MatriklerPage() {
               <th className="text-left px-3 py-2 font-medium">Mark</th>
               <th className="text-right px-3 py-2 font-medium">Registreret areal</th>
               <th className="text-right px-3 py-2 font-medium">Nettoareal</th>
-              <th className="text-left px-3 py-2 font-medium">Forpagter</th>
-              <th className="text-right px-3 py-2 font-medium">Årlig leje</th>
-              <th className="text-left px-3 py-2 font-medium">Kontrakt slut</th>
             </tr>
           </thead>
           <tbody>

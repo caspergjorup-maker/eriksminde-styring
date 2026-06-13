@@ -29,6 +29,7 @@ const CreateSchema = z.object({
   name: z.string().trim().min(1).max(200),
   use_type: z.enum(["omdrift", "skov", "gaard"]).nullable(),
   geometry: GeometrySchema.nullable(),
+  parcelId: z.string().uuid().nullable().optional(),
 });
 
 export const createField = createServerFn({ method: "POST" })
@@ -41,5 +42,13 @@ export const createField = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { id: inserted.id as string };
+    const fieldId = inserted.id as string;
+    if (data.parcelId) {
+      const { error: linkErr } = await context.supabase
+        .from("parcels")
+        .update({ field_id: fieldId })
+        .eq("id", data.parcelId);
+      if (linkErr) throw new Error(linkErr.message);
+    }
+    return { id: fieldId };
   });

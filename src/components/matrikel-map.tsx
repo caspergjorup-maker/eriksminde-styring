@@ -122,7 +122,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<{ id: string | null; name: string }  | null>(null);
+  const [editingField, setEditingField] = useState<{ id: string | null; name: string; parcelId?: string | null }  | null>(null);
   const [drawnGeometry, setDrawnGeometry] = useState<Polygon | MultiPolygon | null>(null);
   const [saving, setSaving] = useState(false);
   const saveGeometryFn = useServerFn(saveFieldGeometry);
@@ -571,13 +571,12 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     }
   };
 
-  const startDrawNewField = () => {
-    const name = window.prompt("Navn på den nye mark:");
+  const startDrawNewField = (parcelId?: string | null, presetName?: string) => {
+    const name = presetName ?? window.prompt("Navn på den nye mark:");
     if (!name || !name.trim()) return;
-    // Reuse startDrawField's setup, but with a null id to signal "create"
     const map = leafletMap.current;
     if (!map) return;
-    setEditingField({ id: null, name: name.trim() });
+    setEditingField({ id: null, name: name.trim(), parcelId: parcelId ?? null });
     setDrawnGeometry(null);
     setSelectedParcel(null);
     setSelectedField(null);
@@ -586,7 +585,17 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (rawGeojson.current) {
       backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
         interactive: false,
-        style: () => ({ color: "#1f2937", weight: 1.5, opacity: 0.85, dashArray: "4 3", fill: false }),
+        style: (feature) => {
+          const p = (feature?.properties as FeatureProps | undefined);
+          const isTarget = parcelId && p?.parcel?.id === parcelId;
+          return {
+            color: isTarget ? "#1D9E75" : "#1f2937",
+            weight: isTarget ? 2.5 : 1.5,
+            opacity: isTarget ? 1 : 0.85,
+            dashArray: isTarget ? undefined : "4 3",
+            fill: false,
+          };
+        },
         onEachFeature: (feature, lyr) => {
           const p = feature.properties as FeatureProps;
           (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });
@@ -624,7 +633,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSaving(true);
     try {
       if (editingField.id == null) {
-        await createFieldFn({ data: { name: editingField.name, use_type: null, geometry: drawnGeometry } });
+        await createFieldFn({ data: { name: editingField.name, use_type: null, geometry: drawnGeometry, parcelId: editingField.parcelId ?? null } });
       } else {
         await saveGeometryFn({ data: { fieldId: editingField.id, geometry: drawnGeometry } });
       }
@@ -662,7 +671,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         </button>
         <div className="flex-1" />
         <button
-          onClick={startDrawNewField}
+          onClick={() => startDrawNewField()}
           disabled={!!editingField}
           className="px-3.5 py-1.5 text-[13px] rounded-md bg-[#1D9E75] text-white hover:opacity-90 disabled:opacity-40"
         >
@@ -899,7 +908,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               </p>
             )}
 
-            {selectedParcel.parcel?.field?.id && (
+            {selectedParcel.parcel?.field?.id ? (
               <div className="mt-3 pt-3 border-t border-border flex justify-end">
                 <button
                   onClick={() =>
@@ -913,7 +922,16 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                   Tegn / rediger marken "{selectedParcel.parcel.field.name}"
                 </button>
               </div>
-            )}
+            ) : selectedParcel.parcel?.id ? (
+              <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                <button
+                  onClick={() => startDrawNewField(selectedParcel.parcel!.id)}
+                  className="px-3 py-1.5 text-xs rounded-md bg-[#1D9E75] text-white hover:opacity-90"
+                >
+                  + Tegn ny mark her
+                </button>
+              </div>
+            ) : null}
           </div>
 
         )}

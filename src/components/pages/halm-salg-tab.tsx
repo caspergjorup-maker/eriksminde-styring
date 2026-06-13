@@ -167,17 +167,19 @@ export function HalmSalgPage() {
         </TabsList>
       </Tabs>
 
+      <TableToolbar api={tableFilters} searchPlaceholder="Søg kontakt, balletype, noter…" />
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Dato</th>
-              <th className="px-4 py-2.5 font-medium">Retning</th>
-              <th className="px-4 py-2.5 font-medium">Balletype</th>
-              <th className="px-4 py-2.5 font-medium">Kontakt</th>
-              <th className="px-4 py-2.5 font-medium text-right">Antal</th>
-              <th className="px-4 py-2.5 font-medium text-right">Pris/stk</th>
-              <th className="px-4 py-2.5 font-medium text-right">Beløb</th>
+              <SortableHeader label="Dato" sortKey="movement_date" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Retning" sortKey="direction" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Balletype" sortKey="bale_type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Kontakt" sortKey="contact" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="Antal" sortKey="quantity" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Pris/stk" sortKey="unit_price" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
+              <SortableHeader label="Beløb" sortKey="total_amount" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>

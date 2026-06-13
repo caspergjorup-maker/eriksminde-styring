@@ -805,6 +805,22 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
                 {selectedParcel.parcel.notes}
               </p>
             )}
+
+            {selectedParcel.parcel?.field?.id && (
+              <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                <button
+                  onClick={() =>
+                    startDrawField(
+                      selectedParcel.parcel!.field!.id,
+                      selectedParcel.parcel!.field!.name,
+                    )
+                  }
+                  className="px-3 py-1.5 text-xs rounded-md bg-[#1D9E75] text-white hover:opacity-90"
+                >
+                  Tegn / rediger marken "{selectedParcel.parcel.field.name}"
+                </button>
+              </div>
+            )}
           </div>
 
         )}

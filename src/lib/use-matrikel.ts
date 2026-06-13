@@ -84,10 +84,24 @@ export type MatrikelRow = {
   notes: string | null;
 };
 
+type AllFieldRow = {
+  id: string;
+  name: string;
+  use_type: UseType | null;
+  notes: string | null;
+  lease_area_ha: number | null;
+  lease_price_per_ha: number | null;
+  soil_type: string | null;
+  is_drained: boolean | null;
+  has_irrigation: boolean | null;
+  eligible_area_ha: number | null;
+  non_eligible_area_ha: number | null;
+};
+
 async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: MatrikelRow[] }> {
   const r = await fetch("/api/matrikel");
   if (!r.ok) throw new Error(`Kunne ikke hente matrikeldata (HTTP ${r.status})`);
-  const gj = (await r.json()) as { features: Feature[] };
+  const gj = (await r.json()) as { features: Feature[]; allFields?: AllFieldRow[] };
 
   const byField = new Map<string, Feature[]>();
   const matrikelByKey = new Map<string, MatrikelRow>();
@@ -177,6 +191,31 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
     });
   });
+
+  // Add any orphan fields (no parcel link) so they still appear in the UI
+  const seen = new Set(fields.map((f) => f.id));
+  for (const af of gj.allFields ?? []) {
+    if (seen.has(af.id)) continue;
+    fields.push({
+      id: af.id,
+      name: af.name,
+      use_type: af.use_type,
+      notes: af.notes,
+      matrikler: [],
+      parcels: [],
+      totalHa: 0,
+      leaseholder: null,
+      contractEnd: null,
+      annualFee: null,
+      lease_area_ha: af.lease_area_ha,
+      lease_price_per_ha: af.lease_price_per_ha,
+      soil_type: af.soil_type,
+      is_drained: af.is_drained,
+      has_irrigation: af.has_irrigation,
+      eligible_area_ha: af.eligible_area_ha,
+      non_eligible_area_ha: af.non_eligible_area_ha,
+    });
+  }
 
   fields.sort((a, b) => a.name.localeCompare(b.name, "da"));
   matrikler.sort((a, b) => a.matrikelnr.localeCompare(b.matrikelnr, "da", { numeric: true }));

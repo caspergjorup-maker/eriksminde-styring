@@ -438,6 +438,29 @@ export function MarkerPage() {
           setEditing(null);
         }}
       />
+
+      <AlertDialog open={deleting != null} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slet mark "{deleting?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && deleting.parcels.length > 0
+                ? `Marken er knyttet til ${deleting.parcels.length} matrikel-parcel(ler). Tilknytningen fjernes, men matriklerne bevares.`
+                : "Denne handling kan ikke fortrydes."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Annuller</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMut.isPending}
+              onClick={(e) => { e.preventDefault(); if (deleting) deleteMut.mutate(deleting.id); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? "Sletter…" : "Slet"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

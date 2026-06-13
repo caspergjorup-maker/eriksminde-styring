@@ -89,10 +89,25 @@ export function HalmSalgPage() {
 
   const [filter, setFilter] = useState<"all" | "in" | "out">("all");
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["straw-movements", filter],
     queryFn: () => list({ data: { direction: filter } }),
   });
+  const movementCols: FilterColumn<StrawMovementRow>[] = [
+    { key: "movement_date", label: "Dato", sortable: true, sortValue: (r) => r.movement_date ?? "" },
+    { key: "direction", label: "Retning", type: "enum", get: (r) => r.direction, options: [{ value: "out", label: "Salg" }, { value: "in", label: "Køb" }], sortable: true, sortValue: (r) => r.direction },
+    { key: "bale_type", label: "Balletype", type: "enum", get: (r) => r.bale_type, options: BALE_TYPES.map((t) => ({ value: t, label: BALE_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.bale_type },
+    { key: "contact", label: "Kontakt", type: "enum", get: (r) => r.contact_name ?? "", sortable: true, sortValue: (r) => r.contact_name ?? "" },
+    { key: "quantity", label: "Antal", type: "number", get: (r) => r.quantity, sortable: true, sortValue: (r) => r.quantity },
+    { key: "unit_price", label: "Pris/stk", type: "number", get: (r) => Number(r.unit_price), sortable: true, sortValue: (r) => Number(r.unit_price) },
+    { key: "total_amount", label: "Beløb", type: "number", get: (r) => Number(r.total_amount ?? 0), sortable: true, sortValue: (r) => Number(r.total_amount ?? 0) },
+  ];
+  const tableFilters = useTableFilters({
+    rows: allRows,
+    columns: movementCols,
+    searchFields: [(r) => r.contact_name ?? "", (r) => labelFor(r.bale_type), (r) => r.notes ?? ""],
+  });
+  const rows = tableFilters.rows;
   const { data: contacts = [] } = useQuery({
     queryKey: ["straw-contacts"],
     queryFn: () => contactsFn(),

@@ -91,10 +91,15 @@ export const Route = createFileRoute("/api/matrikel")({
         }
         geojson.features = outputFeatures;
 
+        // Also load all fields so orphan fields (no parcel link) still appear in the UI
+        const { data: allFields } = await supabaseAdmin
+          .from("fields")
+          .select("id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha, geometry");
 
-        return Response.json(geojson, {
-          headers: { "Cache-Control": "private, max-age=60" },
-        });
+        return Response.json(
+          { ...geojson, allFields: allFields ?? [] },
+          { headers: { "Cache-Control": "private, max-age=60" } },
+        );
       },
     },
   },

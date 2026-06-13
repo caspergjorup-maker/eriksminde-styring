@@ -658,6 +658,38 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               </p>
             )}
 
+            <div className="mt-3 pt-3 border-t border-border flex justify-end">
+              <button
+                onClick={() => startDrawField(selectedField.id)}
+                className="px-3 py-1.5 text-xs rounded-md bg-[#1D9E75] text-white hover:opacity-90"
+              >
+                Tegn / rediger geometri
+              </button>
+            </div>
+          </div>
+        )}
+
+        {editingField && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] rounded-lg bg-background border border-border shadow-lg px-4 py-3 flex items-center gap-3">
+            <div className="text-sm">
+              {drawnGeometry
+                ? `Tilpas hjørnerne eller gem polygonen for "${editingField.name}".`
+                : `Klik på kortet for at tegne "${editingField.name}". Dobbeltklik for at afslutte.`}
+            </div>
+            <button
+              onClick={cancelDrawing}
+              disabled={saving}
+              className="px-3 py-1 text-xs rounded-md border border-border hover:bg-muted"
+            >
+              Annullér
+            </button>
+            <button
+              onClick={commitDrawing}
+              disabled={!drawnGeometry || saving}
+              className="px-3 py-1 text-xs rounded-md bg-[#1D9E75] text-white disabled:opacity-40"
+            >
+              {saving ? "Gemmer…" : "Gem"}
+            </button>
           </div>
         )}
 

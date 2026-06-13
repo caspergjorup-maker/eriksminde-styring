@@ -92,10 +92,20 @@ export function LandbrugsjordPage() {
   const update = useServerFn(updateLandLease);
   const remove = useServerFn(deleteLandLease);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["land-leases"],
     queryFn: () => list(),
   });
+  const filters = useTableFilters({
+    rows: allRows,
+    columns: LEASE_COLUMNS,
+    searchFields: [
+      (r) => r.leaseholder_name ?? "",
+      (r) => r.field_names.join(" "),
+      (r) => r.notes ?? "",
+    ],
+  });
+  const rows = filters.rows;
   const { data: holders = [] } = useQuery({
     queryKey: ["contacts-leaseholders"],
     queryFn: () => leaseholders(),

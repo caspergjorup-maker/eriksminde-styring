@@ -79,9 +79,21 @@ export function MarkerPage() {
   const qc = useQueryClient();
   const update = useServerFn(updateField);
 
+  type UpdatePayload = {
+    id: string;
+    name: string;
+    use_type: "omdrift" | "skov" | "gaard" | null;
+    lease_area_ha: number | null;
+    lease_price_per_ha: number | null;
+    eligible_area_ha: number | null;
+    non_eligible_area_ha: number | null;
+    soil_type: string | null;
+    is_drained: boolean;
+    has_irrigation: boolean;
+    notes: string | null;
+  };
   const saveMut = useMutation({
-    mutationFn: (payload: Parameters<typeof update>[0]["data"]) =>
-      update({ data: payload }),
+    mutationFn: (payload: UpdatePayload) => update({ data: payload }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["matrikel-data"] });
     },

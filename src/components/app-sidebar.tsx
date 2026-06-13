@@ -14,6 +14,7 @@ import {
   Truck,
   FolderOpen,
   Wrench,
+  ListTodo,
   LogOut,
 } from "lucide-react";
 
@@ -59,6 +60,7 @@ const sections: Section[] = [
   {
     title: "Andet",
     items: [
+      { label: "Opgaver", to: "/opgaver", icon: ListTodo },
       { label: "Dokumenter", to: "/dokumenter", icon: FolderOpen },
       { label: "Vedligehold", to: "/vedligehold", icon: Wrench },
     ],

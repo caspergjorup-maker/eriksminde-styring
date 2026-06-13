@@ -142,6 +142,14 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       realized: realizedByCat[b.category] ?? 0,
     }));
 
+    const openTasks = (tasksRes.data ?? []).map((r) => ({
+      id: r.id,
+      title: r.title,
+      priority: r.priority,
+      due_date: r.due_date,
+      assignee: (r.contacts as { name?: string } | null)?.name ?? null,
+    }));
+
     return {
       yearRevenue,
       strawTotalValue,
@@ -152,5 +160,6 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       pendingBuildingLeases,
       readyInvoices,
       budgetProgress,
+      openTasks,
     };
   });

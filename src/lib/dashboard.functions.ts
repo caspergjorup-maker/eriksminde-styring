@@ -37,6 +37,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       readyInvRes,
       budgetsRes,
       paidByCatRes,
+      tasksRes,
     ] = await Promise.all([
       supabase
         .from("invoices")
@@ -68,6 +69,12 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
         .select("category, total_amount")
         .eq("status", "paid")
         .gte("invoice_date", yearStart),
+      supabase
+        .from("tasks")
+        .select("id, title, priority, due_date, contacts:assigned_contact_id(name)")
+        .not("status", "in", "('done','cancelled')")
+        .order("due_date", { ascending: true })
+        .limit(8),
     ]);
 
     const yearRevenue = (paidInvoicesRes.data ?? []).reduce(

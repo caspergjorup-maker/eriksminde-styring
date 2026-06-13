@@ -44,6 +44,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TableToolbar,
+  SortableHeader,
+  useTableFilters,
+  type FilterColumn,
+} from "@/components/table-filters";
+
 
 
 const NONE = "__none__";

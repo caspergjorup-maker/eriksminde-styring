@@ -78,10 +78,24 @@ export function HalmLagerPage() {
   const update = useServerFn(updateStrawInventory);
   const remove = useServerFn(deleteStrawInventory);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: allRows = [], isLoading } = useQuery({
     queryKey: ["straw-inventory"],
     queryFn: () => list(),
   });
+
+  const columns: FilterColumn<StrawInventoryRow>[] = [
+    { key: "bale_type", label: "Balletype", type: "enum", get: (r) => r.bale_type, options: BALE_TYPES.map((t) => ({ value: t, label: BALE_TYPE_LABEL[t] })), sortable: true, sortValue: (r) => r.bale_type },
+    { key: "harvest_year", label: "Høstår", type: "enum", get: (r) => String(r.harvest_year ?? ""), sortable: true, sortValue: (r) => r.harvest_year ?? 0 },
+    { key: "quantity", label: "Antal", type: "number", get: (r) => r.quantity, sortable: true, sortValue: (r) => r.quantity },
+    { key: "price_per_unit", label: "Pris/stk", type: "number", get: (r) => Number(r.price_per_unit), sortable: true, sortValue: (r) => Number(r.price_per_unit) },
+    { key: "value", label: "Værdi", type: "number", get: (r) => r.quantity * Number(r.price_per_unit), sortable: true, sortValue: (r) => r.quantity * Number(r.price_per_unit) },
+  ];
+  const filters = useTableFilters({
+    rows: allRows,
+    columns,
+    searchFields: [(r) => labelFor(r.bale_type), (r) => r.notes ?? ""],
+  });
+  const rows = filters.rows;
 
   const [editing, setEditing] = useState<StrawInventoryRow | null>(null);
   const [creating, setCreating] = useState(false);

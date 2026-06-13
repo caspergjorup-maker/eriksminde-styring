@@ -115,6 +115,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
   const drawFeatureGroup = useRef<L.FeatureGroup | null>(null);
   const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
+  const backdropLayer = useRef<L.GeoJSON | null>(null);
 
   const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
@@ -451,11 +452,11 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startDrawField = (fieldId: string) => {
+  const startDrawField = (fieldId: string, fallbackName?: string) => {
     const map = leafletMap.current;
     if (!map) return;
     // Find field name from existing fields
-    let name = "Mark";
+    let name = fallbackName ?? "Mark";
     fieldLayersById.current.forEach((lyr, id) => {
       if (id === fieldId) {
         const f = (lyr as unknown as { feature?: FieldFeature }).feature;
@@ -468,6 +469,24 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
+
+    // Show matrikel boundaries as a non-interactive backdrop so the user has a reference while drawing
+    if (rawGeojson.current) {
+      backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
+        interactive: false,
+        style: () => ({
+          color: "#1f2937",
+          weight: 1.5,
+          opacity: 0.85,
+          dashArray: "4 3",
+          fill: false,
+        }),
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties as FeatureProps;
+          (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });
+        },
+      }).addTo(map);
+    }
 
     const fg = new L.FeatureGroup().addTo(map);
     drawFeatureGroup.current = fg;
@@ -506,6 +525,10 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (drawFeatureGroup.current && map) {
       map.removeLayer(drawFeatureGroup.current);
       drawFeatureGroup.current = null;
+    }
+    if (backdropLayer.current && map) {
+      map.removeLayer(backdropLayer.current);
+      backdropLayer.current = null;
     }
     setEditingField(null);
     setDrawnGeometry(null);
@@ -781,6 +804,22 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
               <p className="mt-3 text-xs text-muted-foreground whitespace-pre-wrap">
                 {selectedParcel.parcel.notes}
               </p>
+            )}
+
+            {selectedParcel.parcel?.field?.id && (
+              <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                <button
+                  onClick={() =>
+                    startDrawField(
+                      selectedParcel.parcel!.field!.id,
+                      selectedParcel.parcel!.field!.name,
+                    )
+                  }
+                  className="px-3 py-1.5 text-xs rounded-md bg-[#1D9E75] text-white hover:opacity-90"
+                >
+                  Tegn / rediger marken "{selectedParcel.parcel.field.name}"
+                </button>
+              </div>
             )}
           </div>
 

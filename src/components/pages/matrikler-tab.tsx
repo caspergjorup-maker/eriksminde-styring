@@ -84,12 +84,16 @@ export function MatriklerPage() {
             ))}
           </tbody>
           {matrikler.length > 0 && (
-            <tfoot>
+          <tfoot>
               <tr className="border-t border-border bg-muted/30 font-medium">
                 <td className="px-3 py-2" colSpan={4}>I alt ({matrikler.length})</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalRegistreret.toFixed(2)} ha</td>
                 <td className="px-3 py-2 text-right tabular-nums">{totalNet.toFixed(2)} ha</td>
-                <td colSpan={3}></td>
+                <td className="px-3 py-2"></td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {formatDKK(matrikler.reduce((s, m) => s + (m.annualFee ?? 0), 0))}
+                </td>
+                <td></td>
               </tr>
             </tfoot>
           )}

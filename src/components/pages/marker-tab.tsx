@@ -168,6 +168,32 @@ export function MarkerPage() {
               );
             })}
           </tbody>
+          {fields.length > 0 && (
+            <tfoot>
+              <tr className="border-t border-border bg-muted/30 font-medium">
+                <td className="px-3 py-2" colSpan={3}>I alt ({fields.length})</td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {fields.reduce((s, f) => s + (f.totalHa ?? 0), 0).toFixed(2)} ha
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {fields.reduce((s, f) => s + (f.lease_area_ha ?? 0), 0).toFixed(2)} ha
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {fields.reduce((s, f) => s + (f.eligible_area_ha ?? 0), 0).toFixed(2)} ha
+                </td>
+                <td className="px-3 py-2"></td>
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {fmtKr(fields.reduce((s, f) => {
+                    const annual = f.lease_area_ha != null && f.lease_price_per_ha != null
+                      ? f.lease_area_ha * f.lease_price_per_ha
+                      : 0;
+                    return s + annual;
+                  }, 0))}
+                </td>
+                <td colSpan={3}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

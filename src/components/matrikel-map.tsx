@@ -571,13 +571,12 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     }
   };
 
-  const startDrawNewField = () => {
-    const name = window.prompt("Navn på den nye mark:");
+  const startDrawNewField = (parcelId?: string | null, presetName?: string) => {
+    const name = presetName ?? window.prompt("Navn på den nye mark:");
     if (!name || !name.trim()) return;
-    // Reuse startDrawField's setup, but with a null id to signal "create"
     const map = leafletMap.current;
     if (!map) return;
-    setEditingField({ id: null, name: name.trim() });
+    setEditingField({ id: null, name: name.trim(), parcelId: parcelId ?? null });
     setDrawnGeometry(null);
     setSelectedParcel(null);
     setSelectedField(null);
@@ -586,7 +585,17 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     if (rawGeojson.current) {
       backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
         interactive: false,
-        style: () => ({ color: "#1f2937", weight: 1.5, opacity: 0.85, dashArray: "4 3", fill: false }),
+        style: (feature) => {
+          const p = (feature?.properties as FeatureProps | undefined);
+          const isTarget = parcelId && p?.parcel?.id === parcelId;
+          return {
+            color: isTarget ? "#1D9E75" : "#1f2937",
+            weight: isTarget ? 2.5 : 1.5,
+            opacity: isTarget ? 1 : 0.85,
+            dashArray: isTarget ? undefined : "4 3",
+            fill: false,
+          };
+        },
         onEachFeature: (feature, lyr) => {
           const p = feature.properties as FeatureProps;
           (lyr as L.Path).bindTooltip(`Matr. ${p.matrikelnr ?? "?"}`, { sticky: true });

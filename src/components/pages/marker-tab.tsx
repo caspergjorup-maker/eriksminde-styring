@@ -348,6 +348,13 @@ export function MarkerPage() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{f.totalHa} ha</td>
+                  <td
+                    className="px-3 py-2 text-right tabular-nums text-muted-foreground"
+                    title="Beregnet ud fra polygonen tegnet på kortet"
+                  >
+                    {f.mapAreaHa != null ? `${f.mapAreaHa} ha` : "—"}
+                  </td>
+
                   <td className="px-3 py-2 text-right tabular-nums">
                     {tableEdit ? (
                       <InlineNumber

@@ -466,14 +466,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             },
           );
 
-        const skovFeatures = fieldFeatures.filter(
-          (f) => f.properties.field.use_type === "skov",
-        );
-        const nonSkovFeatures = fieldFeatures.filter(
-          (f) => f.properties.field.use_type !== "skov",
-        );
-        fieldLayer.current = buildFieldLayer(nonSkovFeatures);
-        skovLayer.current = buildFieldLayer(skovFeatures);
+        fieldLayer.current = buildFieldLayer(fieldFeatures);
 
         // Start in fields view
         fieldLayer.current.addTo(map);

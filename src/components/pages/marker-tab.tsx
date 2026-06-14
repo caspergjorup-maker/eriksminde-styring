@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { Pencil, MapPin, Trash2 } from "lucide-react";
+import { Pencil, MapPin, Trash2, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -10,8 +10,10 @@ import {
   USE_TYPE_COLORS,
   USE_TYPE_LABELS,
   type FieldRow,
+  type MatrikelRow,
 } from "@/lib/use-matrikel";
-import { SOIL_TYPES, updateField, deleteField } from "@/lib/fields.functions";
+import { SOIL_TYPES, updateField, deleteField, setFieldParcels } from "@/lib/fields.functions";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +43,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   TableToolbar,
   SortableHeader,
@@ -140,6 +151,7 @@ function fmtKr(n: number | null | undefined) {
 export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
   const allFields = data?.fields ?? [];
+  const allMatrikler: MatrikelRow[] = data?.matrikler ?? [];
   const filters = useTableFilters({
     rows: allFields,
     columns: FIELD_COLUMNS,
@@ -284,7 +296,26 @@ export function MarkerPage() {
                       />
                     ) : f.name}
                   </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{f.matrikler.join(", ")}</td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span>{f.matrikler.length > 0 ? f.matrikler.join(", ") : "—"}</span>
+                      {tableEdit && (
+                        <ParcelPicker
+                          field={f}
+                          allMatrikler={allMatrikler}
+                          trigger={
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded border border-dashed border-border px-1.5 py-0.5 text-[11px] hover:bg-muted"
+                              title="Tilknyt matrikler"
+                            >
+                              <Plus className="h-3 w-3" /> Matrikel
+                            </button>
+                          }
+                        />
+                      )}
+                    </div>
+                  </td>
                   <td className="px-3 py-2">
                     {tableEdit ? (
                       <Select
@@ -432,6 +463,7 @@ export function MarkerPage() {
 
       <FieldDialog
         editing={editing}
+        allMatrikler={allMatrikler}
         onOpenChange={(o) => { if (!o) setEditing(null); }}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["matrikel-data"] });
@@ -493,9 +525,10 @@ function InlineNumber({ value, onCommit }: { value: number | null | undefined; o
 }
 
 function FieldDialog({
-  editing, onOpenChange, onSaved,
+  editing, allMatrikler, onOpenChange, onSaved,
 }: {
   editing: FieldRow | null;
+  allMatrikler: MatrikelRow[];
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {
@@ -580,9 +613,20 @@ function FieldDialog({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Tilknyttede matrikler</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Tilknyttede matrikler</Label>
+                  <ParcelPicker
+                    field={editing}
+                    allMatrikler={allMatrikler}
+                    trigger={
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-xs">
+                        <Plus className="h-3 w-3 mr-1" /> Tilknyt matrikel
+                      </Button>
+                    }
+                  />
+                </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {editing.matrikler.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
+                  {editing.matrikler.length === 0 && <span className="text-xs text-muted-foreground">Ingen matrikler tilknyttet</span>}
                   {editing.matrikler.map((m) => (
                     <span key={m} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted">
                       Matr. {m}
@@ -683,5 +727,131 @@ function FieldDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ParcelPicker({
+  field,
+  allMatrikler,
+  trigger,
+}: {
+  field: FieldRow;
+  allMatrikler: MatrikelRow[];
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const setParcels = useServerFn(setFieldParcels);
+  const qc = useQueryClient();
+
+  const currentIds = useMemo(
+    () => new Set(field.parcels.map((p) => p.id)),
+    [field.parcels],
+  );
+  const [selected, setSelected] = useState<Set<string>>(currentIds);
+
+  // Reset selection when the picker is reopened or the field changes
+  useEffect(() => {
+    if (open) setSelected(new Set(currentIds));
+  }, [open, currentIds]);
+
+  const mut = useMutation({
+    mutationFn: (ids: string[]) => setParcels({ data: { field_id: field.id, parcel_ids: ids } }),
+    onSuccess: () => {
+      toast.success("Matrikler opdateret");
+      qc.invalidateQueries({ queryKey: ["matrikel-data"] });
+      setOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Sort so already-linked parcels appear first
+  const sorted = useMemo(() => {
+    return [...allMatrikler].sort((a, b) => {
+      const aMine = currentIds.has(a.parcelId) ? 0 : 1;
+      const bMine = currentIds.has(b.parcelId) ? 0 : 1;
+      if (aMine !== bMine) return aMine - bMine;
+      return a.matrikelnr.localeCompare(b.matrikelnr, "da", { numeric: true });
+    });
+  }, [allMatrikler, currentIds]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent className="w-[360px] p-0" align="end">
+        <Command>
+          <CommandInput placeholder="Søg matrikel eller ejerlav…" />
+          <CommandList className="max-h-[300px]">
+            <CommandEmpty>Ingen matrikler.</CommandEmpty>
+            <CommandGroup>
+              {sorted.map((m) => {
+                const isSelected = selected.has(m.parcelId);
+                const linkedElsewhere =
+                  m.fieldId && m.fieldId !== field.id ? m.fieldName : null;
+                return (
+                  <CommandItem
+                    key={m.parcelId}
+                    value={`${m.matrikelnr} ${m.ejerlav}`}
+                    onSelect={() => toggle(m.parcelId)}
+                    className="flex items-start gap-2"
+                  >
+                    <div
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        isSelected ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-3 w-3" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">Matr. {m.matrikelnr}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {m.ejerlav}
+                        {linkedElsewhere && (
+                          <span className="ml-1 text-amber-600">
+                            • flyttes fra "{linkedElsewhere}"
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        <div className="flex items-center justify-between gap-2 border-t border-border p-2">
+          <span className="text-[11px] text-muted-foreground">
+            {selected.size} valgt
+          </span>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={mut.isPending}
+            >
+              <X className="h-3 w-3 mr-1" /> Annullér
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => mut.mutate(Array.from(selected))}
+              disabled={mut.isPending}
+            >
+              {mut.isPending ? "Gemmer…" : "Gem"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

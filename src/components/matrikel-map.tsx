@@ -693,6 +693,16 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           Marker
         </button>
         <button
+          onClick={() => setViewMode("skov")}
+          className="px-3.5 py-1.5 text-[13px] rounded-md border border-border transition-colors cursor-pointer"
+          style={{
+            background: viewMode === "skov" ? USE_TYPE_COLORS.skov : "transparent",
+            color: viewMode === "skov" ? "#fff" : "var(--muted-foreground)",
+          }}
+        >
+          Skov
+        </button>
+        <button
           onClick={() => setViewMode("parcels")}
           className="px-3.5 py-1.5 text-[13px] rounded-md border border-border transition-colors cursor-pointer"
           style={{

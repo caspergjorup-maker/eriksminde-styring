@@ -34,7 +34,7 @@ function LandbrugsjordTabsPage() {
         }
       >
         <TabsList>
-          <TabsTrigger value="marker">Marker</TabsTrigger>
+          <TabsTrigger value="marker">Marker og skov</TabsTrigger>
           <TabsTrigger value="matrikler">Matrikler</TabsTrigger>
           <TabsTrigger value="landbrugsjord">Forpagtning</TabsTrigger>
           <TabsTrigger value="kort">Kort</TabsTrigger>

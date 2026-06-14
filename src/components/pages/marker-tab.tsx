@@ -139,7 +139,7 @@ function fmtKr(n: number | null | undefined) {
 
 export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
-  const allFields = (data?.fields ?? []).filter((f) => f.use_type !== "skov");
+  const allFields = data?.fields ?? [];
   const filters = useTableFilters({
     rows: allFields,
     columns: FIELD_COLUMNS,

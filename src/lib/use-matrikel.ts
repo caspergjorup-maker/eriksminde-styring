@@ -188,6 +188,8 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       has_irrigation: fieldMeta.has_irrigation ?? null,
       eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
       non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
+      mapAreaHa: geometryAreaHa(fieldMeta.geometry),
+
     });
   });
 

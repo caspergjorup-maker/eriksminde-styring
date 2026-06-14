@@ -497,7 +497,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       leafletMap.current = null;
       parcelLayer.current = null;
       fieldLayer.current = null;
-      skovLayer.current = null;
+      
       fieldLayersById.current = new Map();
       parcelLayers.current = [];
     };
@@ -520,7 +520,6 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
-    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
 
     // Show matrikel boundaries as a non-interactive backdrop so the user has a reference while drawing
@@ -587,7 +586,6 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setDrawnGeometry(null);
     if (map) {
       if (viewMode === "fields" && fieldLayer.current) fieldLayer.current.addTo(map);
-      if (viewMode === "skov" && skovLayer.current) skovLayer.current.addTo(map);
       if (viewMode === "parcels" && parcelLayer.current) parcelLayer.current.addTo(map);
     }
   };
@@ -602,7 +600,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
-    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
+    
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
     if (rawGeojson.current) {
       backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
@@ -679,17 +677,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
             color: viewMode === "fields" ? "#fff" : "var(--muted-foreground)",
           }}
         >
-          Marker
-        </button>
-        <button
-          onClick={() => setViewMode("skov")}
-          className="px-3.5 py-1.5 text-[13px] rounded-md border border-border transition-colors cursor-pointer"
-          style={{
-            background: viewMode === "skov" ? USE_TYPE_COLORS.skov : "transparent",
-            color: viewMode === "skov" ? "#fff" : "var(--muted-foreground)",
-          }}
-        >
-          Skov
+          Marker og skov
         </button>
         <button
           onClick={() => setViewMode("parcels")}

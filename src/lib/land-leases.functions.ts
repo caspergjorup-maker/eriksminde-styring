@@ -30,13 +30,19 @@ export const listLandLeases = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<LandLease[]> => {
     const { data, error } = await context.supabase
       .from("land_leases")
-      .select("id, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name), parcels:parcels!parcels_land_lease_id_fkey(field:field_id(name))")
+      .select("id, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name), parcels:parcels!parcels_land_lease_id_fkey(field_parcels(fields(name)))")
       .order("contract_end", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => {
-      const parcels = (r.parcels ?? []) as Array<{ field: { name: string } | null }>;
+      const parcels = (r.parcels ?? []) as Array<{
+        field_parcels: Array<{ fields: { name: string } | null }> | null;
+      }>;
       const names = Array.from(
-        new Set(parcels.map((p) => p.field?.name).filter((n): n is string => !!n)),
+        new Set(
+          parcels.flatMap((p) =>
+            (p.field_parcels ?? []).map((fp) => fp.fields?.name).filter((n): n is string => !!n),
+          ),
+        ),
       ).sort((a, b) => a.localeCompare(b, "da"));
       return {
         id: r.id,

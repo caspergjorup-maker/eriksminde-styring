@@ -49,15 +49,34 @@ export const Route = createFileRoute("/api/matrikel")({
         const { data: parcels } = await supabaseAdmin
           .from("parcels")
           .select(
-            `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, field_id, custom_geometry,
-             field:field_id ( id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha, geometry ),
+            `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, custom_geometry,
+             field_parcels:field_parcels ( fields:field_id ( id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha, geometry ) ),
              land_leases:land_lease_id (
                annual_fee, price_per_ha, area_ha, contract_start, contract_end,
                leaseholder:leaseholder_id ( name, phone, email )
              )`,
           );
 
-        const list = (parcels ?? []) as Array<Record<string, unknown> & { matrikel_id: string; custom_geometry?: unknown }>;
+        type FieldRec = {
+          id: string;
+          name: string;
+          use_type: string | null;
+          notes: string | null;
+          lease_area_ha: number | null;
+          lease_price_per_ha: number | null;
+          soil_type: string | null;
+          is_drained: boolean | null;
+          has_irrigation: boolean | null;
+          eligible_area_ha: number | null;
+          non_eligible_area_ha: number | null;
+          geometry?: unknown;
+        };
+        type ParcelRec = Record<string, unknown> & {
+          matrikel_id: string;
+          custom_geometry?: unknown;
+          field_parcels?: Array<{ fields: FieldRec | null }> | null;
+        };
+        const list = (parcels ?? []) as unknown as ParcelRec[];
 
         const inputFeatures = (geojson.features ?? []).filter((f) => {
           const props = f.properties as Record<string, unknown>;
@@ -81,16 +100,45 @@ export const Route = createFileRoute("/api/matrikel")({
               properties: { ...baseProps, parcel: null, originalGeometry: f.geometry },
             });
           } else {
-            // Emit one feature per parcel row so split matrikler appear in multiple fields.
-            // Always keep the original DAWA geometry on properties so the matrikel view
-            // can render the true matrikel boundary regardless of per-parcel custom shapes.
+            // Emit one feature per (parcel × linked field). A parcel with no
+            // field link still produces one feature with parcel.field = null,
+            // so the matrikel view always renders the matrikel.
             for (const match of matches) {
               const geom = match.custom_geometry ?? f.geometry;
-              outputFeatures.push({
-                ...f,
-                geometry: geom,
-                properties: { ...baseProps, parcel: match, originalGeometry: f.geometry },
-              });
+              const links = (match.field_parcels ?? [])
+                .map((fp) => fp.fields)
+                .filter((x): x is FieldRec => !!x);
+              const fieldsList = links;
+              if (fieldsList.length === 0) {
+                const { field_parcels: _fp, ...parcelClean } = match;
+                outputFeatures.push({
+                  ...f,
+                  geometry: geom,
+                  properties: {
+                    ...baseProps,
+                    parcel: { ...parcelClean, field: null, field_id: null, fields: [] },
+                    originalGeometry: f.geometry,
+                  },
+                });
+              } else {
+                for (const field of fieldsList) {
+                  const { field_parcels: _fp, ...parcelClean } = match;
+                  outputFeatures.push({
+                    ...f,
+                    geometry: geom,
+                    properties: {
+                      ...baseProps,
+                      parcel: {
+                        ...parcelClean,
+                        field,
+                        field_id: field.id,
+                        fields: fieldsList,
+                      },
+                      originalGeometry: f.geometry,
+                    },
+                  });
+                }
+              }
             }
           }
         }

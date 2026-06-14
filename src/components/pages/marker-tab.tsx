@@ -525,9 +525,10 @@ function InlineNumber({ value, onCommit }: { value: number | null | undefined; o
 }
 
 function FieldDialog({
-  editing, onOpenChange, onSaved,
+  editing, allMatrikler, onOpenChange, onSaved,
 }: {
   editing: FieldRow | null;
+  allMatrikler: MatrikelRow[];
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {

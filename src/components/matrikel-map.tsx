@@ -110,6 +110,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const leafletMap = useRef<L.Map | null>(null);
   const parcelLayer = useRef<L.GeoJSON | null>(null);
   const fieldLayer = useRef<L.GeoJSON | null>(null);
+  const skovLayer = useRef<L.GeoJSON | null>(null);
   const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
   const parcelLayers = useRef<L.Path[]>([]);
   const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
@@ -117,7 +118,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
   const backdropLayer = useRef<L.GeoJSON | null>(null);
 
-  const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
+  const [viewMode, setViewMode] = useState<"fields" | "skov" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);

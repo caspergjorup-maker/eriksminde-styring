@@ -729,3 +729,129 @@ function FieldDialog({
     </Dialog>
   );
 }
+
+function ParcelPicker({
+  field,
+  allMatrikler,
+  trigger,
+}: {
+  field: FieldRow;
+  allMatrikler: MatrikelRow[];
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const setParcels = useServerFn(setFieldParcels);
+  const qc = useQueryClient();
+
+  const currentIds = useMemo(
+    () => new Set(field.parcels.map((p) => p.id)),
+    [field.parcels],
+  );
+  const [selected, setSelected] = useState<Set<string>>(currentIds);
+
+  // Reset selection when the picker is reopened or the field changes
+  useMemo(() => {
+    if (open) setSelected(new Set(currentIds));
+  }, [open, currentIds]);
+
+  const mut = useMutation({
+    mutationFn: (ids: string[]) => setParcels({ data: { field_id: field.id, parcel_ids: ids } }),
+    onSuccess: () => {
+      toast.success("Matrikler opdateret");
+      qc.invalidateQueries({ queryKey: ["matrikel-data"] });
+      setOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Sort so already-linked parcels appear first
+  const sorted = useMemo(() => {
+    return [...allMatrikler].sort((a, b) => {
+      const aMine = currentIds.has(a.parcelId) ? 0 : 1;
+      const bMine = currentIds.has(b.parcelId) ? 0 : 1;
+      if (aMine !== bMine) return aMine - bMine;
+      return a.matrikelnr.localeCompare(b.matrikelnr, "da", { numeric: true });
+    });
+  }, [allMatrikler, currentIds]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent className="w-[360px] p-0" align="end">
+        <Command>
+          <CommandInput placeholder="Søg matrikel eller ejerlav…" />
+          <CommandList className="max-h-[300px]">
+            <CommandEmpty>Ingen matrikler.</CommandEmpty>
+            <CommandGroup>
+              {sorted.map((m) => {
+                const isSelected = selected.has(m.parcelId);
+                const linkedElsewhere =
+                  m.fieldId && m.fieldId !== field.id ? m.fieldName : null;
+                return (
+                  <CommandItem
+                    key={m.parcelId}
+                    value={`${m.matrikelnr} ${m.ejerlav}`}
+                    onSelect={() => toggle(m.parcelId)}
+                    className="flex items-start gap-2"
+                  >
+                    <div
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        isSelected ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-3 w-3" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">Matr. {m.matrikelnr}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {m.ejerlav}
+                        {linkedElsewhere && (
+                          <span className="ml-1 text-amber-600">
+                            • flyttes fra "{linkedElsewhere}"
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        <div className="flex items-center justify-between gap-2 border-t border-border p-2">
+          <span className="text-[11px] text-muted-foreground">
+            {selected.size} valgt
+          </span>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={mut.isPending}
+            >
+              <X className="h-3 w-3 mr-1" /> Annullér
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => mut.mutate(Array.from(selected))}
+              disabled={mut.isPending}
+            >
+              {mut.isPending ? "Gemmer…" : "Gem"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

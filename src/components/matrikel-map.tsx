@@ -445,28 +445,39 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           },
         });
 
-        // Field layer (merged polygons)
-        fieldLayer.current = L.geoJSON(
-          { type: "FeatureCollection", features: fieldFeatures } as GeoJSON.GeoJsonObject,
-          {
-            style: (feature) => {
-              const f = (feature?.properties as { field?: FieldSummary } | undefined)?.field;
-              const color = f?.use_type ? USE_TYPE_COLORS[f.use_type] : "#aaa";
-              return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
+        // Field layer (merged polygons). Skov-fields render on a separate layer
+        // so the "Marker" view excludes them and the "Skov" view shows only them.
+        const buildFieldLayer = (features: FieldFeature[]) =>
+          L.geoJSON(
+            { type: "FeatureCollection", features } as GeoJSON.GeoJsonObject,
+            {
+              style: (feature) => {
+                const f = (feature?.properties as { field?: FieldSummary } | undefined)?.field;
+                const color = f?.use_type ? USE_TYPE_COLORS[f.use_type] : "#aaa";
+                return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
+              },
+              onEachFeature: (feature, lyr) => {
+                const summary = (feature.properties as { field: FieldSummary }).field;
+                fieldLayersById.current.set(summary.id, lyr as L.Path);
+                lyr.bindTooltip(`${summary.name} · ${summary.totalHa} ha`, { sticky: true });
+                lyr.on("click", () => {
+                  resetFieldStyles();
+                  (lyr as L.Path).setStyle({ fillOpacity: 0.62, weight: 3 });
+                  setSelectedField(summary);
+                  setSelectedParcel(null);
+                });
+              },
             },
-            onEachFeature: (feature, lyr) => {
-              const summary = (feature.properties as { field: FieldSummary }).field;
-              fieldLayersById.current.set(summary.id, lyr as L.Path);
-              lyr.bindTooltip(`${summary.name} · ${summary.totalHa} ha`, { sticky: true });
-              lyr.on("click", () => {
-                resetFieldStyles();
-                (lyr as L.Path).setStyle({ fillOpacity: 0.62, weight: 3 });
-                setSelectedField(summary);
-                setSelectedParcel(null);
-              });
-            },
-          },
+          );
+
+        const skovFeatures = fieldFeatures.filter(
+          (f) => f.properties.field.use_type === "skov",
         );
+        const nonSkovFeatures = fieldFeatures.filter(
+          (f) => f.properties.field.use_type !== "skov",
+        );
+        fieldLayer.current = buildFieldLayer(nonSkovFeatures);
+        skovLayer.current = buildFieldLayer(skovFeatures);
 
         // Start in fields view
         fieldLayer.current.addTo(map);

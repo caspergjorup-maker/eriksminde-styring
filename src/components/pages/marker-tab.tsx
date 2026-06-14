@@ -750,7 +750,7 @@ function ParcelPicker({
   const [selected, setSelected] = useState<Set<string>>(currentIds);
 
   // Reset selection when the picker is reopened or the field changes
-  useMemo(() => {
+  useEffect(() => {
     if (open) setSelected(new Set(currentIds));
   }, [open, currentIds]);
 

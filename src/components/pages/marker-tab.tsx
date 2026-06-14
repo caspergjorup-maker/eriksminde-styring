@@ -656,6 +656,12 @@ function FieldDialog({
                   <p className="text-[11px] text-muted-foreground">Hentes automatisk fra Datafordeler — kan ikke redigeres</p>
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Korttegnet areal (ha)</Label>
+                  <Input readOnly value={editing.mapAreaHa != null ? String(editing.mapAreaHa) : "—"} className="bg-muted/40" />
+                  <p className="text-[11px] text-muted-foreground">Beregnet ud fra polygonen tegnet på kortet</p>
+                </div>
+
+                <div className="space-y-1.5">
                   <Label htmlFor="lease_area">Forpagtningsareal (ha)</Label>
                   <Input id="lease_area" type="number" step="0.01" min="0" value={values.lease_area_ha}
                     onChange={(e) => setValues({ ...values, lease_area_ha: e.target.value })} />

@@ -613,9 +613,20 @@ function FieldDialog({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Tilknyttede matrikler</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Tilknyttede matrikler</Label>
+                  <ParcelPicker
+                    field={editing}
+                    allMatrikler={allMatrikler}
+                    trigger={
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-xs">
+                        <Plus className="h-3 w-3 mr-1" /> Tilknyt matrikel
+                      </Button>
+                    }
+                  />
+                </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {editing.matrikler.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
+                  {editing.matrikler.length === 0 && <span className="text-xs text-muted-foreground">Ingen matrikler tilknyttet</span>}
                   {editing.matrikler.map((m) => (
                     <span key={m} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted">
                       Matr. {m}

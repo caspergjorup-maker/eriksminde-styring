@@ -215,6 +215,8 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       has_irrigation: af.has_irrigation,
       eligible_area_ha: af.eligible_area_ha,
       non_eligible_area_ha: af.non_eligible_area_ha,
+      mapAreaHa: geometryAreaHa(af.geometry),
+
     });
   }
 

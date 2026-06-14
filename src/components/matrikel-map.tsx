@@ -110,6 +110,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const leafletMap = useRef<L.Map | null>(null);
   const parcelLayer = useRef<L.GeoJSON | null>(null);
   const fieldLayer = useRef<L.GeoJSON | null>(null);
+  const skovLayer = useRef<L.GeoJSON | null>(null);
   const fieldLayersById = useRef<Map<string, L.Path>>(new Map());
   const parcelLayers = useRef<L.Path[]>([]);
   const rawGeojson = useRef<{ type: "FeatureCollection"; features: ParcelFeature[] } | null>(null);
@@ -117,7 +118,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   const activeDrawHandler = useRef<{ disable: () => void } | null>(null);
   const backdropLayer = useRef<L.GeoJSON | null>(null);
 
-  const [viewMode, setViewMode] = useState<"fields" | "parcels">("fields");
+  const [viewMode, setViewMode] = useState<"fields" | "skov" | "parcels">("fields");
   const [selectedParcel, setSelectedParcel] = useState<FeatureProps | null>(null);
   const [selectedField, setSelectedField] = useState<FieldSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,16 +174,19 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   useEffect(() => {
     const map = leafletMap.current;
     if (!map) return;
-    if (viewMode === "fields") {
-      if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
-      if (fieldLayer.current && !map.hasLayer(fieldLayer.current)) fieldLayer.current.addTo(map);
-      resetFieldStyles();
-      setSelectedParcel(null);
-    } else {
-      if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
-      if (parcelLayer.current && !map.hasLayer(parcelLayer.current)) parcelLayer.current.addTo(map);
+    const all = [parcelLayer.current, fieldLayer.current, skovLayer.current];
+    for (const l of all) if (l && map.hasLayer(l)) map.removeLayer(l);
+    const target =
+      viewMode === "fields" ? fieldLayer.current
+      : viewMode === "skov" ? skovLayer.current
+      : parcelLayer.current;
+    if (target) target.addTo(map);
+    if (viewMode === "parcels") {
       resetParcelStyles();
       setSelectedField(null);
+    } else {
+      resetFieldStyles();
+      setSelectedParcel(null);
     }
   }, [viewMode]);
 
@@ -441,28 +445,39 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           },
         });
 
-        // Field layer (merged polygons)
-        fieldLayer.current = L.geoJSON(
-          { type: "FeatureCollection", features: fieldFeatures } as GeoJSON.GeoJsonObject,
-          {
-            style: (feature) => {
-              const f = (feature?.properties as { field?: FieldSummary } | undefined)?.field;
-              const color = f?.use_type ? USE_TYPE_COLORS[f.use_type] : "#aaa";
-              return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
+        // Field layer (merged polygons). Skov-fields render on a separate layer
+        // so the "Marker" view excludes them and the "Skov" view shows only them.
+        const buildFieldLayer = (features: FieldFeature[]) =>
+          L.geoJSON(
+            { type: "FeatureCollection", features } as GeoJSON.GeoJsonObject,
+            {
+              style: (feature) => {
+                const f = (feature?.properties as { field?: FieldSummary } | undefined)?.field;
+                const color = f?.use_type ? USE_TYPE_COLORS[f.use_type] : "#aaa";
+                return { color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 };
+              },
+              onEachFeature: (feature, lyr) => {
+                const summary = (feature.properties as { field: FieldSummary }).field;
+                fieldLayersById.current.set(summary.id, lyr as L.Path);
+                lyr.bindTooltip(`${summary.name} · ${summary.totalHa} ha`, { sticky: true });
+                lyr.on("click", () => {
+                  resetFieldStyles();
+                  (lyr as L.Path).setStyle({ fillOpacity: 0.62, weight: 3 });
+                  setSelectedField(summary);
+                  setSelectedParcel(null);
+                });
+              },
             },
-            onEachFeature: (feature, lyr) => {
-              const summary = (feature.properties as { field: FieldSummary }).field;
-              fieldLayersById.current.set(summary.id, lyr as L.Path);
-              lyr.bindTooltip(`${summary.name} · ${summary.totalHa} ha`, { sticky: true });
-              lyr.on("click", () => {
-                resetFieldStyles();
-                (lyr as L.Path).setStyle({ fillOpacity: 0.62, weight: 3 });
-                setSelectedField(summary);
-                setSelectedParcel(null);
-              });
-            },
-          },
+          );
+
+        const skovFeatures = fieldFeatures.filter(
+          (f) => f.properties.field.use_type === "skov",
         );
+        const nonSkovFeatures = fieldFeatures.filter(
+          (f) => f.properties.field.use_type !== "skov",
+        );
+        fieldLayer.current = buildFieldLayer(nonSkovFeatures);
+        skovLayer.current = buildFieldLayer(skovFeatures);
 
         // Start in fields view
         fieldLayer.current.addTo(map);
@@ -493,6 +508,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       leafletMap.current = null;
       parcelLayer.current = null;
       fieldLayer.current = null;
+      skovLayer.current = null;
       fieldLayersById.current = new Map();
       parcelLayers.current = [];
     };
@@ -515,6 +531,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
 
     // Show matrikel boundaries as a non-interactive backdrop so the user has a reference while drawing
@@ -581,6 +598,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setDrawnGeometry(null);
     if (map) {
       if (viewMode === "fields" && fieldLayer.current) fieldLayer.current.addTo(map);
+      if (viewMode === "skov" && skovLayer.current) skovLayer.current.addTo(map);
       if (viewMode === "parcels" && parcelLayer.current) parcelLayer.current.addTo(map);
     }
   };
@@ -595,6 +613,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
     if (rawGeojson.current) {
       backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {
@@ -672,6 +691,16 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
           }}
         >
           Marker
+        </button>
+        <button
+          onClick={() => setViewMode("skov")}
+          className="px-3.5 py-1.5 text-[13px] rounded-md border border-border transition-colors cursor-pointer"
+          style={{
+            background: viewMode === "skov" ? USE_TYPE_COLORS.skov : "transparent",
+            color: viewMode === "skov" ? "#fff" : "var(--muted-foreground)",
+          }}
+        >
+          Skov
         </button>
         <button
           onClick={() => setViewMode("parcels")}

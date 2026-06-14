@@ -76,15 +76,20 @@ export const Route = createFileRoute("/api/matrikel")({
             registreretAreal: props.registreretareal ?? props.registreretAreal,
           };
           if (matches.length === 0) {
-            outputFeatures.push({ ...f, properties: { ...baseProps, parcel: null } });
+            outputFeatures.push({
+              ...f,
+              properties: { ...baseProps, parcel: null, originalGeometry: f.geometry },
+            });
           } else {
-            // Emit one feature per parcel row so split matrikler appear in multiple fields
+            // Emit one feature per parcel row so split matrikler appear in multiple fields.
+            // Always keep the original DAWA geometry on properties so the matrikel view
+            // can render the true matrikel boundary regardless of per-parcel custom shapes.
             for (const match of matches) {
               const geom = match.custom_geometry ?? f.geometry;
               outputFeatures.push({
                 ...f,
                 geometry: geom,
-                properties: { ...baseProps, parcel: match },
+                properties: { ...baseProps, parcel: match, originalGeometry: f.geometry },
               });
             }
           }

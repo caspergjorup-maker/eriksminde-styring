@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { Pencil, MapPin, Trash2 } from "lucide-react";
+import { Pencil, MapPin, Trash2, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -10,8 +10,10 @@ import {
   USE_TYPE_COLORS,
   USE_TYPE_LABELS,
   type FieldRow,
+  type MatrikelRow,
 } from "@/lib/use-matrikel";
-import { SOIL_TYPES, updateField, deleteField } from "@/lib/fields.functions";
+import { SOIL_TYPES, updateField, deleteField, setFieldParcels } from "@/lib/fields.functions";
+
 import {
   AlertDialog,
   AlertDialogAction,

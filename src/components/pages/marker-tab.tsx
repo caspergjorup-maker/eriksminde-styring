@@ -265,21 +265,21 @@ export function MarkerPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser marker…
                 </td>
               </tr>
             )}
             {error && !isLoading && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-destructive text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-destructive text-xs">
                   Kunne ikke hente marker.
                 </td>
               </tr>
             )}
             {!isLoading && !error && fields.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Ingen marker fundet.
                 </td>
               </tr>

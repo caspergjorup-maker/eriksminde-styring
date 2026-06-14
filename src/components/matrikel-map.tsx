@@ -413,7 +413,9 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         const parcelByMatrikel = new Map<string, ParcelFeature>();
         for (const f of geojson.features) {
           const key = `${f.properties.matrikelnr ?? "?"}__${f.properties.parcel?.ejerlav ?? ""}`;
-          if (!parcelByMatrikel.has(key)) parcelByMatrikel.set(key, f);
+          if (parcelByMatrikel.has(key)) continue;
+          const orig = (f.properties as FeatureProps & { originalGeometry?: Polygon | MultiPolygon }).originalGeometry;
+          parcelByMatrikel.set(key, orig ? { ...f, geometry: orig } : f);
         }
         const parcelGeojson = {
           type: "FeatureCollection" as const,

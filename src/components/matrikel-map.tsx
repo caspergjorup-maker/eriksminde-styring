@@ -613,6 +613,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
     if (rawGeojson.current) {
       backdropLayer.current = L.geoJSON(rawGeojson.current as unknown as GeoJSON.GeoJsonObject, {

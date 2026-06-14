@@ -508,6 +508,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       leafletMap.current = null;
       parcelLayer.current = null;
       fieldLayer.current = null;
+      skovLayer.current = null;
       fieldLayersById.current = new Map();
       parcelLayers.current = [];
     };

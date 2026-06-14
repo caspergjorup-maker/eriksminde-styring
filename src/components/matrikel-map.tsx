@@ -597,6 +597,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setDrawnGeometry(null);
     if (map) {
       if (viewMode === "fields" && fieldLayer.current) fieldLayer.current.addTo(map);
+      if (viewMode === "skov" && skovLayer.current) skovLayer.current.addTo(map);
       if (viewMode === "parcels" && parcelLayer.current) parcelLayer.current.addTo(map);
     }
   };

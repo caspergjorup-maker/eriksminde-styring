@@ -406,8 +406,20 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
 
         summaries.sort((a, b) => a.name.localeCompare(b.name, "da"));
 
-        // Parcel layer (matrikler view)
-        parcelLayer.current = L.geoJSON(geojson as unknown as GeoJSON.GeoJsonObject, {
+        // Parcel layer (matrikler view): one feature per matrikel, using the
+        // original geometry from the integration (DAWA). Split matrikler still
+        // exist as multiple parcel rows in the DB, but on the map we show the
+        // single real matrikel boundary.
+        const parcelByMatrikel = new Map<string, ParcelFeature>();
+        for (const f of geojson.features) {
+          const key = `${f.properties.matrikelnr ?? "?"}__${f.properties.parcel?.ejerlav ?? ""}`;
+          if (!parcelByMatrikel.has(key)) parcelByMatrikel.set(key, f);
+        }
+        const parcelGeojson = {
+          type: "FeatureCollection" as const,
+          features: Array.from(parcelByMatrikel.values()),
+        };
+        parcelLayer.current = L.geoJSON(parcelGeojson as unknown as GeoJSON.GeoJsonObject, {
           style: (feature) => {
             const p = (feature?.properties as FeatureProps | undefined)?.parcel ?? null;
             const color = p?.use_type ? USE_TYPE_COLORS[p.use_type] : "#888";

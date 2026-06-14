@@ -188,7 +188,19 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       has_irrigation: fieldMeta.has_irrigation ?? null,
       eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
       non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
-      mapAreaHa: geometryAreaHa(fieldMeta.geometry),
+      mapAreaHa:
+        geometryAreaHa(fieldMeta.geometry) ??
+        (() => {
+          // Fallback: sum the linked parcels' geometry (custom or original matrikelpolygon)
+          let sum = 0;
+          let any = false;
+          for (const feat of features) {
+            const a = geometryAreaHa(feat.geometry);
+            if (a != null) { sum += a; any = true; }
+          }
+          return any ? Number(sum.toFixed(2)) : null;
+        })(),
+
 
     });
   });

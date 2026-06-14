@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { geometryAreaHa } from "@/lib/geo-area";
+
 
 export type UseType = "omdrift" | "skov" | "gaard";
 

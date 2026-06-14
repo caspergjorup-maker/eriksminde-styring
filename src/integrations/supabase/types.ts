@@ -413,6 +413,39 @@ export type Database = {
           },
         ]
       }
+      field_parcels: {
+        Row: {
+          created_at: string
+          field_id: string
+          parcel_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_id: string
+          parcel_id: string
+        }
+        Update: {
+          created_at?: string
+          field_id?: string
+          parcel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_parcels_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_parcels_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "parcels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fields: {
         Row: {
           created_at: string
@@ -938,7 +971,6 @@ export type Database = {
           custom_geometry: Json | null
           ejerlav: string
           field_area_ha: number | null
-          field_id: string | null
           id: string
           land_lease_id: string | null
           matrikel_id: string
@@ -952,7 +984,6 @@ export type Database = {
           custom_geometry?: Json | null
           ejerlav?: string
           field_area_ha?: number | null
-          field_id?: string | null
           id?: string
           land_lease_id?: string | null
           matrikel_id: string
@@ -966,7 +997,6 @@ export type Database = {
           custom_geometry?: Json | null
           ejerlav?: string
           field_area_ha?: number | null
-          field_id?: string | null
           id?: string
           land_lease_id?: string | null
           matrikel_id?: string
@@ -976,13 +1006,6 @@ export type Database = {
           use_type?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "parcels_field_id_fkey"
-            columns: ["field_id"]
-            isOneToOne: false
-            referencedRelation: "fields"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "parcels_land_lease_id_fkey"
             columns: ["land_lease_id"]

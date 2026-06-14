@@ -296,7 +296,26 @@ export function MarkerPage() {
                       />
                     ) : f.name}
                   </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{f.matrikler.join(", ")}</td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span>{f.matrikler.length > 0 ? f.matrikler.join(", ") : "—"}</span>
+                      {tableEdit && (
+                        <ParcelPicker
+                          field={f}
+                          allMatrikler={allMatrikler}
+                          trigger={
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded border border-dashed border-border px-1.5 py-0.5 text-[11px] hover:bg-muted"
+                              title="Tilknyt matrikler"
+                            >
+                              <Plus className="h-3 w-3" /> Matrikel
+                            </button>
+                          }
+                        />
+                      )}
+                    </div>
+                  </td>
                   <td className="px-3 py-2">
                     {tableEdit ? (
                       <Select

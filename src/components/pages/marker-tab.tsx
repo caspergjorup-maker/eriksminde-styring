@@ -450,6 +450,10 @@ export function MarkerPage() {
                 <td className="px-3 py-2 text-right tabular-nums">
                   {fields.reduce((s, f) => s + (f.totalHa ?? 0), 0).toFixed(2)} ha
                 </td>
+                <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                  {fields.reduce((s, f) => s + (f.mapAreaHa ?? 0), 0).toFixed(2)} ha
+                </td>
+
                 <td className="px-3 py-2 text-right tabular-nums">
                   {fields.reduce((s, f) => s + (f.lease_area_ha ?? 0), 0).toFixed(2)} ha
                 </td>

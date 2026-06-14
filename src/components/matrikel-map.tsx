@@ -531,6 +531,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
     setSelectedParcel(null);
     setSelectedField(null);
     if (fieldLayer.current && map.hasLayer(fieldLayer.current)) map.removeLayer(fieldLayer.current);
+    if (skovLayer.current && map.hasLayer(skovLayer.current)) map.removeLayer(skovLayer.current);
     if (parcelLayer.current && map.hasLayer(parcelLayer.current)) map.removeLayer(parcelLayer.current);
 
     // Show matrikel boundaries as a non-interactive backdrop so the user has a reference while drawing

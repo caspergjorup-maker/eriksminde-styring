@@ -100,7 +100,9 @@ type AllFieldRow = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  geometry?: unknown;
 };
+
 
 async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: MatrikelRow[] }> {
   const r = await fetch("/api/matrikel");

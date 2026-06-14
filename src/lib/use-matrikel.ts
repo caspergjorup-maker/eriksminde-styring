@@ -25,7 +25,9 @@ type Field = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  geometry?: unknown;
 };
+
 type Parcel = {
   id: string;
   matrikel_id: string;

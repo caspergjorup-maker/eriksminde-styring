@@ -173,12 +173,9 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
   useEffect(() => {
     const map = leafletMap.current;
     if (!map) return;
-    const all = [parcelLayer.current, fieldLayer.current, skovLayer.current];
+    const all = [parcelLayer.current, fieldLayer.current];
     for (const l of all) if (l && map.hasLayer(l)) map.removeLayer(l);
-    const target =
-      viewMode === "fields" ? fieldLayer.current
-      : viewMode === "skov" ? skovLayer.current
-      : parcelLayer.current;
+    const target = viewMode === "fields" ? fieldLayer.current : parcelLayer.current;
     if (target) target.addTo(map);
     if (viewMode === "parcels") {
       resetParcelStyles();

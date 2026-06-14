@@ -45,9 +45,11 @@ export const createField = createServerFn({ method: "POST" })
     const fieldId = inserted.id as string;
     if (data.parcelId) {
       const { error: linkErr } = await context.supabase
-        .from("parcels")
-        .update({ field_id: fieldId })
-        .eq("id", data.parcelId);
+        .from("field_parcels")
+        .upsert([{ field_id: fieldId, parcel_id: data.parcelId }], {
+          onConflict: "field_id,parcel_id",
+          ignoreDuplicates: true,
+        });
       if (linkErr) throw new Error(linkErr.message);
     }
     return { id: fieldId };

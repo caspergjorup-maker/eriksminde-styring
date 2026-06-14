@@ -30,7 +30,6 @@ const USE_TYPES = ["omdrift", "skov", "gaard"] as const;
 const UpdateParcelSchema = z.object({
   id: z.string().uuid(),
   use_type: z.enum(USE_TYPES).nullable(),
-  field_id: z.string().uuid().nullable(),
   net_area_ha: z.number().min(0).max(100000).nullable(),
   notes: z.string().trim().max(2000).nullable(),
 });

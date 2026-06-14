@@ -87,7 +87,6 @@ const COLUMNS: FilterColumn<MatrikelRow>[] = [
 type ParcelUpdatePayload = {
   id: string;
   use_type: UseType | null;
-  field_id: string | null;
   net_area_ha: number | null;
   notes: string | null;
 };
@@ -125,7 +124,6 @@ export function MatriklerPage() {
     saveMut.mutate({
       id: m.parcelId,
       use_type: m.use_type,
-      field_id: m.fieldId,
       net_area_ha: m.netAreaHa,
       notes: m.notes,
       ...patch,
@@ -222,20 +220,7 @@ export function MatriklerPage() {
                   )}
                 </td>
                 <td className="px-3 py-2 text-xs">
-                  {tableEdit ? (
-                    <Select
-                      value={m.fieldId ?? NONE}
-                      onValueChange={(v) => patchParcel(m, { field_id: v === NONE ? null : v })}
-                    >
-                      <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>—</SelectItem>
-                        {allFields.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : m.fieldNames.length > 0 ? m.fieldNames.join(", ") : "—"}
+                  {m.fieldNames.length > 0 ? m.fieldNames.join(", ") : "—"}
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {m.registreretAreaHa != null ? `${m.registreretAreaHa} ha` : "—"}
@@ -305,7 +290,7 @@ function InlineNumber({ value, onCommit }: { value: number | null | undefined; o
 }
 
 function MatrikelDialog({
-  editing, fields, onOpenChange, onSave, saving,
+  editing, onOpenChange, onSave, saving,
 }: {
   editing: MatrikelRow | null;
   fields: FieldRow[];
@@ -315,7 +300,6 @@ function MatrikelDialog({
 }) {
   const open = editing != null;
   const [useType, setUseType] = useState<UseType | null>(null);
-  const [fieldId, setFieldId] = useState<string | null>(null);
   const [netArea, setNetArea] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -326,7 +310,6 @@ function MatrikelDialog({
     setLastId(editingId);
     if (editing) {
       setUseType(editing.use_type);
-      setFieldId(editing.fieldId);
       setNetArea(editing.netAreaHa != null ? String(editing.netAreaHa) : "");
       setNotes(editing.notes ?? "");
     }
@@ -341,38 +324,32 @@ function MatrikelDialog({
           <DialogTitle>Matr. {editing.matrikelnr} — {editing.ejerlav}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="mb-1.5 block">Type</Label>
-              <Select
-                value={useType ?? NONE}
-                onValueChange={(v) => setUseType(v === NONE ? null : (v as UseType))}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
-                  {USE_TYPE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="mb-1.5 block">Mark</Label>
-              <Select
-                value={fieldId ?? NONE}
-                onValueChange={(v) => setFieldId(v === NONE ? null : v)}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
-                  {fields.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label className="mb-1.5 block">Type</Label>
+            <Select
+              value={useType ?? NONE}
+              onValueChange={(v) => setUseType(v === NONE ? null : (v as UseType))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>—</SelectItem>
+                {USE_TYPE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          {editing.fieldNames.length > 0 && (
+            <div>
+              <Label className="mb-1.5 block">Tilknyttede marker</Label>
+              <div className="text-sm text-muted-foreground">
+                {editing.fieldNames.join(", ")}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Tilknytning ændres fra "Marker og skov".
+              </p>
+            </div>
+          )}
           <div>
             <Label className="mb-1.5 block">Nettoareal (ha)</Label>
             <Input
@@ -399,7 +376,6 @@ function MatrikelDialog({
             onClick={() => onSave({
               id: editing.parcelId,
               use_type: useType,
-              field_id: fieldId,
               net_area_ha: netArea.trim() === "" ? null : Number(netArea),
               notes: notes.trim() || null,
             })}

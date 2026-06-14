@@ -794,8 +794,7 @@ function ParcelPicker({
             <CommandGroup>
               {sorted.map((m) => {
                 const isSelected = selected.has(m.parcelId);
-                const linkedElsewhere =
-                  m.fieldId && m.fieldId !== field.id ? m.fieldName : null;
+                const otherFields = m.fieldNames.filter((n) => n !== field.name);
                 return (
                   <CommandItem
                     key={m.parcelId}
@@ -814,9 +813,9 @@ function ParcelPicker({
                       <div className="text-sm font-medium">Matr. {m.matrikelnr}</div>
                       <div className="text-[11px] text-muted-foreground truncate">
                         {m.ejerlav}
-                        {linkedElsewhere && (
-                          <span className="ml-1 text-amber-600">
-                            • flyttes fra "{linkedElsewhere}"
+                        {otherFields.length > 0 && (
+                          <span className="ml-1 text-muted-foreground">
+                            • også: {otherFields.join(", ")}
                           </span>
                         )}
                       </div>

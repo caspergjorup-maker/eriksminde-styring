@@ -59,29 +59,31 @@ const SetParcelsSchema = z.object({
   parcel_ids: z.array(z.string().uuid()).max(500),
 });
 
-// Links the given set of parcels to a field. Any parcel currently linked
-// to this field but NOT in the list will be unlinked (field_id = null).
+// Replaces this field's set of linked parcels in the field_parcels join table.
+// Other fields' links to the same parcels are NOT touched (many-to-many).
 export const setFieldParcels = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => SetParcelsSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { field_id, parcel_ids } = data;
-    let unlinkQuery = context.supabase
-      .from("parcels")
-      .update({ field_id: null })
+
+    // Remove existing links for this field that are no longer in the list
+    let delQuery = context.supabase
+      .from("field_parcels")
+      .delete()
       .eq("field_id", field_id);
     if (parcel_ids.length > 0) {
-      unlinkQuery = unlinkQuery.not("id", "in", `(${parcel_ids.join(",")})`);
+      delQuery = delQuery.not("parcel_id", "in", `(${parcel_ids.join(",")})`);
     }
-    const { error: unlinkErr } = await unlinkQuery;
-    if (unlinkErr) throw new Error(unlinkErr.message);
+    const { error: delErr } = await delQuery;
+    if (delErr) throw new Error(delErr.message);
 
     if (parcel_ids.length > 0) {
-      const { error: linkErr } = await context.supabase
-        .from("parcels")
-        .update({ field_id })
-        .in("id", parcel_ids);
-      if (linkErr) throw new Error(linkErr.message);
+      const rows = parcel_ids.map((parcel_id) => ({ field_id, parcel_id }));
+      const { error: insErr } = await context.supabase
+        .from("field_parcels")
+        .upsert(rows, { onConflict: "field_id,parcel_id", ignoreDuplicates: true });
+      if (insErr) throw new Error(insErr.message);
     }
     return { ok: true };
   });
@@ -96,23 +98,29 @@ export const linkParcelToField = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => LinkParcelSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
-      .from("parcels")
-      .update({ field_id: data.field_id })
-      .eq("id", data.parcel_id);
+      .from("field_parcels")
+      .upsert([{ field_id: data.field_id, parcel_id: data.parcel_id }], {
+        onConflict: "field_id,parcel_id",
+        ignoreDuplicates: true,
+      });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-const UnlinkParcelSchema = z.object({ parcel_id: z.string().uuid() });
+const UnlinkParcelSchema = z.object({
+  field_id: z.string().uuid(),
+  parcel_id: z.string().uuid(),
+});
 
 export const unlinkParcelFromField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => UnlinkParcelSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
-      .from("parcels")
-      .update({ field_id: null })
-      .eq("id", data.parcel_id);
+      .from("field_parcels")
+      .delete()
+      .eq("field_id", data.field_id)
+      .eq("parcel_id", data.parcel_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

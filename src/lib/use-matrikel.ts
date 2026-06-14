@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { geometryAreaHa } from "@/lib/geo-area";
+
 
 export type UseType = "omdrift" | "skov" | "gaard";
 
@@ -23,7 +25,9 @@ type Field = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  geometry?: unknown;
 };
+
 type Parcel = {
   id: string;
   matrikel_id: string;
@@ -66,7 +70,9 @@ export type FieldRow = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  mapAreaHa: number | null;
 };
+
 
 export type MatrikelRow = {
   parcelId: string;
@@ -94,7 +100,9 @@ type AllFieldRow = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  geometry?: unknown;
 };
+
 
 async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: MatrikelRow[] }> {
   const r = await fetch("/api/matrikel");
@@ -180,6 +188,8 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       has_irrigation: fieldMeta.has_irrigation ?? null,
       eligible_area_ha: fieldMeta.eligible_area_ha ?? null,
       non_eligible_area_ha: fieldMeta.non_eligible_area_ha ?? null,
+      mapAreaHa: geometryAreaHa(fieldMeta.geometry),
+
     });
   });
 
@@ -205,6 +215,8 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       has_irrigation: af.has_irrigation,
       eligible_area_ha: af.eligible_area_ha,
       non_eligible_area_ha: af.non_eligible_area_ha,
+      mapAreaHa: geometryAreaHa(af.geometry),
+
     });
   }
 

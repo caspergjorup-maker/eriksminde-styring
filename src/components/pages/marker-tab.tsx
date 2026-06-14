@@ -77,6 +77,8 @@ const FIELD_COLUMNS: FilterColumn<FieldRow>[] = [
     sortValue: (f) => f.use_type ?? "",
   },
   { key: "totalHa", label: "Matrikelareal (ha)", type: "number", get: (f) => f.totalHa, sortable: true, sortValue: (f) => f.totalHa },
+  { key: "mapAreaHa", label: "Korttegnet areal (ha)", type: "number", get: (f) => f.mapAreaHa, sortable: true, sortValue: (f) => f.mapAreaHa },
+
   { key: "lease_area_ha", label: "Forpagtningsareal (ha)", type: "number", get: (f) => f.lease_area_ha, sortable: true, sortValue: (f) => f.lease_area_ha },
   { key: "eligible_area_ha", label: "Støtteberettiget (ha)", type: "number", get: (f) => f.eligible_area_ha, sortable: true, sortValue: (f) => f.eligible_area_ha },
   { key: "lease_price_per_ha", label: "Pris/ha (kr)", type: "number", get: (f) => f.lease_price_per_ha, sortable: true, sortValue: (f) => f.lease_price_per_ha },
@@ -249,6 +251,8 @@ export function MarkerPage() {
               <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Korttegnet" sortKey="mapAreaHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+
               <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Støtteberettiget" sortKey="eligible_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Pris/ha" sortKey="lease_price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
@@ -261,21 +265,21 @@ export function MarkerPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser marker…
                 </td>
               </tr>
             )}
             {error && !isLoading && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-destructive text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-destructive text-xs">
                   Kunne ikke hente marker.
                 </td>
               </tr>
             )}
             {!isLoading && !error && fields.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Ingen marker fundet.
                 </td>
               </tr>
@@ -344,6 +348,13 @@ export function MarkerPage() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{f.totalHa} ha</td>
+                  <td
+                    className="px-3 py-2 text-right tabular-nums text-muted-foreground"
+                    title="Beregnet ud fra polygonen tegnet på kortet"
+                  >
+                    {f.mapAreaHa != null ? `${f.mapAreaHa} ha` : "—"}
+                  </td>
+
                   <td className="px-3 py-2 text-right tabular-nums">
                     {tableEdit ? (
                       <InlineNumber
@@ -439,6 +450,10 @@ export function MarkerPage() {
                 <td className="px-3 py-2 text-right tabular-nums">
                   {fields.reduce((s, f) => s + (f.totalHa ?? 0), 0).toFixed(2)} ha
                 </td>
+                <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                  {fields.reduce((s, f) => s + (f.mapAreaHa ?? 0), 0).toFixed(2)} ha
+                </td>
+
                 <td className="px-3 py-2 text-right tabular-nums">
                   {fields.reduce((s, f) => s + (f.lease_area_ha ?? 0), 0).toFixed(2)} ha
                 </td>
@@ -644,6 +659,12 @@ function FieldDialog({
                   <Input readOnly value={editing.totalHa} className="bg-muted/40" />
                   <p className="text-[11px] text-muted-foreground">Hentes automatisk fra Datafordeler — kan ikke redigeres</p>
                 </div>
+                <div className="space-y-1.5">
+                  <Label>Korttegnet areal (ha)</Label>
+                  <Input readOnly value={editing.mapAreaHa != null ? String(editing.mapAreaHa) : "—"} className="bg-muted/40" />
+                  <p className="text-[11px] text-muted-foreground">Beregnet ud fra polygonen tegnet på kortet</p>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="lease_area">Forpagtningsareal (ha)</Label>
                   <Input id="lease_area" type="number" step="0.01" min="0" value={values.lease_area_ha}

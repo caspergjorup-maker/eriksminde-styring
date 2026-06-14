@@ -151,6 +151,7 @@ function fmtKr(n: number | null | undefined) {
 export function MarkerPage() {
   const { data, isLoading, error } = useMatrikelData();
   const allFields = data?.fields ?? [];
+  const allMatrikler: MatrikelRow[] = data?.matrikler ?? [];
   const filters = useTableFilters({
     rows: allFields,
     columns: FIELD_COLUMNS,

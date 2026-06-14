@@ -70,7 +70,9 @@ export type FieldRow = {
   has_irrigation: boolean | null;
   eligible_area_ha: number | null;
   non_eligible_area_ha: number | null;
+  mapAreaHa: number | null;
 };
+
 
 export type MatrikelRow = {
   parcelId: string;

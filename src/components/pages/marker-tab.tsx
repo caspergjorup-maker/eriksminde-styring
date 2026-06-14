@@ -463,6 +463,7 @@ export function MarkerPage() {
 
       <FieldDialog
         editing={editing}
+        allMatrikler={allMatrikler}
         onOpenChange={(o) => { if (!o) setEditing(null); }}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["matrikel-data"] });

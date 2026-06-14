@@ -87,7 +87,6 @@ const COLUMNS: FilterColumn<MatrikelRow>[] = [
 type ParcelUpdatePayload = {
   id: string;
   use_type: UseType | null;
-  field_id: string | null;
   net_area_ha: number | null;
   notes: string | null;
 };
@@ -125,7 +124,6 @@ export function MatriklerPage() {
     saveMut.mutate({
       id: m.parcelId,
       use_type: m.use_type,
-      field_id: m.fieldId,
       net_area_ha: m.netAreaHa,
       notes: m.notes,
       ...patch,

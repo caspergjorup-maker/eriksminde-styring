@@ -251,6 +251,8 @@ export function MarkerPage() {
               <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+              <SortableHeader label="Korttegnet" sortKey="mapAreaHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
+
               <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Støtteberettiget" sortKey="eligible_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Pris/ha" sortKey="lease_price_per_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />

@@ -93,6 +93,7 @@ export const Route = createFileRoute("/api/matrikel")({
             ...props,
             ejerlavsnavn: props.ejerlavnavn ?? props.ejerlavsnavn,
             registreretAreal: props.registreretareal ?? props.registreretAreal,
+            vejareal: props.vejareal ?? null,
           };
           if (matches.length === 0) {
             outputFeatures.push({

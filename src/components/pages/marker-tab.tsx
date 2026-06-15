@@ -76,7 +76,7 @@ const FIELD_COLUMNS: FilterColumn<FieldRow>[] = [
     sortable: true,
     sortValue: (f) => f.use_type ?? "",
   },
-  { key: "totalHa", label: "Matrikelareal (ha)", type: "number", get: (f) => f.totalHa, sortable: true, sortValue: (f) => f.totalHa },
+  
   { key: "mapAreaHa", label: "Korttegnet areal (ha)", type: "number", get: (f) => f.mapAreaHa, sortable: true, sortValue: (f) => f.mapAreaHa },
 
   { key: "lease_area_ha", label: "Forpagtningsareal (ha)", type: "number", get: (f) => f.lease_area_ha, sortable: true, sortValue: (f) => f.lease_area_ha },
@@ -250,7 +250,6 @@ export function MarkerPage() {
               <SortableHeader label="Mark" sortKey="name" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
-              <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Korttegnet" sortKey="mapAreaHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
 
               <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
@@ -265,21 +264,21 @@ export function MarkerPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Indlæser marker…
                 </td>
               </tr>
             )}
             {error && !isLoading && (
               <tr>
-                <td colSpan={12} className="px-3 py-6 text-center text-destructive text-xs">
+                <td colSpan={11} className="px-3 py-6 text-center text-destructive text-xs">
                   Kunne ikke hente marker.
                 </td>
               </tr>
             )}
             {!isLoading && !error && fields.length === 0 && (
               <tr>
-                <td colSpan={12} className="px-3 py-6 text-center text-muted-foreground text-xs">
+                <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground text-xs">
                   Ingen marker fundet.
                 </td>
               </tr>
@@ -347,7 +346,6 @@ export function MarkerPage() {
                       "—"
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{f.totalHa} ha</td>
                   <td
                     className="px-3 py-2 text-right tabular-nums text-muted-foreground"
                     title="Beregnet ud fra polygonen tegnet på kortet"
@@ -447,9 +445,6 @@ export function MarkerPage() {
             <tfoot>
               <tr className="border-t border-border bg-muted/30 font-medium">
                 <td className="px-3 py-2" colSpan={3}>I alt ({fields.length})</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {fields.reduce((s, f) => s + (f.totalHa ?? 0), 0).toFixed(2)} ha
-                </td>
                 <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                   {fields.reduce((s, f) => s + (f.mapAreaHa ?? 0), 0).toFixed(2)} ha
                 </td>

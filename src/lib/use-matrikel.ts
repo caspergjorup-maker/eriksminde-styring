@@ -47,6 +47,7 @@ type Feature = {
     matrikelnr?: string;
     ejerlavsnavn?: string;
     registreretAreal?: number;
+    vejareal?: number | null;
     parcel: Parcel | null;
   };
   geometry: unknown;

@@ -76,7 +76,7 @@ const FIELD_COLUMNS: FilterColumn<FieldRow>[] = [
     sortable: true,
     sortValue: (f) => f.use_type ?? "",
   },
-  { key: "totalHa", label: "Matrikelareal (ha)", type: "number", get: (f) => f.totalHa, sortable: true, sortValue: (f) => f.totalHa },
+  
   { key: "mapAreaHa", label: "Korttegnet areal (ha)", type: "number", get: (f) => f.mapAreaHa, sortable: true, sortValue: (f) => f.mapAreaHa },
 
   { key: "lease_area_ha", label: "Forpagtningsareal (ha)", type: "number", get: (f) => f.lease_area_ha, sortable: true, sortValue: (f) => f.lease_area_ha },

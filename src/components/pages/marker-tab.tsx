@@ -445,9 +445,6 @@ export function MarkerPage() {
             <tfoot>
               <tr className="border-t border-border bg-muted/30 font-medium">
                 <td className="px-3 py-2" colSpan={3}>I alt ({fields.length})</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {fields.reduce((s, f) => s + (f.totalHa ?? 0), 0).toFixed(2)} ha
-                </td>
                 <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                   {fields.reduce((s, f) => s + (f.mapAreaHa ?? 0), 0).toFixed(2)} ha
                 </td>

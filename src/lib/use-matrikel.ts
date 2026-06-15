@@ -128,6 +128,14 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
       f.properties.registreretAreal != null
         ? Number((f.properties.registreretAreal / 10000).toFixed(2))
         : null;
+    const vejHa =
+      f.properties.vejareal != null
+        ? Number((f.properties.vejareal / 10000).toFixed(2))
+        : null;
+    const netCalcHa =
+      f.properties.registreretAreal != null && f.properties.vejareal != null
+        ? Number(((f.properties.registreretAreal - f.properties.vejareal) / 10000).toFixed(2))
+        : null;
     if (!existing) {
       matrikelByKey.set(key, {
         parcelId: p.id,
@@ -135,7 +143,7 @@ async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: Matrike
         ejerlav: p.ejerlav,
         use_type: p.use_type,
         registreretAreaHa: regHa,
-        netAreaHa: p.net_area_ha,
+        netAreaHa: p.net_area_ha ?? netCalcHa,
         fieldAreaHa: p.field_area_ha,
         fieldId: p.field_id ?? null,
         fieldName,

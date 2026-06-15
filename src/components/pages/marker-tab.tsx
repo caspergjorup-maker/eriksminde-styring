@@ -250,7 +250,6 @@ export function MarkerPage() {
               <SortableHeader label="Mark" sortKey="name" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Matrikel" sortKey="matrikel" sort={filters.sort} onToggle={filters.toggleSort} />
               <SortableHeader label="Type" sortKey="use_type" sort={filters.sort} onToggle={filters.toggleSort} />
-              <SortableHeader label="Matrikelareal" sortKey="totalHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
               <SortableHeader label="Korttegnet" sortKey="mapAreaHa" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
 
               <SortableHeader label="Forpagtningsareal" sortKey="lease_area_ha" sort={filters.sort} onToggle={filters.toggleSort} align="right" />
@@ -347,7 +346,6 @@ export function MarkerPage() {
                       "—"
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{f.totalHa} ha</td>
                   <td
                     className="px-3 py-2 text-right tabular-nums text-muted-foreground"
                     title="Beregnet ud fra polygonen tegnet på kortet"

@@ -32,7 +32,6 @@ const sections: Section[] = [
       { label: "Landbrugsjord & Marker", to: "/landbrugsjord", icon: Sprout },
       { label: "Bygninger", to: "/bygninger", icon: Building2 },
       { label: "Maskiner", to: "/maskiner", icon: Tractor },
-      { label: "Jagtleje", to: "/jagtleje", icon: Crosshair },
     ],
   },
   {
@@ -40,6 +39,7 @@ const sections: Section[] = [
     items: [
       { label: "Halm", to: "/halm", icon: Layers },
       { label: "Skov & hugst", to: "/skov", icon: Trees },
+      { label: "Jagtleje", to: "/jagtleje", icon: Crosshair },
     ],
   },
   {

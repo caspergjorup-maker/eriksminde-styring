@@ -445,12 +445,18 @@ function LinesTable({
   const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-scenario", scenarioId] });
 
   const createMut = useMutation({
-    mutationFn: (data: Parameters<typeof createFn>[0]["data"]) => createFn({ data }),
+    mutationFn: (data: {
+      scenario_id: string; kind: "income" | "expense"; category: string; label: string;
+      annual_amount: number; monthly_override: number[] | null; source_note: string | null; sort_order: number;
+    }) => createFn({ data }),
     onSuccess: () => { toast.success("Linje tilføjet"); invalidate(); setCreating(false); },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: Parameters<typeof updateFn>[0]["data"]) => updateFn({ data }),
+    mutationFn: (data: {
+      id: string; category?: string; label?: string; annual_amount?: number;
+      monthly_override?: number[] | null; source_note?: string | null; sort_order?: number;
+    }) => updateFn({ data }),
     onSuccess: () => { invalidate(); setEditing(null); },
     onError: (e: Error) => toast.error(e.message),
   });

@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_lines: {
+        Row: {
+          annual_amount: number
+          category: string
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          monthly_override: Json | null
+          scenario_id: string
+          sort_order: number
+          source_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          annual_amount?: number
+          category: string
+          created_at?: string
+          id?: string
+          kind: string
+          label: string
+          monthly_override?: Json | null
+          scenario_id: string
+          sort_order?: number
+          source_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annual_amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          monthly_override?: Json | null
+          scenario_id?: string
+          sort_order?: number
+          source_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lines_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "budget_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_loans: {
+        Row: {
+          created_at: string
+          id: string
+          interest_rate: number
+          loan_type: string
+          name: string
+          notes: string | null
+          principal: number
+          scenario_id: string
+          sort_order: number
+          start_date: string | null
+          term_months: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          loan_type?: string
+          name: string
+          notes?: string | null
+          principal?: number
+          scenario_id: string
+          sort_order?: number
+          start_date?: string | null
+          term_months?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          loan_type?: string
+          name?: string
+          notes?: string | null
+          principal?: number
+          scenario_id?: string
+          sort_order?: number
+          start_date?: string | null
+          term_months?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_loans_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "budget_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          name: string
+          notes: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name: string
+          notes?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           budgeted_amount: number

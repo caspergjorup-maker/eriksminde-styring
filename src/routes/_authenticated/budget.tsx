@@ -698,12 +698,18 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
   const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-scenario", scenarioId] });
 
   const createMut = useMutation({
-    mutationFn: (data: Parameters<typeof createFn>[0]["data"]) => createFn({ data }),
+    mutationFn: (data: {
+      scenario_id: string; name: string; principal: number; interest_rate: number;
+      term_months: number; loan_type: LoanType; start_date: string | null; notes: string | null; sort_order: number;
+    }) => createFn({ data }),
     onSuccess: () => { toast.success("Lån tilføjet"); invalidate(); setCreating(false); },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: Parameters<typeof updateFn>[0]["data"]) => updateFn({ data }),
+    mutationFn: (data: {
+      id: string; name?: string; principal?: number; interest_rate?: number;
+      term_months?: number; loan_type?: LoanType; start_date?: string | null; notes?: string | null; sort_order?: number;
+    }) => updateFn({ data }),
     onSuccess: () => { invalidate(); setEditing(null); },
     onError: (e: Error) => toast.error(e.message),
   });

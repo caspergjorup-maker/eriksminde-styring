@@ -1,0 +1,1 @@
+CREATE POLICY "Members can update field_parcels" ON public.field_parcels FOR UPDATE USING (public.is_member(auth.uid())) WITH CHECK (public.is_member(auth.uid()));

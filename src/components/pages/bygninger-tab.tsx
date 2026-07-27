@@ -417,9 +417,6 @@ function BuildingsSection({
                       <td className="px-4 py-2 text-muted-foreground tabular-nums">
                         {u.lease?.monthly_rent ? formatDKK(u.lease.monthly_rent) : "—"}
                       </td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {u.lease?.contract_end ? formatDate(u.lease.contract_end) : "—"}
-                      </td>
                       <td className="px-4 py-2 text-muted-foreground tabular-nums">
                         {u.estimated_monthly_rent ? `${formatDKK(u.estimated_monthly_rent)}/md.` : "—"}
                       </td>

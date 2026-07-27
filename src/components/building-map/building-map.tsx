@@ -221,6 +221,11 @@ export function BuildingMap({
                       : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
                     filter: isSelected ? "brightness(0.92)" : undefined,
                     transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px",
+                    overflow: "hidden",
                   }}
                 >
                   <UnitOverlay
@@ -228,27 +233,22 @@ export function BuildingMap({
                     width={w}
                     height={h}
                   />
+                  <span
+                    style={{
+                      position: "relative",
+                      fontSize: w < 55 || h < 30 ? 9 : w < 85 || h < 45 ? 10 : 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                      textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+                      pointerEvents: "none",
+                      padding: "0 2px",
+                    }}
+                  >
+                    {b.name}
+                  </span>
                 </div>
-                <span
-                  style={{
-                    position: "absolute",
-                    left: "50%",
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    fontSize: w < 55 || h < 30 ? 9 : w < 85 || h < 45 ? 10 : 12,
-                    fontWeight: 600,
-                    color: "#fff",
-                    textAlign: "center",
-                    lineHeight: 1.2,
-                    textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-                    pointerEvents: "none",
-                    padding: "0 4px",
-                    whiteSpace: "nowrap",
-                    maxWidth: 140,
-                  }}
-                >
-                  {b.name}
-                </span>
               </div>
             );
           })}

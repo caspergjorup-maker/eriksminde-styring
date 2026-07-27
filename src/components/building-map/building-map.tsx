@@ -89,24 +89,38 @@ export function BuildingMap({
             position: "relative",
             width: MAP_W,
             height: MAP_H,
-            background: "#EBF8F3",
-            borderRadius: 8,
+            background: "oklch(0.97 0.015 160)",
+            borderRadius: "var(--radius-lg)",
             overflow: "hidden",
             transform: scale !== 1 ? `scale(${scale})` : undefined,
             transformOrigin: "top left",
+            boxShadow: "inset 0 0 0 1px oklch(0.85 0.012 165 / 0.5), 0 4px 20px oklch(0.55 0.02 160 / 0.08)",
           }}
         >
+          {/* Subtle map texture */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "radial-gradient(circle at 20% 30%, oklch(0.94 0.02 160 / 0.25) 0%, transparent 25%), radial-gradient(circle at 80% 70%, oklch(0.92 0.015 160 / 0.3) 0%, transparent 30%)",
+              pointerEvents: "none",
+            }}
+          />
+
           {/* Fjordager — lodret, let roteret */}
           <div
             style={{
               position: "absolute",
-              width: 16,
+              width: 18,
               height: 340,
-              left: 95,
+              left: 94,
               top: 0,
-              background: "#d4cfc8",
+              background: "oklch(0.82 0.004 160)",
+              borderRadius: 9,
               transform: "rotate(8deg)",
               transformOrigin: "top center",
+              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
             }}
           />
           {/* Sønderbyen — vandret tværvej */}
@@ -114,21 +128,24 @@ export function BuildingMap({
             style={{
               position: "absolute",
               width: 580,
-              height: 15,
+              height: 16,
               left: 80,
               top: 252,
-              background: "#d4cfc8",
+              background: "oklch(0.82 0.004 160)",
+              borderRadius: 8,
+              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
             }}
           />
           {/* Vejskilte */}
           <span
             style={{
               position: "absolute",
-              left: 52,
+              left: 50,
               top: 130,
-              fontSize: 11,
-              color: "#888",
-              letterSpacing: 1,
+              fontSize: 10,
+              fontWeight: 600,
+              color: "oklch(0.55 0.01 160)",
+              letterSpacing: 1.5,
               textTransform: "uppercase",
               transform: "rotate(-90deg)",
               transformOrigin: "center",
@@ -142,10 +159,11 @@ export function BuildingMap({
             style={{
               position: "absolute",
               left: 200,
-              top: 238,
-              fontSize: 11,
-              color: "#888",
-              letterSpacing: 1,
+              top: 236,
+              fontSize: 10,
+              fontWeight: 600,
+              color: "oklch(0.55 0.01 160)",
+              letterSpacing: 1.5,
               textTransform: "uppercase",
               pointerEvents: interactive ? undefined : "none",
             }}
@@ -160,51 +178,75 @@ export function BuildingMap({
             const isSelected = selected?.id === b.id;
             const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
             const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
+            const baseColor = b.map_color ?? "#1D9E75";
+            const w = b.map_w ?? 40;
+            const h = b.map_h ?? 40;
             return (
               <div
                 key={b.id}
                 onClick={() => handleClick(b)}
+                title={b.name}
                 style={{
                   position: "absolute",
                   left: b.map_x ?? 0,
                   top: b.map_y ?? 0,
-                  width: b.map_w ?? 40,
-                  height: b.map_h ?? 40,
-                  background: b.map_color ?? "#1D9E75",
-                  borderRadius: isCircle ? "50%" : 2,
-                  border: `1.5px solid ${isSelected ? "#085041" : borderColor}`,
+                  width: w,
+                  height: h,
                   cursor: interactive ? "pointer" : "default",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transform: rotate ? "rotate(-8deg)" : undefined,
-                  transformOrigin: rotateOrigin ? "left center" : undefined,
-                  filter: isSelected ? "brightness(0.82)" : undefined,
-                  transition: "filter 0.15s",
+                  zIndex: isSelected ? 10 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (interactive) {
+                    const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
+                    if (inner) inner.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
+                  if (inner) inner.style.transform = rotate ? "rotate(-8deg)" : "";
                 }}
               >
-                <UnitOverlay
-                  units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
-                  width={b.map_w ?? 40}
-                  height={b.map_h ?? 40}
-                />
-                <span
+                <div
+                  data-building-shape
                   style={{
-                    position: "relative",
-                    fontSize: 11,
-                    fontWeight: 500,
-                    color: "#fff",
-                    textAlign: "center",
-                    lineHeight: 1.25,
-                    textShadow: "0 1px 2px rgba(0,0,0,0.4)",
-                    pointerEvents: "none",
-                    padding: "0 2px",
+                    position: "absolute",
+                    inset: 0,
+                    background: baseColor,
+                    borderRadius: isCircle ? "50%" : "var(--radius-md)",
+                    border: `2px solid ${isSelected ? "oklch(0.35 0.07 168)" : borderColor}`,
+                    transform: rotate ? "rotate(-8deg)" : undefined,
+                    transformOrigin: rotateOrigin ? "left center" : "center",
+                    boxShadow: isSelected
+                      ? "0 8px 24px oklch(0.35 0.05 160 / 0.25), 0 0 0 3px oklch(0.95 0.005 160)"
+                      : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
+                    filter: isSelected ? "brightness(0.92)" : undefined,
+                    transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {b.building_nr}
-                  <br />
-                  {b.name}
-                </span>
+                  <UnitOverlay
+                    units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
+                    width={w}
+                    height={h}
+                  />
+                  <span
+                    style={{
+                      position: "relative",
+                      fontSize: w < 55 || h < 30 ? 8 : w < 85 || h < 45 ? 10 : 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                      textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+                      pointerEvents: "none",
+                      padding: "0 1px",
+                    }}
+                  >
+                    {b.name}
+                  </span>
+                </div>
               </div>
             );
           })}
@@ -237,33 +279,35 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
   return (
     <div
       style={{
-        marginTop: 12,
-        background: "hsl(var(--background))",
+        marginTop: 16,
+        background: "hsl(var(--card))",
         border: "1px solid hsl(var(--border))",
-        borderRadius: 12,
-        padding: "1rem 1.25rem",
+        borderRadius: "var(--radius-xl)",
+        padding: "1.25rem",
         maxWidth: MAP_W,
+        boxShadow: "0 2px 12px oklch(0.35 0.02 160 / 0.06)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            borderRadius: "var(--radius-md)",
             background: building.map_color ?? "#1D9E75",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "#fff",
-            fontSize: 13,
-            fontWeight: 500,
+            fontSize: 16,
+            boxShadow: "0 2px 6px oklch(0.35 0.02 160 / 0.15)",
+            flexShrink: 0,
           }}
         >
-          {building.building_nr ?? "?"}
+          <HomeIcon />
         </div>
-        <div>
-          <p style={{ fontWeight: 500, fontSize: 15, margin: 0 }}>{building.name}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>{building.name}</p>
           <div
             style={{
               fontSize: 13,
@@ -271,12 +315,14 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
               display: "flex",
               alignItems: "center",
               gap: 8,
+              flexWrap: "wrap",
+              marginTop: 2,
             }}
           >
             <span>{building.type}</span>
             {building.lease_status && (
               <>
-                <span>·</span>
+                <span style={{ color: "hsl(var(--border))" }}>·</span>
                 <span
                   title={building.lease_status_note ?? undefined}
                   style={{
@@ -294,7 +340,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             )}
             {lease && (
               <>
-                <span>·</span>
+                <span style={{ color: "hsl(var(--border))" }}>·</span>
                 <span
                   style={{
                     background: s.bg,
@@ -319,8 +365,8 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 8,
-            marginTop: 10,
+            gap: 10,
+            marginTop: 12,
           }}
         >
           <MetricCard label="Lejer" value={lease.tenant?.name ?? "—"} />
@@ -342,7 +388,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <Link
           to="/dokumenter"
           search={{ building: building.id } as never}
@@ -361,21 +407,31 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
   );
 }
 
+function HomeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
-        background: "hsl(var(--muted) / 0.4)",
-        borderRadius: 8,
-        padding: "8px 10px",
+        background: "hsl(var(--muted) / 0.45)",
+        borderRadius: "var(--radius-md)",
+        padding: "10px 12px",
+        border: "1px solid hsl(var(--border) / 0.4)",
       }}
     >
-      <p style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", margin: 0, fontWeight: 500 }}>{label}</p>
       <p
         style={{
           fontSize: 13,
-          fontWeight: 500,
-          margin: "2px 0 0",
+          fontWeight: 600,
+          margin: "4px 0 0",
           wordBreak: "break-word",
         }}
       >
@@ -400,10 +456,15 @@ export function BuildingMapLegend() {
       style={{
         display: "flex",
         flexWrap: "wrap",
-        gap: 12,
-        marginTop: 12,
+        gap: 10,
+        marginTop: 16,
+        padding: "10px 12px",
+        background: "hsl(var(--card))",
+        border: "1px solid hsl(var(--border))",
+        borderRadius: "var(--radius-lg)",
         fontSize: 12,
         color: "hsl(var(--muted-foreground))",
+        boxShadow: "0 1px 6px oklch(0.35 0.02 160 / 0.04)",
       }}
     >
       {items.map((it) => (
@@ -412,12 +473,13 @@ export function BuildingMapLegend() {
             style={{
               width: 14,
               height: 14,
-              borderRadius: it.circle ? "50%" : 3,
+              borderRadius: it.circle ? "50%" : "var(--radius-sm)",
               background: it.color,
               display: "inline-block",
+              boxShadow: "0 1px 3px oklch(0.35 0.02 160 / 0.15)",
             }}
           />
-          {it.label}
+          <span style={{ fontWeight: 500 }}>{it.label}</span>
         </div>
       ))}
     </div>

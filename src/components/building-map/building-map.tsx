@@ -319,7 +319,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             width: 36,
             height: 36,
             borderRadius: "var(--radius-md)",
-            background: building.map_color ?? "#1D9E75",
+            background: getBuildingTypeColor(building.type),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

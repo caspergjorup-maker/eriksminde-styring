@@ -376,6 +376,17 @@ function BuildingsSection({
                       })()}
                     </td>
                     <td className="px-4 py-2.5">
+                      {isOnMap(b) ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-emerald-100 text-emerald-900">
+                          <MapPin className="h-3 w-3" /> Ja
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
+                          Ikke placeret
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
                       {hasUnits ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
                           {bUnits.length} enheder

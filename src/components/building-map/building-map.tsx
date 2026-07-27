@@ -116,11 +116,11 @@ export function BuildingMap({
               height: 340,
               left: 94,
               top: 0,
-              background: "oklch(0.82 0.01 80)",
+              background: "oklch(0.82 0.004 160)",
               borderRadius: 9,
               transform: "rotate(8deg)",
               transformOrigin: "top center",
-              boxShadow: "inset 0 0 0 1px oklch(0.75 0.01 80 / 0.4)",
+              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
             }}
           />
           {/* Sønderbyen — vandret tværvej */}
@@ -131,9 +131,9 @@ export function BuildingMap({
               height: 16,
               left: 80,
               top: 252,
-              background: "oklch(0.82 0.01 80)",
+              background: "oklch(0.82 0.004 160)",
               borderRadius: 8,
-              boxShadow: "inset 0 0 0 1px oklch(0.75 0.01 80 / 0.4)",
+              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
             }}
           />
           {/* Vejskilte */}

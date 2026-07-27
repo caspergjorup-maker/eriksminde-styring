@@ -265,33 +265,35 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
   return (
     <div
       style={{
-        marginTop: 12,
-        background: "hsl(var(--background))",
+        marginTop: 16,
+        background: "hsl(var(--card))",
         border: "1px solid hsl(var(--border))",
-        borderRadius: 12,
-        padding: "1rem 1.25rem",
+        borderRadius: "var(--radius-xl)",
+        padding: "1.25rem",
         maxWidth: MAP_W,
+        boxShadow: "0 2px 12px oklch(0.35 0.02 160 / 0.06)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            borderRadius: "var(--radius-md)",
             background: building.map_color ?? "#1D9E75",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "#fff",
-            fontSize: 13,
-            fontWeight: 500,
+            fontSize: 16,
+            boxShadow: "0 2px 6px oklch(0.35 0.02 160 / 0.15)",
+            flexShrink: 0,
           }}
         >
-          {building.building_nr ?? "?"}
+          <HomeIcon />
         </div>
-        <div>
-          <p style={{ fontWeight: 500, fontSize: 15, margin: 0 }}>{building.name}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>{building.name}</p>
           <div
             style={{
               fontSize: 13,
@@ -299,12 +301,14 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
               display: "flex",
               alignItems: "center",
               gap: 8,
+              flexWrap: "wrap",
+              marginTop: 2,
             }}
           >
             <span>{building.type}</span>
             {building.lease_status && (
               <>
-                <span>·</span>
+                <span style={{ color: "hsl(var(--border))" }}>·</span>
                 <span
                   title={building.lease_status_note ?? undefined}
                   style={{
@@ -322,7 +326,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             )}
             {lease && (
               <>
-                <span>·</span>
+                <span style={{ color: "hsl(var(--border))" }}>·</span>
                 <span
                   style={{
                     background: s.bg,
@@ -347,8 +351,8 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 8,
-            marginTop: 10,
+            gap: 10,
+            marginTop: 12,
           }}
         >
           <MetricCard label="Lejer" value={lease.tenant?.name ?? "—"} />
@@ -370,7 +374,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <Link
           to="/dokumenter"
           search={{ building: building.id } as never}
@@ -389,21 +393,31 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
   );
 }
 
+function HomeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div
       style={{
-        background: "hsl(var(--muted) / 0.4)",
-        borderRadius: 8,
-        padding: "8px 10px",
+        background: "hsl(var(--muted) / 0.45)",
+        borderRadius: "var(--radius-md)",
+        padding: "10px 12px",
+        border: "1px solid hsl(var(--border) / 0.4)",
       }}
     >
-      <p style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", margin: 0, fontWeight: 500 }}>{label}</p>
       <p
         style={{
           fontSize: 13,
-          fontWeight: 500,
-          margin: "2px 0 0",
+          fontWeight: 600,
+          margin: "4px 0 0",
           wordBreak: "break-word",
         }}
       >

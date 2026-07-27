@@ -127,14 +127,172 @@ export const deleteScenario = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const setPrimaryScenario = createServerFn({ method: "POST" })
+// ---------- Ét budget pr. år ----------
+
+export const listBudgetYears = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context }): Promise<number[]> => {
+    const { data, error } = await context.supabase
+      .from("budget_scenarios")
+      .select("year")
+      .order("year", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => r.year as number);
+  });
+
+export const getBudgetByYear = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ year: z.number().int() }).parse(d))
+  .handler(async ({ data, context }): Promise<ScenarioBundle | null> => {
+    const sRes = await context.supabase
+      .from("budget_scenarios")
+      .select("id, name, year, notes, is_primary")
+      .eq("year", data.year)
+      .maybeSingle();
+    if (sRes.error) throw new Error(sRes.error.message);
+    if (!sRes.data) return null;
+    const id = sRes.data.id as string;
+    const [lRes, loRes] = await Promise.all([
+      context.supabase.from("budget_lines").select("*").eq("scenario_id", id).order("sort_order").order("created_at"),
+      context.supabase.from("budget_loans").select("*").eq("scenario_id", id).order("sort_order").order("created_at"),
+    ]);
+    if (lRes.error) throw new Error(lRes.error.message);
+    if (loRes.error) throw new Error(loRes.error.message);
+    return {
+      scenario: sRes.data as BudgetScenario,
+      lines: (lRes.data ?? []).map((r) => ({
+        ...r,
+        annual_amount: Number(r.annual_amount ?? 0),
+        monthly_override: (r.monthly_override as number[] | null) ?? null,
+      })) as BudgetLine[],
+      loans: (loRes.data ?? []).map((r) => ({
+        ...r,
+        principal: Number(r.principal ?? 0),
+        interest_rate: Number(r.interest_rate ?? 0),
+        term_months: Number(r.term_months ?? 0),
+      })) as BudgetLoan[],
+    };
+  });
+
+export const copyBudgetToYear = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        fromYear: z.number().int(),
+        toYear: z.number().int().min(1900).max(3000),
+        adjustPct: z.number().min(-100).max(1000).default(0),
+        rollForwardLoans: z.boolean().default(true),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    const c1 = await context.supabase.from("budget_scenarios").update({ is_primary: false }).neq("id", data.id);
-    if (c1.error) throw new Error(c1.error.message);
-    const c2 = await context.supabase.from("budget_scenarios").update({ is_primary: true }).eq("id", data.id);
-    if (c2.error) throw new Error(c2.error.message);
+    const src = await context.supabase
+      .from("budget_scenarios")
+      .select("id, notes")
+      .eq("year", data.fromYear)
+      .maybeSingle();
+    if (src.error) throw new Error(src.error.message);
+    if (!src.data) throw new Error(`Der findes intet budget for ${data.fromYear}`);
+
+    const exists = await context.supabase
+      .from("budget_scenarios")
+      .select("id")
+      .eq("year", data.toYear)
+      .maybeSingle();
+    if (exists.error) throw new Error(exists.error.message);
+    if (exists.data) throw new Error(`Der findes allerede et budget for ${data.toYear}`);
+
+    const created = await context.supabase
+      .from("budget_scenarios")
+      .insert({ name: `Budget ${data.toYear}`, year: data.toYear, notes: src.data.notes, is_primary: false })
+      .select("id")
+      .single();
+    if (created.error) throw new Error(created.error.message);
+    const newId = created.data.id as string;
+
+    const factor = 1 + data.adjustPct / 100;
+
+    const [lRes, loRes] = await Promise.all([
+      context.supabase.from("budget_lines").select("*").eq("scenario_id", src.data.id),
+      context.supabase.from("budget_loans").select("*").eq("scenario_id", src.data.id),
+    ]);
+    if (lRes.error) throw new Error(lRes.error.message);
+    if (loRes.error) throw new Error(loRes.error.message);
+
+    const newLines = (lRes.data ?? []).map((r) => ({
+      scenario_id: newId,
+      kind: r.kind,
+      category: r.category,
+      label: r.label,
+      annual_amount: Math.round(Number(r.annual_amount ?? 0) * factor),
+      monthly_override: Array.isArray(r.monthly_override)
+        ? (r.monthly_override as number[]).map((v) => Math.round(Number(v) * factor))
+        : null,
+      source_note: [r.source_note, `Kopieret fra ${data.fromYear}`].filter(Boolean).join(" · ").slice(0, 500),
+      sort_order: r.sort_order ?? 0,
+    }));
+    if (newLines.length > 0) {
+      const ins = await context.supabase.from("budget_lines").insert(newLines);
+      if (ins.error) throw new Error(ins.error.message);
+    }
+
+    const newLoans = (loRes.data ?? []).map((r) => {
+      const loan: BudgetLoan = {
+        id: r.id as string,
+        scenario_id: newId,
+        name: r.name as string,
+        principal: Number(r.principal ?? 0),
+        interest_rate: Number(r.interest_rate ?? 0),
+        term_months: Number(r.term_months ?? 0),
+        loan_type: r.loan_type as LoanType,
+        start_date: (r.start_date as string | null) ?? null,
+        notes: (r.notes as string | null) ?? null,
+        sort_order: (r.sort_order as number) ?? 0,
+      };
+      if (!data.rollForwardLoans) {
+        return {
+          scenario_id: newId,
+          name: loan.name,
+          principal: loan.principal,
+          interest_rate: loan.interest_rate,
+          term_months: loan.term_months,
+          loan_type: loan.loan_type,
+          start_date: loan.start_date,
+          notes: loan.notes,
+          sort_order: loan.sort_order,
+        };
+      }
+      const rows = buildAmortization(loan);
+      const remaining = rows.length > 0 ? Math.round(rows[0].balance) : loan.principal;
+      const start = loan.start_date ? new Date(loan.start_date) : null;
+      if (start) start.setFullYear(start.getFullYear() + 1);
+      return {
+        scenario_id: newId,
+        name: loan.name,
+        principal: remaining,
+        interest_rate: loan.interest_rate,
+        term_months: Math.max(0, loan.term_months - 12),
+        loan_type: loan.loan_type,
+        start_date: start ? start.toISOString().slice(0, 10) : null,
+        notes: [loan.notes, `Restgæld videreført fra ${data.fromYear}`].filter(Boolean).join(" · ").slice(0, 2000),
+        sort_order: loan.sort_order,
+      };
+    });
+    if (newLoans.length > 0) {
+      const ins = await context.supabase.from("budget_loans").insert(newLoans);
+      if (ins.error) throw new Error(ins.error.message);
+    }
+
+    return { id: newId, year: data.toYear };
+  });
+
+export const deleteBudgetYear = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ year: z.number().int() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("budget_scenarios").delete().eq("year", data.year);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

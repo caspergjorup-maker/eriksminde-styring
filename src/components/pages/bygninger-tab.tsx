@@ -40,6 +40,7 @@ import {
   type BuildingUnit,
   type UnitLeaseStatus,
 } from "@/lib/building-units.functions";
+import { getBudgetByYear } from "@/lib/budget.functions";
 import { formatDKK, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -139,6 +140,20 @@ function RentalPotentialSection({
   units: BuildingUnit[];
   leases: BuildingLease[];
 }) {
+  const budgetYear = new Date().getFullYear();
+  const fetchBudget = useServerFn(getBudgetByYear);
+  const { data: budget } = useQuery({
+    queryKey: ["budget", budgetYear],
+    queryFn: () => fetchBudget({ data: { year: budgetYear } }),
+  });
+
+  const budgetedMonthly = useMemo(() => {
+    const lines = (budget?.lines ?? []).filter(
+      (l) => l.kind === "income" && l.category === "bygningsudlejning",
+    );
+    return lines.reduce((s, l) => s + (l.annual_amount ?? 0), 0) / 12;
+  }, [budget]);
+
   const totals = useMemo(() => {
     let totalPotential = 0;
     const byStatus: Record<BuildingLeaseStatus, number> = {
@@ -170,6 +185,12 @@ function RentalPotentialSection({
       tone: "text-[var(--brand-900)]",
     },
     {
+      label: `Udlejningsbudget ${budgetYear}`,
+      value: budget ? formatDKK(budgetedMonthly) : "—",
+      sub: budget ? "Budgetteret pr. måned" : "Intet budget for året",
+      tone: "text-[var(--brand-900)]",
+    },
+    {
       label: "Aktuel lejeindtægt",
       value: formatDKK(totals.actualIncome),
       sub: `${leases.length} lejemål`,
@@ -186,7 +207,9 @@ function RentalPotentialSection({
       value: totals.totalPotential > 0
         ? `${Math.round((totals.actualIncome / totals.totalPotential) * 100)} %`
         : "—",
-      sub: "af potentialet",
+      sub: budget && budgetedMonthly > 0
+        ? `${Math.round((totals.actualIncome / budgetedMonthly) * 100)} % af budget`
+        : "af potentialet",
       tone: "text-[var(--brand-900)]",
     },
   ];
@@ -194,7 +217,7 @@ function RentalPotentialSection({
   return (
     <section>
       <h2 className="font-semibold text-[var(--brand-900)] mb-3">Udlejningspotentiale</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
         {cards.map((c) => (
           <Card key={c.label}>
             <CardHeader className="pb-2">

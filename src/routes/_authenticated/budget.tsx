@@ -603,22 +603,27 @@ function LinesTable({
         </Table>
       </div>
 
-      <LineDialog
-        open={creating}
-        onOpenChange={setCreating}
-        title={`Ny ${kind === "income" ? "indtægt" : "udgift"}`}
-        initial={null}
-        kind={kind}
-        onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, kind, sort_order: lines.length, ...v })}
-      />
-      <LineDialog
-        open={!!editing}
-        onOpenChange={(v) => !v && setEditing(null)}
-        title="Rediger linje"
-        initial={editing}
-        kind={kind}
-        onSubmit={(v) => editing && updateMut.mutate({ id: editing.id, ...v })}
-      />
+      {creating && (
+        <LineDialog
+          open
+          onOpenChange={setCreating}
+          title={`Ny ${kind === "income" ? "indtægt" : "udgift"}`}
+          initial={null}
+          kind={kind}
+          onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, kind, sort_order: lines.length, ...v })}
+        />
+      )}
+      {editing && (
+        <LineDialog
+          key={editing.id}
+          open
+          onOpenChange={(v) => !v && setEditing(null)}
+          title="Rediger linje"
+          initial={editing}
+          kind={kind}
+          onSubmit={(v) => updateMut.mutate({ id: editing.id, ...v })}
+        />
+      )}
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
         <AlertDialogContent>
@@ -666,16 +671,6 @@ function LineDialog({
   const [monthly, setMonthly] = useState<string[]>(
     initial?.monthly_override?.map((n) => String(n)) ?? Array(12).fill("0"),
   );
-
-  // Reset when initial changes
-  useMemo(() => {
-    setLabel(initial?.label ?? "");
-    setCategory(initial?.category ?? defaultCat);
-    setAnnual(String(initial?.annual_amount ?? 0));
-    setSource(initial?.source_note ?? "");
-    setUseMonthly(!!initial?.monthly_override);
-    setMonthly(initial?.monthly_override?.map((n) => String(n)) ?? Array(12).fill("0"));
-  }, [initial, defaultCat]);
 
   const submit = () => {
     const override = useMonthly ? monthly.map((v) => Number(v) || 0) : null;
@@ -837,20 +832,25 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
         </Table>
       </div>
 
-      <LoanDialog
-        open={creating}
-        onOpenChange={setCreating}
-        title="Nyt lån"
-        initial={null}
-        onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, sort_order: loans.length, ...v })}
-      />
-      <LoanDialog
-        open={!!editing}
-        onOpenChange={(v) => !v && setEditing(null)}
-        title="Rediger lån"
-        initial={editing}
-        onSubmit={(v) => editing && updateMut.mutate({ id: editing.id, ...v })}
-      />
+      {creating && (
+        <LoanDialog
+          open
+          onOpenChange={setCreating}
+          title="Nyt lån"
+          initial={null}
+          onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, sort_order: loans.length, ...v })}
+        />
+      )}
+      {editing && (
+        <LoanDialog
+          key={editing.id}
+          open
+          onOpenChange={(v) => !v && setEditing(null)}
+          title="Rediger lån"
+          initial={editing}
+          onSubmit={(v) => updateMut.mutate({ id: editing.id, ...v })}
+        />
+      )}
 
       <AmortDialog loan={amort} onOpenChange={(v) => !v && setAmort(null)} />
 
@@ -898,16 +898,6 @@ function LoanDialog({
   const [type, setType] = useState<LoanType>(initial?.loan_type ?? "annuity");
   const [startDate, setStartDate] = useState(initial?.start_date ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
-
-  useMemo(() => {
-    setName(initial?.name ?? "");
-    setPrincipal(String(initial?.principal ?? 0));
-    setRate(String(((initial?.interest_rate ?? 0) * 100).toFixed(3)));
-    setYears(String(initial?.term_months ? Math.round(initial.term_months / 12) : 30));
-    setType(initial?.loan_type ?? "annuity");
-    setStartDate(initial?.start_date ?? "");
-    setNotes(initial?.notes ?? "");
-  }, [initial]);
 
   const preview = calcLoan({
     id: "", scenario_id: "", name, principal: Number(principal) || 0, interest_rate: (Number(rate) || 0) / 100,

@@ -89,24 +89,38 @@ export function BuildingMap({
             position: "relative",
             width: MAP_W,
             height: MAP_H,
-            background: "#EBF8F3",
-            borderRadius: 8,
+            background: "oklch(0.97 0.015 160)",
+            borderRadius: "var(--radius-lg)",
             overflow: "hidden",
             transform: scale !== 1 ? `scale(${scale})` : undefined,
             transformOrigin: "top left",
+            boxShadow: "inset 0 0 0 1px oklch(0.85 0.012 165 / 0.5), 0 4px 20px oklch(0.55 0.02 160 / 0.08)",
           }}
         >
+          {/* Subtle map texture */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "radial-gradient(circle at 20% 30%, oklch(0.94 0.02 160 / 0.25) 0%, transparent 25%), radial-gradient(circle at 80% 70%, oklch(0.92 0.015 160 / 0.3) 0%, transparent 30%)",
+              pointerEvents: "none",
+            }}
+          />
+
           {/* Fjordager — lodret, let roteret */}
           <div
             style={{
               position: "absolute",
-              width: 16,
+              width: 18,
               height: 340,
-              left: 95,
+              left: 94,
               top: 0,
-              background: "#d4cfc8",
+              background: "oklch(0.82 0.01 80)",
+              borderRadius: 9,
               transform: "rotate(8deg)",
               transformOrigin: "top center",
+              boxShadow: "inset 0 0 0 1px oklch(0.75 0.01 80 / 0.4)",
             }}
           />
           {/* Sønderbyen — vandret tværvej */}
@@ -114,21 +128,24 @@ export function BuildingMap({
             style={{
               position: "absolute",
               width: 580,
-              height: 15,
+              height: 16,
               left: 80,
               top: 252,
-              background: "#d4cfc8",
+              background: "oklch(0.82 0.01 80)",
+              borderRadius: 8,
+              boxShadow: "inset 0 0 0 1px oklch(0.75 0.01 80 / 0.4)",
             }}
           />
           {/* Vejskilte */}
           <span
             style={{
               position: "absolute",
-              left: 52,
+              left: 50,
               top: 130,
-              fontSize: 11,
-              color: "#888",
-              letterSpacing: 1,
+              fontSize: 10,
+              fontWeight: 600,
+              color: "oklch(0.55 0.01 160)",
+              letterSpacing: 1.5,
               textTransform: "uppercase",
               transform: "rotate(-90deg)",
               transformOrigin: "center",
@@ -142,10 +159,11 @@ export function BuildingMap({
             style={{
               position: "absolute",
               left: 200,
-              top: 238,
-              fontSize: 11,
-              color: "#888",
-              letterSpacing: 1,
+              top: 236,
+              fontSize: 10,
+              fontWeight: 600,
+              color: "oklch(0.55 0.01 160)",
+              letterSpacing: 1.5,
               textTransform: "uppercase",
               pointerEvents: interactive ? undefined : "none",
             }}
@@ -160,27 +178,39 @@ export function BuildingMap({
             const isSelected = selected?.id === b.id;
             const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
             const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
+            const baseColor = b.map_color ?? "#1D9E75";
             return (
               <div
                 key={b.id}
                 onClick={() => handleClick(b)}
+                title={b.name}
                 style={{
                   position: "absolute",
                   left: b.map_x ?? 0,
                   top: b.map_y ?? 0,
                   width: b.map_w ?? 40,
                   height: b.map_h ?? 40,
-                  background: b.map_color ?? "#1D9E75",
-                  borderRadius: isCircle ? "50%" : 2,
-                  border: `1.5px solid ${isSelected ? "#085041" : borderColor}`,
+                  background: baseColor,
+                  borderRadius: isCircle ? "50%" : "var(--radius-md)",
+                  border: `2px solid ${isSelected ? "oklch(0.35 0.07 168)" : borderColor}`,
                   cursor: interactive ? "pointer" : "default",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transform: rotate ? "rotate(-8deg)" : undefined,
                   transformOrigin: rotateOrigin ? "left center" : undefined,
-                  filter: isSelected ? "brightness(0.82)" : undefined,
-                  transition: "filter 0.15s",
+                  boxShadow: isSelected
+                    ? "0 8px 24px oklch(0.35 0.05 160 / 0.25), 0 0 0 3px oklch(0.95 0.005 160)"
+                    : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
+                  filter: isSelected ? "brightness(0.92)" : undefined,
+                  transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
+                  zIndex: isSelected ? 10 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (interactive) e.currentTarget.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = rotate ? "rotate(-8deg)" : undefined;
                 }}
               >
                 <UnitOverlay
@@ -191,18 +221,16 @@ export function BuildingMap({
                 <span
                   style={{
                     position: "relative",
-                    fontSize: 11,
-                    fontWeight: 500,
+                    fontSize: 12,
+                    fontWeight: 600,
                     color: "#fff",
                     textAlign: "center",
-                    lineHeight: 1.25,
-                    textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                    lineHeight: 1.2,
+                    textShadow: "0 1px 3px rgba(0,0,0,0.35)",
                     pointerEvents: "none",
-                    padding: "0 2px",
+                    padding: "0 4px",
                   }}
                 >
-                  {b.building_nr}
-                  <br />
                   {b.name}
                 </span>
               </div>

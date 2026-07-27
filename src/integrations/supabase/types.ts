@@ -461,6 +461,41 @@ export type Database = {
         }
         Relationships: []
       }
+      document_links: {
+        Row: {
+          created_at: string
+          document_id: string
+          entity_id: string
+          entity_type: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_links_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string | null
@@ -470,6 +505,7 @@ export type Database = {
           name: string
           notes: string | null
           related_contact_id: string | null
+          updated_at: string
           upload_date: string | null
         }
         Insert: {
@@ -480,6 +516,7 @@ export type Database = {
           name: string
           notes?: string | null
           related_contact_id?: string | null
+          updated_at?: string
           upload_date?: string | null
         }
         Update: {
@@ -490,6 +527,7 @@ export type Database = {
           name?: string
           notes?: string | null
           related_contact_id?: string | null
+          updated_at?: string
           upload_date?: string | null
         }
         Relationships: [

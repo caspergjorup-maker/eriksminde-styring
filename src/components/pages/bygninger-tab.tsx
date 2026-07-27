@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Shapes, Trash2, Waves, Wifi } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 

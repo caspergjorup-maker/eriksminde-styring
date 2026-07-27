@@ -210,7 +210,7 @@ export function BuildingMap({
                   if (interactive) e.currentTarget.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = rotate ? "rotate(-8deg)" : undefined;
+                  e.currentTarget.style.transform = rotate ? "rotate(-8deg)" : "";
                 }}
               >
                 <UnitOverlay

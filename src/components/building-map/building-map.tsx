@@ -251,11 +251,13 @@ export function BuildingMap({
                     justifyContent: "center",
                   }}
                 >
-                  <UnitOverlay
-                    units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
-                    width={w}
-                    height={h}
-                  />
+                  {isSelected && (
+                    <UnitOverlay
+                      units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
+                      width={w}
+                      height={h}
+                    />
+                  )}
                   <span
                     style={{
                       position: "relative",

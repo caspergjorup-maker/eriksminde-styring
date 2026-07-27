@@ -126,6 +126,101 @@ const STATUS_TONE: Record<LeaseStatus, string> = {
   vacant: "bg-muted text-muted-foreground",
 };
 
+function buildingPotential(b: Building, units: BuildingUnit[]): number {
+  const bUnits = units.filter((u) => u.building_id === b.id);
+  const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
+  return unitSum > 0 ? unitSum : (b.estimated_monthly_rent ?? 0);
+}
+
+function RentalPotentialSection({
+  buildings, units, leases,
+}: {
+  buildings: Building[];
+  units: BuildingUnit[];
+  leases: BuildingLease[];
+}) {
+  const totals = useMemo(() => {
+    let totalPotential = 0;
+    const byStatus: Record<BuildingLeaseStatus, number> = {
+      udlejet: 0,
+      ledig: 0,
+      ikke_klar: 0,
+      intern_brug: 0,
+      udlejes_ikke: 0,
+    };
+
+    for (const b of buildings) {
+      const potential = buildingPotential(b, units);
+      totalPotential += potential;
+      const status = b.lease_status ?? "ledig";
+      byStatus[status] = (byStatus[status] ?? 0) + potential;
+    }
+
+    const actualIncome = leases.reduce((s, l) => s + (l.monthly_rent ?? 0), 0);
+    const unrealized = totalPotential - actualIncome;
+
+    return { totalPotential, byStatus, actualIncome, unrealized };
+  }, [buildings, units, leases]);
+
+  const cards = [
+    {
+      label: "Samlet udlejningspotentiale",
+      value: formatDKK(totals.totalPotential),
+      sub: `Pr. måned`,
+      tone: "text-[var(--brand-900)]",
+    },
+    {
+      label: "Aktuel lejeindtægt",
+      value: formatDKK(totals.actualIncome),
+      sub: `${leases.length} lejemål`,
+      tone: "text-emerald-700",
+    },
+    {
+      label: "Urealiseret potentiale",
+      value: formatDKK(totals.unrealized),
+      sub: totals.unrealized > 0 ? "Ledigt / ikke udlejet" : "Potentiale udnyttet",
+      tone: totals.unrealized > 0 ? "text-amber-700" : "text-emerald-700",
+    },
+    {
+      label: "Udlejet andel",
+      value: totals.totalPotential > 0
+        ? `${Math.round((totals.actualIncome / totals.totalPotential) * 100)} %`
+        : "—",
+      sub: "af potentialet",
+      tone: "text-[var(--brand-900)]",
+    },
+  ];
+
+  return (
+    <section>
+      <h2 className="font-semibold text-[var(--brand-900)] mb-3">Udlejningspotentiale</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        {cards.map((c) => (
+          <Card key={c.label}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-2xl font-semibold ${c.tone}`}>{c.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{c.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="bg-card border border-border rounded-xl px-4 py-3 flex flex-wrap gap-4 text-sm">
+        <span className="text-muted-foreground">Potentiale efter status:</span>
+        {BUILDING_LEASE_STATUSES.map((s) => (
+          <span key={s} className="inline-flex items-center gap-1.5">
+            <span className={`inline-block w-2 h-2 rounded-full ${LEASE_STATUS_TONE[s].split(" ")[0].replace("bg-", "bg-").replace("100", "500")}`} />
+            <span className="text-muted-foreground">{LEASE_STATUS_LABEL[s]}:</span>
+            <span className="font-medium tabular-nums">{formatDKK(totals.byStatus[s])}/md.</span>
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function BygningerPage() {
   const qc = useQueryClient();
   const listB = useServerFn(listBuildings);

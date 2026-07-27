@@ -422,6 +422,11 @@ function BuildingsSection({
                         {u.estimated_monthly_rent ? `${formatDKK(u.estimated_monthly_rent)}/md.` : "—"}
                       </td>
                       <td className="px-4 py-2">
+                        {u.map_geometry && u.map_kind ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700"><MapPin className="h-3.5 w-3.5" /> Ja</span>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                      </td>
+                      <td className="px-4 py-2">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${UNIT_LEASE_STATUS_TONE[u.lease_status]}`}
                           title={u.lease_status_note ?? undefined}

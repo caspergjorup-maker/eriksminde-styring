@@ -224,7 +224,6 @@ export function BuildingMap({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "0 4px",
                     overflow: "hidden",
                   }}
                 >
@@ -236,14 +235,14 @@ export function BuildingMap({
                   <span
                     style={{
                       position: "relative",
-                      fontSize: w < 55 || h < 30 ? 9 : w < 85 || h < 45 ? 10 : 12,
+                      fontSize: w < 55 || h < 30 ? 8 : w < 85 || h < 45 ? 10 : 12,
                       fontWeight: 600,
                       color: "#fff",
                       textAlign: "center",
                       lineHeight: 1.2,
                       textShadow: "0 1px 3px rgba(0,0,0,0.35)",
                       pointerEvents: "none",
-                      padding: "0 2px",
+                      padding: "0 1px",
                     }}
                   >
                     {b.name}

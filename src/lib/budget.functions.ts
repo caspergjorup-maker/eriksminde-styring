@@ -47,48 +47,6 @@ export type ScenarioBundle = {
 
 // ---------- Scenarios ----------
 
-export const listScenarios = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<BudgetScenario[]> => {
-    const { data, error } = await context.supabase
-      .from("budget_scenarios")
-      .select("id, name, year, notes, is_primary")
-      .order("is_primary", { ascending: false })
-      .order("year", { ascending: false })
-      .order("name");
-    if (error) throw new Error(error.message);
-    return (data ?? []) as BudgetScenario[];
-  });
-
-export const getScenario = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }): Promise<ScenarioBundle | null> => {
-    const [sRes, lRes, loRes] = await Promise.all([
-      context.supabase.from("budget_scenarios").select("id, name, year, notes, is_primary").eq("id", data.id).maybeSingle(),
-      context.supabase.from("budget_lines").select("*").eq("scenario_id", data.id).order("sort_order").order("created_at"),
-      context.supabase.from("budget_loans").select("*").eq("scenario_id", data.id).order("sort_order").order("created_at"),
-    ]);
-    if (sRes.error) throw new Error(sRes.error.message);
-    if (!sRes.data) return null;
-    if (lRes.error) throw new Error(lRes.error.message);
-    if (loRes.error) throw new Error(loRes.error.message);
-    return {
-      scenario: sRes.data as BudgetScenario,
-      lines: (lRes.data ?? []).map((r) => ({
-        ...r,
-        annual_amount: Number(r.annual_amount ?? 0),
-        monthly_override: (r.monthly_override as number[] | null) ?? null,
-      })) as BudgetLine[],
-      loans: (loRes.data ?? []).map((r) => ({
-        ...r,
-        principal: Number(r.principal ?? 0),
-        interest_rate: Number(r.interest_rate ?? 0),
-        term_months: Number(r.term_months ?? 0),
-      })) as BudgetLoan[],
-    };
-  });
-
 const scenarioInput = z.object({
   name: z.string().trim().min(1).max(200),
   year: z.number().int().min(1900).max(3000),
@@ -114,15 +72,6 @@ export const updateScenario = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { id, ...rest } = data;
     const { error } = await context.supabase.from("budget_scenarios").update(rest).eq("id", id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
-export const deleteScenario = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("budget_scenarios").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

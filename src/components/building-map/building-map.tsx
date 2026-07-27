@@ -442,10 +442,15 @@ export function BuildingMapLegend() {
       style={{
         display: "flex",
         flexWrap: "wrap",
-        gap: 12,
-        marginTop: 12,
+        gap: 10,
+        marginTop: 16,
+        padding: "10px 12px",
+        background: "hsl(var(--card))",
+        border: "1px solid hsl(var(--border))",
+        borderRadius: "var(--radius-lg)",
         fontSize: 12,
         color: "hsl(var(--muted-foreground))",
+        boxShadow: "0 1px 6px oklch(0.35 0.02 160 / 0.04)",
       }}
     >
       {items.map((it) => (
@@ -454,12 +459,13 @@ export function BuildingMapLegend() {
             style={{
               width: 14,
               height: 14,
-              borderRadius: it.circle ? "50%" : 3,
+              borderRadius: it.circle ? "50%" : "var(--radius-sm)",
               background: it.color,
               display: "inline-block",
+              boxShadow: "0 1px 3px oklch(0.35 0.02 160 / 0.15)",
             }}
           />
-          {it.label}
+          <span style={{ fontWeight: 500 }}>{it.label}</span>
         </div>
       ))}
     </div>

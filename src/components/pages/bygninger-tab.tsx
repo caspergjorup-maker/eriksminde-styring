@@ -204,6 +204,7 @@ function BuildingsSection({
     { key: "type", label: "Type", type: "enum", get: (b) => b.type, options: BUILDING_TYPES.map((t) => ({ value: t, label: BUILDING_TYPE_LABEL[t] ?? t })), sortable: true, sortValue: (b) => b.type },
     { key: "area_m2_gross", label: "Areal (m²)", type: "number", get: (b) => b.area_m2_gross, sortable: true, sortValue: (b) => b.area_m2_gross },
     { key: "condition", label: "Stand", type: "enum", get: (b) => b.condition ?? "", options: BUILDING_CONDITIONS.map((c) => ({ value: c, label: CONDITION_LABEL[c] ?? c })), sortable: true, sortValue: (b) => b.condition ?? "" },
+    { key: "estimated_monthly_rent", label: "Udlejningspotentiale (md.)", type: "number", get: (b) => b.estimated_monthly_rent, sortable: true, sortValue: (b) => b.estimated_monthly_rent },
     { key: "lease_status", label: "Status", type: "enum", get: (b) => b.lease_status ?? "", options: BUILDING_LEASE_STATUSES.map((s) => ({ value: s, label: LEASE_STATUS_LABEL[s] ?? s })) },
   ];
   const tableFilters = useTableFilters({

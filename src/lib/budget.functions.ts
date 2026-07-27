@@ -45,7 +45,7 @@ export type ScenarioBundle = {
   loans: BudgetLoan[];
 };
 
-// ---------- Scenarios ----------
+// ---------- Budget (scenarie-tabellen bruges som ét budget pr. år) ----------
 
 const scenarioInput = z.object({
   name: z.string().trim().min(1).max(200),

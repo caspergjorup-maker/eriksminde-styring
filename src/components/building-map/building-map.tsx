@@ -179,6 +179,8 @@ export function BuildingMap({
             const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
             const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
             const baseColor = b.map_color ?? "#1D9E75";
+            const w = b.map_w ?? 40;
+            const h = b.map_h ?? 40;
             return (
               <div
                 key={b.id}
@@ -188,39 +190,52 @@ export function BuildingMap({
                   position: "absolute",
                   left: b.map_x ?? 0,
                   top: b.map_y ?? 0,
-                  width: b.map_w ?? 40,
-                  height: b.map_h ?? 40,
-                  background: baseColor,
-                  borderRadius: isCircle ? "50%" : "var(--radius-md)",
-                  border: `2px solid ${isSelected ? "oklch(0.35 0.07 168)" : borderColor}`,
+                  width: w,
+                  height: h,
                   cursor: interactive ? "pointer" : "default",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transform: rotate ? "rotate(-8deg)" : undefined,
-                  transformOrigin: rotateOrigin ? "left center" : undefined,
-                  boxShadow: isSelected
-                    ? "0 8px 24px oklch(0.35 0.05 160 / 0.25), 0 0 0 3px oklch(0.95 0.005 160)"
-                    : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
-                  filter: isSelected ? "brightness(0.92)" : undefined,
-                  transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
                   zIndex: isSelected ? 10 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  if (interactive) e.currentTarget.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
+                  if (interactive) {
+                    const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
+                    if (inner) inner.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = rotate ? "rotate(-8deg)" : "";
+                  const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
+                  if (inner) inner.style.transform = rotate ? "rotate(-8deg)" : "";
                 }}
               >
-                <UnitOverlay
-                  units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
-                  width={b.map_w ?? 40}
-                  height={b.map_h ?? 40}
-                />
+                <div
+                  data-building-shape
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: baseColor,
+                    borderRadius: isCircle ? "50%" : "var(--radius-md)",
+                    border: `2px solid ${isSelected ? "oklch(0.35 0.07 168)" : borderColor}`,
+                    transform: rotate ? "rotate(-8deg)" : undefined,
+                    transformOrigin: rotateOrigin ? "left center" : "center",
+                    boxShadow: isSelected
+                      ? "0 8px 24px oklch(0.35 0.05 160 / 0.25), 0 0 0 3px oklch(0.95 0.005 160)"
+                      : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
+                    filter: isSelected ? "brightness(0.92)" : undefined,
+                    transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
+                  }}
+                >
+                  <UnitOverlay
+                    units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
+                    width={w}
+                    height={h}
+                  />
+                </div>
                 <span
                   style={{
-                    position: "relative",
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     fontSize: 12,
                     fontWeight: 600,
                     color: "#fff",
@@ -229,6 +244,7 @@ export function BuildingMap({
                     textShadow: "0 1px 3px rgba(0,0,0,0.35)",
                     pointerEvents: "none",
                     padding: "0 4px",
+                    overflow: "hidden",
                   }}
                 >
                   {b.name}

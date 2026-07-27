@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bolt, ChevronDown, ChevronRight, Droplet, Flame, Pencil, Plus, Shapes, Trash2, Waves, Wifi } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 
@@ -169,6 +169,43 @@ function BuildingsSection({
   const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
   const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
   const [drawingFor, setDrawingFor] = useState<Building | null>(null);
+  const [tableEdit, setTableEdit] = useState(false);
+
+  const patchMut = useMutation({
+    mutationFn: (v: BuildingSubmit & { id: string }) => update({ data: v }),
+    onSuccess: () => {
+      toast.success("Gemt");
+      qc.invalidateQueries({ queryKey: ["buildings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function patchBuilding(b: Building, patch: Partial<BuildingSubmit>) {
+    patchMut.mutate({
+      id: b.id,
+      name: b.name,
+      type: b.type,
+      description: b.description ?? null,
+      build_year: b.build_year ?? null,
+      area_m2_gross: b.area_m2_gross ?? null,
+      area_m2_net: b.area_m2_net ?? null,
+      floors: b.floors ?? null,
+      parcel_id: b.parcel_id ?? null,
+      condition: b.condition ?? null,
+      last_inspection: b.last_inspection ?? null,
+      lease_status: b.lease_status ?? "ledig",
+      lease_status_note: b.lease_status_note ?? null,
+      estimated_monthly_rent: b.estimated_monthly_rent ?? null,
+      has_electricity: !!b.has_electricity,
+      has_water: !!b.has_water,
+      has_heating: !!b.has_heating,
+      heating_type: b.heating_type ?? null,
+      has_sewage: !!b.has_sewage,
+      has_internet: !!b.has_internet,
+      internal_notes: b.internal_notes ?? null,
+      ...patch,
+    });
+  }
 
   const unitsByBuilding = new Map<string, BuildingUnit[]>();
   for (const u of units) {
@@ -218,9 +255,14 @@ function BuildingsSection({
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-semibold text-[var(--brand-900)]">Bygninger</h2>
-        <Button size="sm" onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Ny bygning
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant={tableEdit ? "default" : "outline"} size="sm" onClick={() => setTableEdit((v) => !v)}>
+            {tableEdit ? "Færdig" : "Rediger i tabel"}
+          </Button>
+          <Button size="sm" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Ny bygning
+          </Button>
+        </div>
       </div>
       <TableToolbar api={tableFilters} searchPlaceholder="Søg bygning…" />
       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -231,16 +273,15 @@ function BuildingsSection({
               <SortableHeader label="Type" sortKey="type" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Areal" sortKey="area_m2_gross" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Stand" sortKey="condition" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
-              <th className="px-4 py-2.5 font-medium">Forsyning</th>
               <SortableHeader label="Udlejningspot./md." sortKey="estimated_monthly_rent" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Status / lejer</th>
               <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && filteredBuildings.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
             {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];
@@ -260,21 +301,74 @@ function BuildingsSection({
                             ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                             : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                         ) : <span className="w-3.5" />}
-                        {b.name}
+                        {tableEdit ? (
+                          <Input
+                            defaultValue={b.name}
+                            className="h-7 text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => {
+                              const v = e.target.value.trim();
+                              if (v && v !== b.name) patchBuilding(b, { name: v });
+                            }}
+                          />
+                        ) : b.name}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
+                    <td className="px-4 py-2.5" onClick={(e) => tableEdit && e.stopPropagation()}>
+                      {tableEdit ? (
+                        <Select value={b.type} onValueChange={(v) => patchBuilding(b, { type: v as BuildingType })}>
+                          <SelectTrigger className="h-7 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {BUILDING_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>{BUILDING_TYPE_LABEL[t] ?? t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (BUILDING_TYPE_LABEL[b.type] ?? b.type)}
+                    </td>
                     <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
-                      {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
+                      {tableEdit ? (
+                        <Input
+                          type="number"
+                          defaultValue={b.area_m2_gross ?? ""}
+                          className="h-7 text-sm w-24"
+                          onClick={(e) => e.stopPropagation()}
+                          onBlur={(e) => {
+                            const v = e.target.value === "" ? null : Number(e.target.value);
+                            if (v !== (b.area_m2_gross ?? null)) patchBuilding(b, { area_m2_gross: v });
+                          }}
+                        />
+                      ) : (b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—")}
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {b.condition ? CONDITION_LABEL[b.condition] : "—"}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <UtilityIcons b={b} />
+                    <td className="px-4 py-2.5 text-muted-foreground" onClick={(e) => tableEdit && e.stopPropagation()}>
+                      {tableEdit ? (
+                        <Select
+                          value={b.condition ?? NONE}
+                          onValueChange={(v) => patchBuilding(b, { condition: v === NONE ? null : (v as BuildingCondition) })}
+                        >
+                          <SelectTrigger className="h-7 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NONE}>—</SelectItem>
+                            {BUILDING_CONDITIONS.map((c) => (
+                              <SelectItem key={c} value={c}>{CONDITION_LABEL[c] ?? c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (b.condition ? CONDITION_LABEL[b.condition] : "—")}
                     </td>
                     <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                      {(() => {
+                      {tableEdit ? (
+                        <Input
+                          type="number"
+                          defaultValue={b.estimated_monthly_rent ?? ""}
+                          className="h-7 text-sm w-28"
+                          onClick={(e) => e.stopPropagation()}
+                          onBlur={(e) => {
+                            const v = e.target.value === "" ? null : Number(e.target.value);
+                            if (v !== (b.estimated_monthly_rent ?? null)) patchBuilding(b, { estimated_monthly_rent: v });
+                          }}
+                        />
+                      ) : (() => {
                         const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
                         const val = hasUnits && unitSum > 0 ? unitSum : b.estimated_monthly_rent;
                         return val ? `${formatDKK(val)}/md.` : "—";
@@ -322,9 +416,6 @@ function BuildingsSection({
                       </td>
                       <td className="px-4 py-2 text-muted-foreground tabular-nums">
                         {u.lease?.monthly_rent ? formatDKK(u.lease.monthly_rent) : "—"}
-                      </td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {u.lease?.contract_end ? formatDate(u.lease.contract_end) : "—"}
                       </td>
                       <td className="px-4 py-2 text-muted-foreground tabular-nums">
                         {u.estimated_monthly_rent ? `${formatDKK(u.estimated_monthly_rent)}/md.` : "—"}
@@ -482,24 +573,8 @@ export type BuildingSubmit = {
   internal_notes: string | null;
 };
 
-function UtilityIcons({ b }: { b: Building }) {
-  const items: { on: boolean | null; icon: React.ReactNode; title: string }[] = [
-    { on: b.has_electricity, icon: <Bolt className="h-3.5 w-3.5" />, title: "El" },
-    { on: b.has_water, icon: <Droplet className="h-3.5 w-3.5" />, title: "Vand" },
-    { on: b.has_heating, icon: <Flame className="h-3.5 w-3.5" />, title: "Varme" },
-    { on: b.has_sewage, icon: <Waves className="h-3.5 w-3.5" />, title: "Kloak" },
-    { on: b.has_internet, icon: <Wifi className="h-3.5 w-3.5" />, title: "Internet" },
-  ];
-  const active = items.filter((i) => i.on);
-  if (active.length === 0) return <span className="text-muted-foreground text-xs">—</span>;
-  return (
-    <div className="flex items-center gap-1.5 text-muted-foreground">
-      {active.map((i) => (
-        <span key={i.title} title={i.title}>{i.icon}</span>
-      ))}
-    </div>
-  );
-}
+
+
 
 function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (

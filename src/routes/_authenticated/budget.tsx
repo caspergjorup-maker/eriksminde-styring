@@ -114,62 +114,73 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "
 
 function BudgetPage() {
   const qc = useQueryClient();
-  const fetchScenarios = useServerFn(listScenarios);
-  const fetchScenario = useServerFn(getScenario);
+  const fetchYears = useServerFn(listBudgetYears);
+  const fetchBudget = useServerFn(getBudgetByYear);
   const createScenarioFn = useServerFn(createScenario);
-  const setPrimaryFn = useServerFn(setPrimaryScenario);
+  const copyBudgetFn = useServerFn(copyBudgetToYear);
   const updateScenarioFn = useServerFn(updateScenario);
-  const deleteScenarioFn = useServerFn(deleteScenario);
+  const deleteYearFn = useServerFn(deleteBudgetYear);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [monthlyView, setMonthlyView] = useState(false);
-  const [newScenarioOpen, setNewScenarioOpen] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
 
-  const scenariosQ = useQuery({
-    queryKey: ["budget-scenarios"],
-    queryFn: () => fetchScenarios(),
+  const yearsQ = useQuery({
+    queryKey: ["budget-years"],
+    queryFn: () => fetchYears(),
   });
 
-  const currentId = selectedId ?? scenariosQ.data?.find((s) => s.is_primary)?.id ?? scenariosQ.data?.[0]?.id ?? null;
+  const years = yearsQ.data ?? [];
+  const thisYear = new Date().getFullYear();
+  const currentYear =
+    selectedYear ?? (years.includes(thisYear) ? thisYear : (years[0] ?? null));
 
   const bundleQ = useQuery({
-    queryKey: ["budget-scenario", currentId],
-    queryFn: () => fetchScenario({ data: { id: currentId! } }),
-    enabled: !!currentId,
+    queryKey: ["budget-year", currentYear],
+    queryFn: () => fetchBudget({ data: { year: currentYear! } }),
+    enabled: currentYear !== null,
   });
 
   const createScenarioMut = useMutation({
     mutationFn: (data: { name: string; year: number; notes: string | null }) => createScenarioFn({ data }),
-    onSuccess: (res) => {
-      toast.success("Scenarie oprettet");
-      qc.invalidateQueries({ queryKey: ["budget-scenarios"] });
-      setSelectedId(res.id);
-      setNewScenarioOpen(false);
+    onSuccess: (_res, vars) => {
+      toast.success("Budget oprettet");
+      qc.invalidateQueries({ queryKey: ["budget-years"] });
+      setSelectedYear(vars.year);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const setPrimaryMut = useMutation({
-    mutationFn: (id: string) => setPrimaryFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-scenarios"] }),
+  const copyMut = useMutation({
+    mutationFn: (data: { fromYear: number; toYear: number; adjustPct: number; rollForwardLoans: boolean }) =>
+      copyBudgetFn({ data }),
+    onSuccess: (res) => {
+      toast.success(`Budget ${res.year} oprettet ud fra det forrige år`);
+      qc.invalidateQueries({ queryKey: ["budget-years"] });
+      setSelectedYear(res.year);
+      setCopyOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  const deleteScenarioMut = useMutation({
-    mutationFn: (id: string) => deleteScenarioFn({ data: { id } }),
+  const deleteYearMut = useMutation({
+    mutationFn: (year: number) => deleteYearFn({ data: { year } }),
     onSuccess: () => {
-      toast.success("Scenarie slettet");
-      setSelectedId(null);
-      qc.invalidateQueries({ queryKey: ["budget-scenarios"] });
+      toast.success("Budget slettet");
+      setSelectedYear(null);
+      qc.invalidateQueries({ queryKey: ["budget-years"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const updateScenarioMut = useMutation({
     mutationFn: (data: { id: string; name: string; year: number; notes: string | null }) =>
       updateScenarioFn({ data }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["budget-scenarios"] });
-      qc.invalidateQueries({ queryKey: ["budget-scenario"] });
+      qc.invalidateQueries({ queryKey: ["budget-years"] });
+      qc.invalidateQueries({ queryKey: ["budget-year"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const bundle = bundleQ.data ?? null;
@@ -185,47 +196,51 @@ function BudgetPage() {
   const totalLoanPayments = loans.reduce((s, l) => s + calcLoan(l).annualPayment, 0);
   const result = totalIncome - totalExpense - totalLoanPayments;
 
+  const nextYear = currentYear !== null ? currentYear + 1 : thisYear + 1;
+  const canCopy = currentYear !== null && !years.includes(nextYear);
+
   return (
     <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Budget</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Drift og finansiering pr. scenarie</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Drift og finansiering — ét budget pr. år</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={currentId ?? ""} onValueChange={(v) => setSelectedId(v)}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Vælg scenarie" />
-            </SelectTrigger>
-            <SelectContent>
-              {(scenariosQ.data ?? []).map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.is_primary ? "★ " : ""}{s.name} · {s.year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {scenario && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPrimaryMut.mutate(scenario.id)}
-              title={scenario.is_primary ? "Primær" : "Sæt som primær"}
+          {years.length > 0 && (
+            <Select
+              value={currentYear !== null ? String(currentYear) : ""}
+              onValueChange={(v) => setSelectedYear(Number(v))}
             >
-              {scenario.is_primary ? <Star className="h-4 w-4 fill-current" /> : <StarOff className="h-4 w-4" />}
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Vælg år" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {canCopy && (
+            <Button size="sm" onClick={() => setCopyOpen(true)}>
+              <Copy className="h-4 w-4 mr-1" /> Opret budget for {nextYear}
             </Button>
           )}
-          <Button size="sm" onClick={() => setNewScenarioOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Nyt scenarie
-          </Button>
         </div>
       </div>
 
-      {!scenario && !scenariosQ.isLoading && (
+      {years.length === 0 && !yearsQ.isLoading && (
         <div className="bg-card border border-border rounded-xl p-8 text-center">
-          <p className="text-muted-foreground mb-4">Der er ingen budget-scenarier endnu.</p>
-          <Button onClick={() => setNewScenarioOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Opret dit første scenarie
+          <p className="text-muted-foreground mb-4">Der er ingen budgetter endnu.</p>
+          <Button
+            onClick={() =>
+              createScenarioMut.mutate({ name: `Budget ${thisYear}`, year: thisYear, notes: null })
+            }
+          >
+            <Plus className="h-4 w-4 mr-1" /> Opret budget for {thisYear}
           </Button>
         </div>
       )}
@@ -235,7 +250,7 @@ function BudgetPage() {
           <ScenarioHeader
             scenario={scenario}
             onUpdate={(patch) => updateScenarioMut.mutate({ id: scenario.id, ...patch })}
-            onDelete={() => deleteScenarioMut.mutate(scenario.id)}
+            onDelete={() => deleteYearMut.mutate(scenario.year)}
           />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -294,11 +309,16 @@ function BudgetPage() {
         </>
       )}
 
-      <NewScenarioDialog
-        open={newScenarioOpen}
-        onOpenChange={setNewScenarioOpen}
-        onCreate={(data) => createScenarioMut.mutate(data)}
-      />
+      {currentYear !== null && (
+        <CopyBudgetDialog
+          open={copyOpen}
+          onOpenChange={setCopyOpen}
+          fromYear={currentYear}
+          toYear={nextYear}
+          pending={copyMut.isPending}
+          onConfirm={(opts) => copyMut.mutate({ fromYear: currentYear, toYear: nextYear, ...opts })}
+        />
+      )}
     </div>
   );
 }
@@ -337,36 +357,45 @@ function ScenarioHeader({
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(scenario.name);
-  const [year, setYear] = useState(String(scenario.year));
   const [notes, setNotes] = useState(scenario.notes ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <div className="text-lg font-semibold text-[var(--brand-900)]">{scenario.name} <span className="text-muted-foreground font-normal">· {scenario.year}</span></div>
+        <div className="text-lg font-semibold text-[var(--brand-900)]">
+          {scenario.name} <span className="text-muted-foreground font-normal">· {scenario.year}</span>
+        </div>
         {scenario.notes && <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{scenario.notes}</div>}
       </div>
       <div className="flex gap-2 shrink-0">
-        <Button variant="outline" size="sm" onClick={() => { setName(scenario.name); setYear(String(scenario.year)); setNotes(scenario.notes ?? ""); setEditing(true); }}>
+        <Button variant="outline" size="sm" onClick={() => { setName(scenario.name); setNotes(scenario.notes ?? ""); setEditing(true); }}>
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem className="text-red-600" onSelect={() => setConfirmDelete(true)}>
+              <Trash2 className="h-4 w-4 mr-2" /> Slet budget {scenario.year}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Rediger scenarie</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Rediger budget</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label>År</Label><Input type="number" value={year} onChange={(e) => setYear(e.target.value)} /></div>
             <div><Label>Noter</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(false)}>Annuller</Button>
-            <Button onClick={() => { onUpdate({ name: name.trim(), year: Number(year), notes: notes.trim() || null }); setEditing(false); }}>Gem</Button>
+            <Button onClick={() => { onUpdate({ name: name.trim(), year: scenario.year, notes: notes.trim() || null }); setEditing(false); }}>Gem</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -374,8 +403,8 @@ function ScenarioHeader({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Slet scenarie?</AlertDialogTitle>
-            <AlertDialogDescription>Alle linjer og lån i scenariet slettes også. Dette kan ikke fortrydes.</AlertDialogDescription>
+            <AlertDialogTitle>Slet budget {scenario.year}?</AlertDialogTitle>
+            <AlertDialogDescription>Alle poster og lån i budgettet slettes også. Dette kan ikke fortrydes.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuller</AlertDialogCancel>
@@ -387,31 +416,48 @@ function ScenarioHeader({
   );
 }
 
-function NewScenarioDialog({
+function CopyBudgetDialog({
   open,
   onOpenChange,
-  onCreate,
+  fromYear,
+  toYear,
+  pending,
+  onConfirm,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCreate: (data: { name: string; year: number; notes: string | null }) => void;
+  fromYear: number;
+  toYear: number;
+  pending: boolean;
+  onConfirm: (opts: { adjustPct: number; rollForwardLoans: boolean }) => void;
 }) {
-  const [name, setName] = useState("");
-  const [year, setYear] = useState(String(new Date().getFullYear()));
-  const [notes, setNotes] = useState("");
+  const [rollForward, setRollForward] = useState(true);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) { setName(""); setYear(String(new Date().getFullYear())); setNotes(""); } }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Nyt budget-scenarie</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Fjordager 11 – 2026" /></div>
-          <div><Label>År</Label><Input type="number" value={year} onChange={(e) => setYear(e.target.value)} /></div>
-          <div><Label>Noter</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} /></div>
+        <DialogHeader><DialogTitle>Opret budget for {toYear}</DialogTitle></DialogHeader>
+        <div className="space-y-4 text-sm">
+          <p className="text-muted-foreground">
+            Alle poster og lån fra budget {fromYear} kopieres til {toYear}. Kopierede poster får noten
+            “Kopieret fra {fromYear}”, så du kan se hvad du endnu ikke har gennemgået.
+          </p>
+          <div className="flex items-start gap-3">
+            <Switch id="roll-forward" checked={rollForward} onCheckedChange={setRollForward} />
+            <div>
+              <Label htmlFor="roll-forward">Videreført restgæld på lån</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Lånebeløbet sættes til restgælden ved udgangen af {fromYear}, og løbetiden reduceres med 12 måneder.
+                Slå fra for at kopiere lånene uændret.
+              </p>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
-          <Button disabled={!name.trim()} onClick={() => onCreate({ name: name.trim(), year: Number(year), notes: notes.trim() || null })}>Opret</Button>
+          <Button disabled={pending} onClick={() => onConfirm({ adjustPct: 0, rollForwardLoans: rollForward })}>
+            Opret {toYear}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

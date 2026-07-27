@@ -235,6 +235,7 @@ export function BygningerPage() {
 
   return (
     <div className="space-y-8">
+      <RentalPotentialSection buildings={buildings} units={units} leases={leases} />
       <BuildingsSection buildings={buildings} units={units} loading={lb} qc={qc} />
       <LeasesSection
         leases={leases}

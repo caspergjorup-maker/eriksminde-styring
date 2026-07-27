@@ -467,15 +467,10 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 }
 
 export function BuildingMapLegend() {
-  const items = [
-    { color: "#0F6E56", label: "Stuehus" },
-    { color: "#1D9E75", label: "Nordlænge" },
-    { color: "#5DCAA5", label: "Stalde" },
-    { color: "#7EC8A4", label: "Værksted / tørreri" },
-    { color: "#9FE1CB", label: "Foderrum" },
-    { color: "#085041", label: "Maskinhus" },
-    { color: "#7a7a7a", label: "Gylletank", circle: true },
-  ];
+  const items = Object.entries(BUILDING_TYPE_COLOR).map(([type, color]) => ({
+    color,
+    label: BUILDING_TYPE_LABEL[type as BuildingType],
+  }));
   return (
     <div
       style={{

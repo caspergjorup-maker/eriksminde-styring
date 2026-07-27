@@ -67,6 +67,10 @@ import {
 
 const NONE = "__none__";
 
+function isOnMap(b: Building) {
+  return b.map_x != null && b.map_y != null && b.map_w != null && b.map_h != null;
+}
+
 const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
   stuehus: "Stuehus",
   lade: "Lade",

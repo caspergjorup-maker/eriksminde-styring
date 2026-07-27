@@ -232,14 +232,15 @@ function BuildingsSection({
               <SortableHeader label="Areal" sortKey="area_m2_gross" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Stand" sortKey="condition" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Forsyning</th>
+              <SortableHeader label="Udlejningspot./md." sortKey="estimated_monthly_rent" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Status / lejer</th>
               <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && filteredBuildings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
             {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];

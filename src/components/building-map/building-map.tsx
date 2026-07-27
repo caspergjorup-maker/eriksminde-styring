@@ -203,7 +203,7 @@ export function BuildingMap({
             const isSelected = selected?.id === b.id;
             const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
             const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
-            const baseColor = b.map_color ?? "#1D9E75";
+            const baseColor = getBuildingTypeColor(b.type);
             const w = b.map_w ?? 40;
             const h = b.map_h ?? 40;
             return (

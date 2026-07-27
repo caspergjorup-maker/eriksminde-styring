@@ -493,7 +493,7 @@ export function BuildingMapLegend() {
             style={{
               width: 14,
               height: 14,
-              borderRadius: it.circle ? "50%" : "var(--radius-sm)",
+              borderRadius: "var(--radius-sm)",
               background: it.color,
               display: "inline-block",
               boxShadow: "0 1px 3px oklch(0.35 0.02 160 / 0.15)",

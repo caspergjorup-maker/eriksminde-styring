@@ -1,66 +1,33 @@
-Plan: Dokumentmodul
+## Mål
 
-Nuværende tilstand: `/dokumenter` er en placeholder. Tabellen `documents` findes i databasen med felterne navn, kategori, fil-URL, relateret kontakt, upload-dato og noter. Der er ingen storage-bucket, serverfunktioner eller UI endnu.
+Væk med scenarie-tankegangen. Der er ét budget pr. år. Udgangspunktet er det eksisterende "Fjordager 11 – 2026", og man kan oprette næste års budget som en kopi af det nuværende.
 
-Fase 1 — Kerne: upload og metadata
-1. Storage-bucket
-   - Opret privat bucket `documents` i Supabase Storage.
-   - Tilføj RLS-politikker på `storage.objects`, så brugere kun kan se/rette/slette egne filer.
+## Sådan kommer det til at fungere
 
-2. Databaseskema
-   - Sikr at `documents` har RLS aktiveret med politikker for authenticated brugere.
-   - Tilføj evt. `updated_at` og trigger, hvis det mangler.
-   - Overvej at normalisere kategori til en `document_categories`-tabel eller fast enum.
+- Budgetsiden åbner direkte i årets budget — ingen scenarie-liste, ingen "primær"-stjerne.
+- Øverst en simpel års-vælger (fx `2026 ▾`) der kun viser de år, der findes budget for.
+- Knap: **"Opret budget for 2027"** — kopierer alle poster og lån fra det viste år, sætter lånenes startdato/restgæld videre, og åbner det nye år.
+- Findes året allerede, er knappen skjult.
+- Sletning af et års budget flyttes ind i en lille "..."-menu, så det ikke sker ved uheld.
 
-3. Serverfunktioner (`src/lib/documents.functions.ts`)
-   - `listDocuments()` — list med valgfrit filter på kategori, kontakt og fritekst.
-   - `createDocument(data)` — gem metadata og returnér signeret upload-URL eller upload filen direkte via service role.
-   - `updateDocument(id, data)` — ret metadata.
-   - `deleteDocument(id)` — slet række og tilhørende storage-fil.
-   - `getDocumentUploadUrl(filename, contentType)` — returnér en signeret upload-URL til browseren.
+## Oprydning i data
 
-4. UI (`src/routes/_authenticated/dokumenter.tsx` + ny komponent)
-   - Tabel med kolonner: navn, kategori, kontakt, upload-dato, filtype/størrelse, handlinger.
-   - Filtrering og sortering via eksisterende `useTableFilters`/`TableToolbar`.
-   - "Upload dokument"-knap med drag-and-drop eller filvælger.
-   - Dialog til redigering af metadata.
-   - Slet med bekræftelse.
-   - Klik på filnavn åbner/download via signeret URL.
+- Det tomme scenarie **"2026"** (0 poster, 0 lån) slettes.
+- "Fjordager 11 – 2026" omdøbes til **"Budget 2026"** og bliver det ene budget for 2026.
+- Regel fremadrettet: ét budget pr. år (unikt på årstal).
 
-Fase 2 — Forslag til udvidelser (vælg hvilke du vil have)
-A. Knyt dokumenter til flere entiteter
-   - Udover kontakt: bygning, lejemål, maskine, mark, matrikel, jagtleje, opgave.
-   - Løsningsforslag: enten nye link-tabeller (`document_buildings`, `document_machines` …) eller en generel `document_links`-tabel med `(document_id, entity_type, entity_id)`.
-   - Gør det muligt at uploade direkte fra f.eks. bygningsinfo-panelet.
+## Mine input / forslag
 
-B. Tags / labels
-   - Tilføj `document_tags`-tabel og mange-til-mange-link.
-   - Hurtig filtrering på tags i tabellen.
+1. **Lån bør ikke kopieres blindt.** Ved kopi til næste år foreslår jeg at restgælden ved årets udgang bliver det nye lånebeløb, og løbetiden reduceres med 12 måneder — så finansieringslinjerne er rigtige uden manuel rettelse. (Alternativ: kopiér 1:1 — sig til hvis du foretrækker det.)
+2. **Markér kopierede poster.** Nye poster får en note "kopieret fra 2026", så du kan se hvad du endnu ikke har gennemgået.
+3. **Indeksering ved kopi.** Valgfrit felt i kopi-dialogen: "Reguler alle beløb med X %" (fx 2 % pristalsregulering). Kan slås fra.
+4. **Sammenligning år-til-år.** En kolonne i budgettabellen der viser sidste års beløb ved siden af årets, så afvigelser er tydelige.
+5. **Kobling til realiseret.** Senere kan Årsresultat-siden holde budgetlinjerne op mod faktiske indtægter/udgifter pr. kategori.
 
-C. Kontrakt- og udløbsdato
-   - Tilføj `valid_from`, `valid_until` og `renewal_reminder`.
-   - Vis badge for "udløber snart" og send påmindelse (notifikation/email) når dato nærmer sig.
+Punkt 1–2 bygger jeg med som standard. Punkt 3–5 tager jeg med, hvis du siger til.
 
-D. Forhåndsvisning og dokumenttype
-   - Vis thumbnail/ikon for PDF, billeder, regneark.
-   - Integrer en PDF-forhåndsviser eller vis i modal.
+## Teknisk
 
-E. Bulk upload
-   - Upload flere filer på én gang med fælles kategori og kontakt.
-
-F. Versionering
-   - `document_versions`-tabel med upload-dato, fil-URL og bruger.
-   - Mulighed for at erstatte filen og bevare historik.
-
-G. OCR / søgning i indhold
-   - Ekstraher tekst fra PDF-bilag og gør søgbar.
-   - Kræver integration (f.eks. Mistral/OCR, OpenAI, eller Lovable AI Gateway).
-
-Anbefaling
-Start med Fase 1 + forslag A (knytning til bygninger og maskiner), fordi I allerede har links fra bygningskortet til dokumenter. Derefter kan B, C og D tilføjes efter behov.
-
-Tekniske detaljer
-- Brug Supabase Storage browser-upload via `supabase.storage.from('documents').upload(...)` fra komponenten.
-- Gem den returnerede `path` som `file_url` med bucket-præfiks.
-- Brug `createServerFn` til metadata-CRUD og sletning af storage-fil server-side.
-- Følg den eksisterende table-filter og dialog-pattern fra kontakter/bygninger.
+- Migration: slet tomt scenarie, omdøb det andet, fjern `is_primary` fra flowet (kolonnen kan blive stående), tilføj unik constraint på `year`.
+- `src/lib/budget.functions.ts`: erstat `listScenarios`/`setPrimaryScenario` med `listBudgetYears`, `getBudgetByYear` og ny `copyBudgetToYear` (server-side kopi af poster + lån med restgælds-beregning via `buildAmortization`).
+- `src/routes/_authenticated/budget.tsx`: fjern scenarie-liste og primær-toggle, indfør års-vælger + kopi-dialog; resten af tabellerne (poster, lån, amortisering, månedsfordeling) bevares uændret.

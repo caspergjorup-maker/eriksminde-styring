@@ -232,11 +232,10 @@ export function BuildingMap({
                 <span
                   style={{
                     position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    fontSize: w < 55 || h < 30 ? 9 : w < 85 || h < 45 ? 10 : 12,
                     fontWeight: 600,
                     color: "#fff",
                     textAlign: "center",
@@ -244,7 +243,8 @@ export function BuildingMap({
                     textShadow: "0 1px 3px rgba(0,0,0,0.35)",
                     pointerEvents: "none",
                     padding: "0 4px",
-                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    maxWidth: 140,
                   }}
                 >
                   {b.name}

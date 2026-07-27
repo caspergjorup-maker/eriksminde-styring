@@ -3,7 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
 
-import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
+import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingType, type BuildingWithLease } from "@/lib/buildings.functions";
 import { listBuildingUnits, type BuildingUnit } from "@/lib/building-units.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
 
@@ -22,6 +22,31 @@ const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }
   intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
   udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
 };
+
+const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
+  stuehus: "Stuehus",
+  lade: "Lade",
+  maskinhus: "Maskinhus",
+  lagerhal: "Lagerhal",
+  vaerksted: "Værksted",
+  smedie: "Smedie",
+  garage: "Garage",
+};
+
+const BUILDING_TYPE_COLOR: Record<BuildingType, string> = {
+  stuehus: "#B94E48",
+  lade: "#D4A23A",
+  maskinhus: "#5B7A9C",
+  lagerhal: "#C27A3E",
+  vaerksted: "#3F8DDB",
+  smedie: "#4A4A4A",
+  garage: "#8A9A8C",
+};
+
+function getBuildingTypeColor(type: BuildingType | null): string {
+  if (!type) return "#8A9A8C";
+  return BUILDING_TYPE_COLOR[type] ?? "#8A9A8C";
+}
 
 export const buildingsMapQuery = queryOptions({
   queryKey: ["buildings", "with-leases"],
@@ -178,7 +203,7 @@ export function BuildingMap({
             const isSelected = selected?.id === b.id;
             const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
             const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
-            const baseColor = b.map_color ?? "#1D9E75";
+            const baseColor = getBuildingTypeColor(b.type);
             const w = b.map_w ?? 40;
             const h = b.map_h ?? 40;
             return (
@@ -294,7 +319,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
             width: 36,
             height: 36,
             borderRadius: "var(--radius-md)",
-            background: building.map_color ?? "#1D9E75",
+            background: getBuildingTypeColor(building.type),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -442,15 +467,10 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 }
 
 export function BuildingMapLegend() {
-  const items = [
-    { color: "#0F6E56", label: "Stuehus" },
-    { color: "#1D9E75", label: "Nordlænge" },
-    { color: "#5DCAA5", label: "Stalde" },
-    { color: "#7EC8A4", label: "Værksted / tørreri" },
-    { color: "#9FE1CB", label: "Foderrum" },
-    { color: "#085041", label: "Maskinhus" },
-    { color: "#7a7a7a", label: "Gylletank", circle: true },
-  ];
+  const items = Object.entries(BUILDING_TYPE_COLOR).map(([type, color]) => ({
+    color,
+    label: BUILDING_TYPE_LABEL[type as BuildingType],
+  }));
   return (
     <div
       style={{
@@ -473,7 +493,7 @@ export function BuildingMapLegend() {
             style={{
               width: 14,
               height: 14,
-              borderRadius: it.circle ? "50%" : "var(--radius-sm)",
+              borderRadius: "var(--radius-sm)",
               background: it.color,
               display: "inline-block",
               boxShadow: "0 1px 3px oklch(0.35 0.02 160 / 0.15)",

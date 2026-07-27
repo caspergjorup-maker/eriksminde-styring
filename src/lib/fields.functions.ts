@@ -33,6 +33,23 @@ const UpdateSchema = z.object({
   notes: z.string().trim().max(2000).nullable(),
 });
 
+export type FieldListItem = {
+  id: string;
+  name: string;
+  use_type: string | null;
+};
+
+export const listFields = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FieldListItem[]> => {
+    const { data, error } = await context.supabase
+      .from("fields")
+      .select("id, name, use_type")
+      .order("name");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as FieldListItem[];
+  });
+
 export const updateField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => UpdateSchema.parse(data))

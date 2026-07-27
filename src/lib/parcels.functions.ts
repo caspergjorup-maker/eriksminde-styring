@@ -3,6 +3,23 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type ParcelListItem = {
+  id: string;
+  matrikel_id: string;
+  ejerlav: string;
+};
+
+export const listParcels = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ParcelListItem[]> => {
+    const { data, error } = await context.supabase
+      .from("parcels")
+      .select("id, matrikel_id, ejerlav")
+      .order("matrikel_id");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ParcelListItem[];
+  });
+
 const GeometrySchema = z.object({
   type: z.enum(["Polygon", "MultiPolygon"]),
   coordinates: z.array(z.any()),

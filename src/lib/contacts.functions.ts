@@ -61,6 +61,14 @@ export const listContacts = createServerFn({ method: "GET" })
     return (res.data ?? []) as Contact[];
   });
 
+export const listAllContacts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<Contact[]> => {
+    const { data, error } = await context.supabase.from("contacts").select("*").order("name");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Contact[];
+  });
+
 export const createContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => contactInput.parse(data))

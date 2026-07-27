@@ -169,6 +169,43 @@ function BuildingsSection({
   const [editingUnit, setEditingUnit] = useState<BuildingUnit | null>(null);
   const [creatingUnitFor, setCreatingUnitFor] = useState<Building | null>(null);
   const [drawingFor, setDrawingFor] = useState<Building | null>(null);
+  const [tableEdit, setTableEdit] = useState(false);
+
+  const patchMut = useMutation({
+    mutationFn: (v: BuildingSubmit & { id: string }) => update({ data: v }),
+    onSuccess: () => {
+      toast.success("Gemt");
+      qc.invalidateQueries({ queryKey: ["buildings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function patchBuilding(b: Building, patch: Partial<BuildingSubmit>) {
+    patchMut.mutate({
+      id: b.id,
+      name: b.name,
+      type: b.type,
+      description: b.description ?? null,
+      build_year: b.build_year ?? null,
+      area_m2_gross: b.area_m2_gross ?? null,
+      area_m2_net: b.area_m2_net ?? null,
+      floors: b.floors ?? null,
+      parcel_id: b.parcel_id ?? null,
+      condition: b.condition ?? null,
+      last_inspection: b.last_inspection ?? null,
+      lease_status: b.lease_status ?? "ledig",
+      lease_status_note: b.lease_status_note ?? null,
+      estimated_monthly_rent: b.estimated_monthly_rent ?? null,
+      has_electricity: !!b.has_electricity,
+      has_water: !!b.has_water,
+      has_heating: !!b.has_heating,
+      heating_type: b.heating_type ?? null,
+      has_sewage: !!b.has_sewage,
+      has_internet: !!b.has_internet,
+      internal_notes: b.internal_notes ?? null,
+      ...patch,
+    });
+  }
 
   const unitsByBuilding = new Map<string, BuildingUnit[]>();
   for (const u of units) {

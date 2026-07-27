@@ -494,7 +494,7 @@ function LinesTable({
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<BudgetLine | null>(null);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-scenario", scenarioId] });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-year"] });
 
   const createMut = useMutation({
     mutationFn: (data: {
@@ -747,7 +747,7 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
   const [amort, setAmort] = useState<BudgetLoan | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<BudgetLoan | null>(null);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-scenario", scenarioId] });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-year"] });
 
   const createMut = useMutation({
     mutationFn: (data: {

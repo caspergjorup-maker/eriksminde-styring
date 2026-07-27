@@ -2,19 +2,19 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil, Plus, Trash2, Star, StarOff, CalendarDays } from "lucide-react";
+import { Pencil, Plus, Trash2, CalendarDays, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  copyBudgetToYear,
   createBudgetLine,
   createLoan,
   createScenario,
   deleteBudgetLine,
+  deleteBudgetYear,
   deleteLoan,
-  deleteScenario,
-  getScenario,
-  listScenarios,
-  setPrimaryScenario,
+  getBudgetByYear,
+  listBudgetYears,
   updateBudgetLine,
   updateLoan,
   updateScenario,

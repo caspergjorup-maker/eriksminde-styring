@@ -224,7 +224,6 @@ export function BuildingMap({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    overflow: "hidden",
                   }}
                 >
                   <UnitOverlay

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 
@@ -66,6 +66,10 @@ import {
 
 
 const NONE = "__none__";
+
+function isOnMap(b: Building) {
+  return b.map_x != null && b.map_y != null && b.map_w != null && b.map_h != null;
+}
 
 const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
   stuehus: "Stuehus",
@@ -242,6 +246,7 @@ function BuildingsSection({
     { key: "area_m2_gross", label: "Areal (m²)", type: "number", get: (b) => b.area_m2_gross, sortable: true, sortValue: (b) => b.area_m2_gross },
     { key: "condition", label: "Stand", type: "enum", get: (b) => b.condition ?? "", options: BUILDING_CONDITIONS.map((c) => ({ value: c, label: CONDITION_LABEL[c] ?? c })), sortable: true, sortValue: (b) => b.condition ?? "" },
     { key: "estimated_monthly_rent", label: "Udlejningspotentiale (md.)", type: "number", get: (b) => b.estimated_monthly_rent, sortable: true, sortValue: (b) => b.estimated_monthly_rent },
+    { key: "on_map", label: "På bygningsplan", type: "enum", get: (b) => (isOnMap(b) ? "ja" : "nej"), options: [{ value: "ja", label: "Ja" }, { value: "nej", label: "Ikke placeret" }], sortable: true, sortValue: (b) => (isOnMap(b) ? 1 : 0) },
     { key: "lease_status", label: "Status", type: "enum", get: (b) => b.lease_status ?? "", options: BUILDING_LEASE_STATUSES.map((s) => ({ value: s, label: LEASE_STATUS_LABEL[s] ?? s })) },
   ];
   const tableFilters = useTableFilters({
@@ -274,14 +279,15 @@ function BuildingsSection({
               <SortableHeader label="Areal" sortKey="area_m2_gross" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Stand" sortKey="condition" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Udlejningspot./md." sortKey="estimated_monthly_rent" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
+              <SortableHeader label="På plan" sortKey="on_map" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Status / lejer</th>
               <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && filteredBuildings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
             {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];
@@ -375,6 +381,17 @@ function BuildingsSection({
                       })()}
                     </td>
                     <td className="px-4 py-2.5">
+                      {isOnMap(b) ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-emerald-100 text-emerald-900">
+                          <MapPin className="h-3 w-3" /> Ja
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
+                          Ikke placeret
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
                       {hasUnits ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">
                           {bUnits.length} enheder
@@ -419,6 +436,11 @@ function BuildingsSection({
                       </td>
                       <td className="px-4 py-2 text-muted-foreground tabular-nums">
                         {u.estimated_monthly_rent ? `${formatDKK(u.estimated_monthly_rent)}/md.` : "—"}
+                      </td>
+                      <td className="px-4 py-2">
+                        {u.map_geometry && u.map_kind ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700"><MapPin className="h-3.5 w-3.5" /> Ja</span>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
                       </td>
                       <td className="px-4 py-2">
                         <span

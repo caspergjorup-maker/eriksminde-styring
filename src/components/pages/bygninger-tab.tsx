@@ -260,21 +260,74 @@ function BuildingsSection({
                             ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                             : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                         ) : <span className="w-3.5" />}
-                        {b.name}
+                        {tableEdit ? (
+                          <Input
+                            defaultValue={b.name}
+                            className="h-7 text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => {
+                              const v = e.target.value.trim();
+                              if (v && v !== b.name) patchBuilding(b, { name: v });
+                            }}
+                          />
+                        ) : b.name}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5">{BUILDING_TYPE_LABEL[b.type] ?? b.type}</td>
+                    <td className="px-4 py-2.5" onClick={(e) => tableEdit && e.stopPropagation()}>
+                      {tableEdit ? (
+                        <Select value={b.type} onValueChange={(v) => patchBuilding(b, { type: v as BuildingType })}>
+                          <SelectTrigger className="h-7 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {BUILDING_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>{BUILDING_TYPE_LABEL[t] ?? t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (BUILDING_TYPE_LABEL[b.type] ?? b.type)}
+                    </td>
                     <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
-                      {b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—"}
+                      {tableEdit ? (
+                        <Input
+                          type="number"
+                          defaultValue={b.area_m2_gross ?? ""}
+                          className="h-7 text-sm w-24"
+                          onClick={(e) => e.stopPropagation()}
+                          onBlur={(e) => {
+                            const v = e.target.value === "" ? null : Number(e.target.value);
+                            if (v !== (b.area_m2_gross ?? null)) patchBuilding(b, { area_m2_gross: v });
+                          }}
+                        />
+                      ) : (b.area_m2_gross != null ? `${b.area_m2_gross} m²` : "—")}
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {b.condition ? CONDITION_LABEL[b.condition] : "—"}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <UtilityIcons b={b} />
+                    <td className="px-4 py-2.5 text-muted-foreground" onClick={(e) => tableEdit && e.stopPropagation()}>
+                      {tableEdit ? (
+                        <Select
+                          value={b.condition ?? NONE}
+                          onValueChange={(v) => patchBuilding(b, { condition: v === NONE ? null : (v as BuildingCondition) })}
+                        >
+                          <SelectTrigger className="h-7 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NONE}>—</SelectItem>
+                            {BUILDING_CONDITIONS.map((c) => (
+                              <SelectItem key={c} value={c}>{CONDITION_LABEL[c] ?? c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (b.condition ? CONDITION_LABEL[b.condition] : "—")}
                     </td>
                     <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                      {(() => {
+                      {tableEdit ? (
+                        <Input
+                          type="number"
+                          defaultValue={b.estimated_monthly_rent ?? ""}
+                          className="h-7 text-sm w-28"
+                          onClick={(e) => e.stopPropagation()}
+                          onBlur={(e) => {
+                            const v = e.target.value === "" ? null : Number(e.target.value);
+                            if (v !== (b.estimated_monthly_rent ?? null)) patchBuilding(b, { estimated_monthly_rent: v });
+                          }}
+                        />
+                      ) : (() => {
                         const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
                         const val = hasUnits && unitSum > 0 ? unitSum : b.estimated_monthly_rent;
                         return val ? `${formatDKK(val)}/md.` : "—";

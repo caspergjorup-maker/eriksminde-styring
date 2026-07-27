@@ -482,24 +482,8 @@ export type BuildingSubmit = {
   internal_notes: string | null;
 };
 
-function UtilityIcons({ b }: { b: Building }) {
-  const items: { on: boolean | null; icon: React.ReactNode; title: string }[] = [
-    { on: b.has_electricity, icon: <Bolt className="h-3.5 w-3.5" />, title: "El" },
-    { on: b.has_water, icon: <Droplet className="h-3.5 w-3.5" />, title: "Vand" },
-    { on: b.has_heating, icon: <Flame className="h-3.5 w-3.5" />, title: "Varme" },
-    { on: b.has_sewage, icon: <Waves className="h-3.5 w-3.5" />, title: "Kloak" },
-    { on: b.has_internet, icon: <Wifi className="h-3.5 w-3.5" />, title: "Internet" },
-  ];
-  const active = items.filter((i) => i.on);
-  if (active.length === 0) return <span className="text-muted-foreground text-xs">—</span>;
-  return (
-    <div className="flex items-center gap-1.5 text-muted-foreground">
-      {active.map((i) => (
-        <span key={i.title} title={i.title}>{i.icon}</span>
-      ))}
-    </div>
-  );
-}
+
+
 
 function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (

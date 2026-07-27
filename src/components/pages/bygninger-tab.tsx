@@ -204,6 +204,7 @@ function BuildingsSection({
     { key: "type", label: "Type", type: "enum", get: (b) => b.type, options: BUILDING_TYPES.map((t) => ({ value: t, label: BUILDING_TYPE_LABEL[t] ?? t })), sortable: true, sortValue: (b) => b.type },
     { key: "area_m2_gross", label: "Areal (m²)", type: "number", get: (b) => b.area_m2_gross, sortable: true, sortValue: (b) => b.area_m2_gross },
     { key: "condition", label: "Stand", type: "enum", get: (b) => b.condition ?? "", options: BUILDING_CONDITIONS.map((c) => ({ value: c, label: CONDITION_LABEL[c] ?? c })), sortable: true, sortValue: (b) => b.condition ?? "" },
+    { key: "estimated_monthly_rent", label: "Udlejningspotentiale (md.)", type: "number", get: (b) => b.estimated_monthly_rent, sortable: true, sortValue: (b) => b.estimated_monthly_rent },
     { key: "lease_status", label: "Status", type: "enum", get: (b) => b.lease_status ?? "", options: BUILDING_LEASE_STATUSES.map((s) => ({ value: s, label: LEASE_STATUS_LABEL[s] ?? s })) },
   ];
   const tableFilters = useTableFilters({
@@ -231,14 +232,15 @@ function BuildingsSection({
               <SortableHeader label="Areal" sortKey="area_m2_gross" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <SortableHeader label="Stand" sortKey="condition" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Forsyning</th>
+              <SortableHeader label="Udlejningspot./md." sortKey="estimated_monthly_rent" sort={tableFilters.sort} onToggle={tableFilters.toggleSort} className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Status / lejer</th>
               <th className="px-4 py-2.5 w-32"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && filteredBuildings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">{buildings.length === 0 ? "Ingen bygninger endnu." : "Ingen bygninger matcher filtrene."}</td></tr>
             )}
             {filteredBuildings.map((b) => {
               const bUnits = unitsByBuilding.get(b.id) ?? [];
@@ -270,6 +272,13 @@ function BuildingsSection({
                     </td>
                     <td className="px-4 py-2.5">
                       <UtilityIcons b={b} />
+                    </td>
+                    <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                      {(() => {
+                        const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
+                        const val = hasUnits && unitSum > 0 ? unitSum : b.estimated_monthly_rent;
+                        return val ? `${formatDKK(val)}/md.` : "—";
+                      })()}
                     </td>
                     <td className="px-4 py-2.5">
                       {hasUnits ? (
@@ -316,6 +325,9 @@ function BuildingsSection({
                       </td>
                       <td className="px-4 py-2 text-muted-foreground">
                         {u.lease?.contract_end ? formatDate(u.lease.contract_end) : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground tabular-nums">
+                        {u.estimated_monthly_rent ? `${formatDKK(u.estimated_monthly_rent)}/md.` : "—"}
                       </td>
                       <td className="px-4 py-2">
                         <span

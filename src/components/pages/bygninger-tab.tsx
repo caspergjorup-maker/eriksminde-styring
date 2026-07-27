@@ -273,6 +273,13 @@ function BuildingsSection({
                     <td className="px-4 py-2.5">
                       <UtilityIcons b={b} />
                     </td>
+                    <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                      {(() => {
+                        const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
+                        const val = hasUnits && unitSum > 0 ? unitSum : b.estimated_monthly_rent;
+                        return val ? `${formatDKK(val)}/md.` : "—";
+                      })()}
+                    </td>
                     <td className="px-4 py-2.5">
                       {hasUnits ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-muted text-muted-foreground">

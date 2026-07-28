@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, MapPin, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Pencil, Plus, Shapes, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 
@@ -10,7 +10,9 @@ import {
   BUILDING_TYPES,
   BUILDING_CONDITIONS,
   BUILDING_LEASE_STATUSES,
+  BUILDING_TYPE_COLOR,
   HEATING_TYPES,
+  ROOF_TYPES,
   LEASE_STATUSES,
   createBuilding,
   createBuildingLease,
@@ -28,6 +30,7 @@ import {
   type BuildingType,
   type HeatingType,
   type LeaseStatus,
+  type RoofType,
 } from "@/lib/buildings.functions";
 import {
   UNIT_LEASE_STATUSES,
@@ -95,6 +98,14 @@ const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   ikke_klar: "Ikke klar endnu",
   intern_brug: "Intern brug",
   udlejes_ikke: "Udlejes ikke",
+};
+
+const ROOF_LABEL: Record<RoofType, string> = {
+  fladt: "Fladt tag",
+  saddeltag: "Saddeltag",
+  pulttag: "Pulttag",
+  valmtag: "Valmtag",
+  skur_tag: "Skur-tag",
 };
 
 export const LEASE_STATUS_TONE: Record<BuildingLeaseStatus, string> = {
@@ -327,6 +338,11 @@ function BuildingsSection({
       has_sewage: !!b.has_sewage,
       has_internet: !!b.has_internet,
       internal_notes: b.internal_notes ?? null,
+      height_m: b.height_m ?? null,
+      roof_type: b.roof_type ?? null,
+      roof_color: b.roof_color ?? null,
+      wall_color: b.wall_color ?? null,
+      map_angle: b.map_angle ?? null,
       ...patch,
     });
   }
@@ -664,6 +680,11 @@ type BuildingForm = {
   has_sewage: boolean;
   has_internet: boolean;
   internal_notes: string;
+  height_m: string;
+  roof_type: RoofType | null;
+  roof_color: string;
+  wall_color: string;
+  map_angle: string;
 };
 
 const emptyBuilding: BuildingForm = {
@@ -675,6 +696,7 @@ const emptyBuilding: BuildingForm = {
   has_electricity: false, has_water: false, has_heating: false, heating_type: null,
   has_sewage: false, has_internet: false,
   internal_notes: "",
+  height_m: "", roof_type: "saddeltag", roof_color: "", wall_color: "", map_angle: "0",
 };
 
 function toForm(b: Building): BuildingForm {
@@ -699,6 +721,11 @@ function toForm(b: Building): BuildingForm {
     has_sewage: !!b.has_sewage,
     has_internet: !!b.has_internet,
     internal_notes: b.internal_notes ?? "",
+    height_m: b.height_m != null ? String(b.height_m) : "",
+    roof_type: b.roof_type ?? "saddeltag",
+    roof_color: b.roof_color ?? "",
+    wall_color: b.wall_color ?? "",
+    map_angle: b.map_angle != null ? String(b.map_angle) : "0",
   };
 }
 
@@ -713,6 +740,11 @@ export type BuildingSubmit = {
   heating_type: HeatingType | null;
   has_sewage: boolean; has_internet: boolean;
   internal_notes: string | null;
+  height_m: number | null;
+  roof_type: RoofType | null;
+  roof_color: string | null;
+  wall_color: string | null;
+  map_angle: number | null;
 };
 
 
@@ -777,6 +809,11 @@ function BuildingDialog({
                 has_sewage: v.has_sewage,
                 has_internet: v.has_internet,
                 internal_notes: v.internal_notes.trim() || null,
+                height_m: numOrNull(v.height_m),
+                roof_type: v.roof_type,
+                roof_color: v.roof_color.trim() || null,
+                wall_color: v.wall_color.trim() || null,
+                map_angle: numOrNull(v.map_angle),
               });
             } finally { setSaving(false); }
           }}
@@ -895,6 +932,80 @@ function BuildingDialog({
                 </Select>
               </div>
             )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Bygningsplan (visuelt)</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Tagtype</Label>
+                <Select
+                  value={v.roof_type ?? "saddeltag"}
+                  onValueChange={(x) => setV({ ...v, roof_type: x as RoofType })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ROOF_TYPES.map((r) => <SelectItem key={r} value={r}>{ROOF_LABEL[r]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="hm">Højde (m)</Label>
+                <Input id="hm" type="number" min={0} max={200} step={0.1} value={v.height_m}
+                  onChange={(e) => setV({ ...v, height_m: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="wc">Vægfarve</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="wc"
+                    type="color"
+                    value={v.wall_color || BUILDING_TYPE_COLOR[v.type] || "#8A9A8C"}
+                    onChange={(e) => setV({ ...v, wall_color: e.target.value })}
+                    className="w-10 h-10 p-0 border rounded cursor-pointer"
+                  />
+                  <Input
+                    value={v.wall_color}
+                    placeholder="Standard"
+                    onChange={(e) => setV({ ...v, wall_color: e.target.value })}
+                    className="flex-1"
+                  />
+                  {v.wall_color && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setV({ ...v, wall_color: "" })}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="rc">Tagfarve</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="rc"
+                    type="color"
+                    value={v.roof_color || v.wall_color || BUILDING_TYPE_COLOR[v.type] || "#8A9A8C"}
+                    onChange={(e) => setV({ ...v, roof_color: e.target.value })}
+                    className="w-10 h-10 p-0 border rounded cursor-pointer"
+                  />
+                  <Input
+                    value={v.roof_color}
+                    placeholder="Samme som væg"
+                    onChange={(e) => setV({ ...v, roof_color: e.target.value })}
+                    className="flex-1"
+                  />
+                  {v.roof_color && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setV({ ...v, roof_color: "" })}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ma">Vinkel på plan (°)</Label>
+                <Input id="ma" type="number" min={-180} max={180} step={1} value={v.map_angle}
+                  onChange={(e) => setV({ ...v, map_angle: e.target.value })} />
+              </div>
+            </div>
           </section>
 
           <section className="space-y-3">

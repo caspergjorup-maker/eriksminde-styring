@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Bolt, Droplet, Flame, Waves, Wifi } from "lucide-react";
+import { Bolt, Droplet, Flame, Upload, Waves, Wifi, X } from "lucide-react";
 
-import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingType, type BuildingWithLease } from "@/lib/buildings.functions";
+import { BuildingMapLegend } from "./building-map-legend";
+
+import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
+import { BUILDING_TYPE_COLOR, BUILDING_TYPE_LABEL, type BuildingType } from "@/lib/buildings.functions";
 import { listBuildingUnits, type BuildingUnit } from "@/lib/building-units.functions";
+import { getMapBackgroundSignedUrl, getMapBackgroundUploadUrl, getSiteSettings, updateSiteSettings } from "@/lib/site-settings.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
 
 const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   udlejet: "Udlejet",
@@ -23,29 +30,25 @@ const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }
   udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
 };
 
-const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
-  stuehus: "Stuehus",
-  lade: "Lade",
-  maskinhus: "Maskinhus",
-  lagerhal: "Lagerhal",
-  vaerksted: "Værksted",
-  smedie: "Smedie",
-  garage: "Garage",
-};
-
-const BUILDING_TYPE_COLOR: Record<BuildingType, string> = {
-  stuehus: "#B94E48",
-  lade: "#D4A23A",
-  maskinhus: "#5B7A9C",
-  lagerhal: "#C27A3E",
-  vaerksted: "#3F8DDB",
-  smedie: "#4A4A4A",
-  garage: "#8A9A8C",
-};
-
 function getBuildingTypeColor(type: BuildingType | null): string {
   if (!type) return "#8A9A8C";
   return BUILDING_TYPE_COLOR[type] ?? "#8A9A8C";
+}
+
+function getWallColor(b: BuildingWithLease): string {
+  return b.wall_color ?? getBuildingTypeColor(b.type);
+}
+
+function getRoofColor(b: BuildingWithLease): string {
+  return b.roof_color ?? getWallColor(b);
+}
+
+function getRoofType(b: BuildingWithLease): string {
+  return b.roof_type ?? "saddeltag";
+}
+
+function getBuildingAngle(b: BuildingWithLease): number {
+  return b.map_angle ?? 0;
 }
 
 export const buildingsMapQuery = queryOptions({
@@ -58,6 +61,18 @@ export const buildingUnitsQuery = queryOptions({
   queryFn: () => listBuildingUnits(),
 });
 
+export const siteSettingsQuery = queryOptions({
+  queryKey: ["site-settings"],
+  queryFn: () => getSiteSettings(),
+});
+
+export const mapBackgroundUrlQuery = (path: string | null) =>
+  queryOptions({
+    queryKey: ["map-background-url", path],
+    queryFn: () => (path ? getMapBackgroundSignedUrl({ data: { path } }).then((r) => r.url) : Promise.resolve(null)),
+    staleTime: 1000 * 60 * 50,
+  });
+
 function getBorderColor(lease: BuildingMapLease | null): string {
   if (!lease) return "transparent";
   if (lease.status === "vacant") return "#378ADD";
@@ -66,9 +81,6 @@ function getBorderColor(lease: BuildingMapLease | null): string {
   if (d != null && d < 90) return "#D85A30";
   return "transparent";
 }
-
-const NORTH_NRS = new Set(["1", "2", "3", "4"]);
-const NORTH_ROT_NRS = new Set(["2", "3", "4"]);
 
 const MAP_W = 600;
 const MAP_H = 520;
@@ -88,7 +100,13 @@ export function BuildingMap({
 }: BuildingMapProps) {
   const { data: buildings } = useSuspenseQuery(buildingsMapQuery);
   const { data: units } = useSuspenseQuery(buildingUnitsQuery);
+  const { data: settings } = useSuspenseQuery(siteSettingsQuery);
   const [selected, setSelected] = useState<BuildingWithLease | null>(null);
+  const [showControls, setShowControls] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const backgroundUrl = useMapBackgroundUrl(settings.map_background_url);
 
   const placed = buildings.filter(
     (b) => b.map_x != null && b.map_y != null && b.map_w != null && b.map_h != null,
@@ -101,8 +119,109 @@ export function BuildingMap({
     onSelect?.(next);
   }
 
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { path, signedUrl } = await getMapBackgroundUploadUrl({ data: { filename: file.name } });
+      const res = await fetch(signedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      await updateSiteSettings({ data: { map_background_url: path } });
+      toast.success("Baggrundsbillede uploadet");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function handleRemoveBackground() {
+    try {
+      await updateSiteSettings({ data: { map_background_url: null } });
+      toast.success("Baggrundsbillede fjernet");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function handleOpacityChange(v: number[]) {
+    const opacity = v[0] ?? 0.55;
+    try {
+      await updateSiteSettings({ data: { map_background_opacity: opacity } });
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
   return (
     <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowControls((s) => !s)}
+        >
+          <SlidersIcon className="h-4 w-4 mr-1.5" /> Kortindstillinger
+        </Button>
+      </div>
+
+      {showControls && (
+        <div className="mb-3 p-3 bg-card border border-border rounded-xl flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+            >
+              <Upload className="h-4 w-4 mr-1.5" />
+              {uploading ? "Uploader…" : "Upload baggrund"}
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+          </div>
+          {settings.map_background_url && (
+            <>
+              <div className="flex items-center gap-3 min-w-[200px]">
+                <span className="text-xs text-muted-foreground">Gennemsigtighed</span>
+                <Slider
+                  value={[settings.map_background_opacity]}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  onValueChange={handleOpacityChange}
+                  className="w-32"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveBackground}
+              >
+                <X className="h-4 w-4 mr-1.5" /> Fjern
+              </Button>
+            </>
+          )}
+          <span className="text-xs text-muted-foreground ml-auto">
+            Tegninger af bygninger kan redigeres under Bygninger → Rediger
+          </span>
+        </div>
+      )}
+
       <div
         style={{
           width: MAP_W * scale,
@@ -114,7 +233,6 @@ export function BuildingMap({
             position: "relative",
             width: MAP_W,
             height: MAP_H,
-            background: "oklch(0.97 0.015 160)",
             borderRadius: "var(--radius-lg)",
             overflow: "hidden",
             transform: scale !== 1 ? `scale(${scale})` : undefined,
@@ -122,167 +240,472 @@ export function BuildingMap({
             boxShadow: "inset 0 0 0 1px oklch(0.85 0.012 165 / 0.5), 0 4px 20px oklch(0.55 0.02 160 / 0.08)",
           }}
         >
-          {/* Subtle map texture */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage:
-                "radial-gradient(circle at 20% 30%, oklch(0.94 0.02 160 / 0.25) 0%, transparent 25%), radial-gradient(circle at 80% 70%, oklch(0.92 0.015 160 / 0.3) 0%, transparent 30%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          {/* Fjordager — lodret, let roteret */}
-          <div
-            style={{
-              position: "absolute",
-              width: 18,
-              height: 340,
-              left: 94,
-              top: 0,
-              background: "oklch(0.82 0.004 160)",
-              borderRadius: 9,
-              transform: "rotate(8deg)",
-              transformOrigin: "top center",
-              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
-            }}
-          />
-          {/* Sønderbyen — vandret tværvej */}
-          <div
-            style={{
-              position: "absolute",
-              width: 580,
-              height: 16,
-              left: 80,
-              top: 252,
-              background: "oklch(0.82 0.004 160)",
-              borderRadius: 8,
-              boxShadow: "inset 0 0 0 1px oklch(0.73 0.004 160 / 0.4)",
-            }}
-          />
-          {/* Vejskilte */}
-          <span
-            style={{
-              position: "absolute",
-              left: 50,
-              top: 130,
-              fontSize: 10,
-              fontWeight: 600,
-              color: "oklch(0.55 0.01 160)",
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              transform: "rotate(-90deg)",
-              transformOrigin: "center",
-              whiteSpace: "nowrap",
-              pointerEvents: interactive ? undefined : "none",
-            }}
+          <svg
+            width={MAP_W}
+            height={MAP_H}
+            viewBox={`0 0 ${MAP_W} ${MAP_H}`}
+            style={{ display: "block", userSelect: "none" }}
           >
-            Fjordager
-          </span>
-          <span
-            style={{
-              position: "absolute",
-              left: 200,
-              top: 236,
-              fontSize: 10,
-              fontWeight: 600,
-              color: "oklch(0.55 0.01 160)",
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              pointerEvents: interactive ? undefined : "none",
-            }}
-          >
-            Sønderbyen
-          </span>
+            <defs>
+              <filter id="building-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="2" dy="3" stdDeviation="2.5" floodColor="#0c1a14" floodOpacity="0.22" />
+              </filter>
+              <filter id="roof-darken" x="-20%" y="-20%" width="140%" height="140%">
+                <feComponentTransfer>
+                  <feFuncR type="linear" slope="0.88" intercept="0" />
+                  <feFuncG type="linear" slope="0.88" intercept="0" />
+                  <feFuncB type="linear" slope="0.88" intercept="0" />
+                </feComponentTransfer>
+              </filter>
+              <pattern id="grass" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+                <rect width="80" height="80" fill="oklch(0.96 0.018 160)" />
+                <circle cx="12" cy="18" r="1.5" fill="oklch(0.90 0.015 160)" />
+                <circle cx="48" cy="55" r="2" fill="oklch(0.90 0.015 160)" />
+                <circle cx="68" cy="22" r="1.5" fill="oklch(0.90 0.015 160)" />
+                <circle cx="30" cy="72" r="2" fill="oklch(0.90 0.015 160)" />
+              </pattern>
+              <pattern id="selected-halo" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                <rect width="8" height="8" fill="none" />
+                <path d="M0,4 L8,4 M4,0 L4,8" stroke="oklch(0.55 0.05 160)" strokeWidth="1" strokeDasharray="2 2" />
+              </pattern>
+              <marker id="road-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="oklch(0.62 0.005 160)" />
+              </marker>
+            </defs>
 
-          {placed.map((b) => {
-            const lease = b.lease;
-            const borderColor = getBorderColor(lease);
-            const isCircle = b.map_shape === "circle";
-            const isSelected = selected?.id === b.id;
-            const rotate = b.building_nr && NORTH_NRS.has(b.building_nr);
-            const rotateOrigin = b.building_nr && NORTH_ROT_NRS.has(b.building_nr);
-            const baseColor = getBuildingTypeColor(b.type);
-            const w = b.map_w ?? 40;
-            const h = b.map_h ?? 40;
-            return (
-              <div
-                key={b.id}
-                onClick={() => handleClick(b)}
-                title={b.name}
-                style={{
-                  position: "absolute",
-                  left: b.map_x ?? 0,
-                  top: b.map_y ?? 0,
-                  width: w,
-                  height: h,
-                  cursor: interactive ? "pointer" : "default",
-                  zIndex: isSelected ? 10 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (interactive) {
-                    const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
-                    if (inner) inner.style.transform = `${rotate ? "rotate(-8deg) " : ""}scale(1.02)`;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const inner = e.currentTarget.querySelector("[data-building-shape]") as HTMLElement | null;
-                  if (inner) inner.style.transform = rotate ? "rotate(-8deg)" : "";
-                }}
-              >
-                <div
-                  data-building-shape
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: baseColor,
-                    borderRadius: isCircle ? "50%" : "var(--radius-md)",
-                    border: `2px solid ${isSelected ? "oklch(0.35 0.07 168)" : borderColor}`,
-                    transform: rotate ? "rotate(-8deg)" : undefined,
-                    transformOrigin: rotateOrigin ? "left center" : "center",
-                    boxShadow: isSelected
-                      ? "0 8px 24px oklch(0.35 0.05 160 / 0.25), 0 0 0 3px oklch(0.95 0.005 160)"
-                      : "0 3px 10px oklch(0.35 0.02 160 / 0.18)",
-                    filter: isSelected ? "brightness(0.92)" : undefined,
-                    transition: "box-shadow 0.15s ease, filter 0.15s ease, transform 0.15s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {isSelected && (
-                    <UnitOverlay
-                      units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)}
-                      width={w}
-                      height={h}
-                    />
-                  )}
-                  <span
-                    style={{
-                      position: "relative",
-                      fontSize: w < 55 || h < 30 ? 8 : w < 85 || h < 45 ? 10 : 12,
-                      fontWeight: 600,
-                      color: "#fff",
-                      textAlign: "center",
-                      lineHeight: 1.2,
-                      textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-                      pointerEvents: "none",
-                      padding: "0 1px",
-                    }}
-                  >
-                    {b.name}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+            {/* Ground */}
+            <rect width={MAP_W} height={MAP_H} fill="url(#grass)" />
+
+            {/* Optional background image */}
+            {settings.map_background_url && backgroundUrl && (
+              <image
+                href={backgroundUrl}
+                x={0}
+                y={0}
+                width={MAP_W}
+                height={MAP_H}
+                preserveAspectRatio="xMidYMid slice"
+                opacity={settings.map_background_opacity}
+                style={{ pointerEvents: "none" }}
+              />
+            )}
+
+            {/* Roads */}
+            <Roads />
+
+            {/* Buildings */}
+            {placed.map((b) => {
+              const lease = b.lease;
+              const borderColor = getBorderColor(lease);
+              const isSelected = selected?.id === b.id;
+              return (
+                <BuildingShape
+                  key={b.id}
+                  building={b}
+                  units={units}
+                  isSelected={isSelected}
+                  borderColor={borderColor}
+                  interactive={interactive}
+                  onClick={() => handleClick(b)}
+                />
+              );
+            })}
+          </svg>
         </div>
       </div>
 
       {showPanel && selected && <BuildingInfoPanel building={selected} />}
     </div>
   );
+}
+
+function Roads() {
+  return (
+    <g>
+      {/* Fjordager — vertical, slightly rotated */}
+      <g transform="translate(94, 0) rotate(8)">
+        <rect
+          x={-9}
+          y={-20}
+          width={18}
+          height={380}
+          rx={9}
+          fill="oklch(0.82 0.004 160)"
+          stroke="oklch(0.73 0.004 160 / 0.4)"
+          strokeWidth={1}
+        />
+        {/* Road center line */}
+        <line x1={0} y1={-10} x2={0} y2={360} stroke="oklch(0.70 0.004 160 / 0.35)" strokeWidth={1} strokeDasharray="6 6" />
+      </g>
+      {/* Sønderbyen — horizontal */}
+      <rect
+        x={80}
+        y={252 - 8}
+        width={520}
+        height={16}
+        rx={8}
+        fill="oklch(0.82 0.004 160)"
+        stroke="oklch(0.73 0.004 160 / 0.4)"
+        strokeWidth={1}
+      />
+      <line x1={90} y1={252} x2={590} y2={252} stroke="oklch(0.70 0.004 160 / 0.35)" strokeWidth={1} strokeDasharray="6 6" />
+
+      {/* Road labels */}
+      <text
+        x={50}
+        y={130}
+        transform="rotate(-90, 50, 130)"
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={600}
+        fill="oklch(0.55 0.01 160)"
+        letterSpacing={1.5}
+        style={{ textTransform: "uppercase", pointerEvents: "none" }}
+      >
+        Fjordager
+      </text>
+      <text
+        x={340}
+        y={236}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={600}
+        fill="oklch(0.55 0.01 160)"
+        letterSpacing={1.5}
+        style={{ textTransform: "uppercase", pointerEvents: "none" }}
+      >
+        Sønderbyen
+      </text>
+    </g>
+  );
+}
+
+function BuildingShape({
+  building: b,
+  units,
+  isSelected,
+  borderColor,
+  interactive,
+  onClick,
+}: {
+  building: BuildingWithLease;
+  units: BuildingUnit[];
+  isSelected: boolean;
+  borderColor: string;
+  interactive: boolean;
+  onClick: () => void;
+}) {
+  const x = b.map_x ?? 0;
+  const y = b.map_y ?? 0;
+  const w = b.map_w ?? 40;
+  const h = b.map_h ?? 40;
+  const angle = getBuildingAngle(b);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const isCircle = b.map_shape === "circle";
+  const wallColor = getWallColor(b);
+  const roofColor = getRoofColor(b);
+  const roofType = getRoofType(b);
+
+  const showDetails = w >= 28 && h >= 22;
+
+  const cursor = interactive ? "pointer" : "default";
+
+  return (
+    <g
+      transform={`translate(${x}, ${y})`}
+      style={{ cursor }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onMouseEnter={(e) => {
+        const g = e.currentTarget;
+        g.style.filter = "brightness(1.06)";
+      }}
+      onMouseLeave={(e) => {
+        const g = e.currentTarget;
+        g.style.filter = "";
+      }}
+    >
+      <g transform={`rotate(${angle}, ${w / 2}, ${h / 2})`}>
+        {/* Selection halo */}
+        {isSelected && (
+          <rect
+            x={-4}
+            y={-4}
+            width={w + 8}
+            height={h + 8}
+            rx={isCircle ? (w + 8) / 2 : 6}
+            fill="url(#selected-halo)"
+            stroke="oklch(0.35 0.07 168)"
+            strokeWidth={2}
+            style={{ pointerEvents: "none" }}
+          />
+        )}
+
+        {/* Shadow / footprint */}
+        {!isCircle && (
+          <rect
+            x={3}
+            y={3}
+            width={w}
+            height={h}
+            rx={4}
+            fill="oklch(0.35 0.02 160 / 0.18)"
+            style={{ pointerEvents: "none" }}
+          />
+        )}
+        {isCircle && (
+          <ellipse cx={w / 2 + 3} cy={h / 2 + 3} rx={w / 2} ry={h / 2} fill="oklch(0.35 0.02 160 / 0.18)" style={{ pointerEvents: "none" }} />
+        )}
+
+        {/* Walls */}
+        {!isCircle ? (
+          <rect
+            x={0}
+            y={0}
+            width={w}
+            height={h}
+            rx={4}
+            fill={wallColor}
+            filter="url(#building-shadow)"
+            stroke={borderColor !== "transparent" ? borderColor : "oklch(0.35 0.02 160 / 0.15)"}
+            strokeWidth={borderColor !== "transparent" ? 2.5 : 1}
+          />
+        ) : (
+          <ellipse
+            cx={w / 2}
+            cy={h / 2}
+            rx={w / 2}
+            ry={h / 2}
+            fill={wallColor}
+            filter="url(#building-shadow)"
+            stroke={borderColor !== "transparent" ? borderColor : "oklch(0.35 0.02 160 / 0.15)"}
+            strokeWidth={borderColor !== "transparent" ? 2.5 : 1}
+          />
+        )}
+
+        {/* Roof */}
+        <RoofShape
+          width={w}
+          height={h}
+          color={roofColor}
+          type={roofType}
+          isCircle={isCircle}
+        />
+
+        {/* Door and windows */}
+        {showDetails && <BuildingDetails width={w} height={h} color={wallColor} type={b.type} />}
+
+        {/* Unit overlay — only when selected */}
+        {isSelected && (
+          <UnitOverlay units={units.filter((u) => u.building_id === b.id && u.map_geometry && u.map_kind)} width={w} height={h} />
+        )}
+
+        {/* Label */}
+        <text
+          x={w / 2}
+          y={h / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={w < 55 || h < 30 ? 8 : w < 85 || h < 45 ? 10 : 12}
+          fontWeight={600}
+          fill="#ffffff"
+          style={{
+            textShadow: "0 1px 3px rgba(0,0,0,0.45)",
+            pointerEvents: "none",
+            filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))",
+          }}
+        >
+          {b.name}
+        </text>
+      </g>
+    </g>
+  );
+}
+
+function RoofShape({
+  width: w,
+  height: h,
+  color,
+  type,
+  isCircle,
+}: {
+  width: number;
+  height: number;
+  color: string;
+  type: string;
+  isCircle: boolean;
+}) {
+  const inset = 2;
+  const insetX = inset;
+  const insetY = inset;
+  const rw = w - insetX * 2;
+  const rh = h - insetY * 2;
+  const rx = isCircle ? Math.max(0, rw / 2 - 1) : 3;
+  const ry = isCircle ? Math.max(0, rh / 2 - 1) : 3;
+
+  if (isCircle) {
+    return (
+      <ellipse
+        cx={w / 2}
+        cy={h / 2}
+        rx={rw / 2}
+        ry={rh / 2}
+        fill={color}
+        filter="url(#roof-darken)"
+        stroke="oklch(1 0 0 / 0.2)"
+        strokeWidth={1}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+  }
+
+  if (type === "fladt") {
+    return (
+      <rect
+        x={insetX}
+        y={insetY}
+        width={rw}
+        height={rh}
+        rx={rx}
+        fill={color}
+        filter="url(#roof-darken)"
+        stroke="oklch(1 0 0 / 0.2)"
+        strokeWidth={1}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+  }
+
+  if (type === "saddeltag") {
+    const peak = Math.max(8, rh * 0.35);
+    return (
+      <g style={{ pointerEvents: "none" }}>
+        <path
+          d={`M ${insetX} ${insetY + rh - rx} L ${insetX} ${insetY + peak} L ${w / 2} ${insetY} L ${w - insetX} ${insetY + peak} L ${w - insetX} ${insetY + rh - rx} Z`}
+          fill={color}
+          filter="url(#roof-darken)"
+          stroke="oklch(1 0 0 / 0.2)"
+          strokeWidth={1}
+        />
+        <line x1={insetX} y1={insetY + peak} x2={w / 2} y2={insetY} stroke="oklch(1 0 0 / 0.15)" strokeWidth={1} />
+        <line x1={w - insetX} y1={insetY + peak} x2={w / 2} y2={insetY} stroke="oklch(1 0 0 / 0.15)" strokeWidth={1} />
+      </g>
+    );
+  }
+
+  if (type === "pulttag") {
+    const rise = Math.max(6, rh * 0.25);
+    return (
+      <path
+        d={`M ${insetX} ${insetY + rise} L ${insetX} ${insetY + rh - rx} L ${w - insetX} ${insetY + rh - rx} L ${w - insetX} ${insetY} Z`}
+        fill={color}
+        filter="url(#roof-darken)"
+        stroke="oklch(1 0 0 / 0.2)"
+        strokeWidth={1}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+  }
+
+  if (type === "valmtag") {
+    const peak = Math.max(8, rh * 0.3);
+    const hip = Math.min(12, rw * 0.18);
+    return (
+      <g style={{ pointerEvents: "none" }}>
+        <path
+          d={`M ${insetX + hip} ${insetY + peak} L ${w - insetX - hip} ${insetY + peak} L ${w - insetX} ${insetY + hip} L ${w - insetX} ${insetY + rh - rx} L ${insetX} ${insetY + rh - rx} L ${insetX} ${insetY + hip} Z`}
+          fill={color}
+          filter="url(#roof-darken)"
+          stroke="oklch(1 0 0 / 0.2)"
+          strokeWidth={1}
+        />
+        <line x1={insetX + hip} y1={insetY + peak} x2={w - insetX - hip} y2={insetY + peak} stroke="oklch(1 0 0 / 0.15)" strokeWidth={1} />
+        <line x1={w - insetX - hip} y1={insetY + peak} x2={w - insetX} y2={insetY + hip} stroke="oklch(1 0 0 / 0.15)" strokeWidth={1} />
+        <line x1={insetX + hip} y1={insetY + peak} x2={insetX} y2={insetY + hip} stroke="oklch(1 0 0 / 0.15)" strokeWidth={1} />
+      </g>
+    );
+  }
+
+  if (type === "skur_tag") {
+    const rise = Math.max(5, rh * 0.2);
+    return (
+      <path
+        d={`M ${insetX} ${insetY + rise} L ${insetX} ${insetY + rh - rx} L ${w - insetX} ${insetY + rh - rx} L ${w - insetX} ${insetY + rise} L ${w / 2} ${insetY} Z`}
+        fill={color}
+        filter="url(#roof-darken)"
+        stroke="oklch(1 0 0 / 0.2)"
+        strokeWidth={1}
+        style={{ pointerEvents: "none" }}
+      />
+    );
+  }
+
+  return null;
+}
+
+function BuildingDetails({
+  width: w,
+  height: h,
+  color,
+  type,
+}: {
+  width: number;
+  height: number;
+  color: string;
+  type: BuildingType;
+}) {
+  // Door always at the bottom center
+  const doorW = Math.max(4, Math.min(10, w * 0.18));
+  const doorH = Math.max(5, Math.min(12, h * 0.25));
+  const doorX = (w - doorW) / 2;
+  const doorY = h - doorH - 3;
+
+  // Windows: 1-2 small rectangles above the door
+  const winW = Math.max(3, Math.min(8, w * 0.14));
+  const winH = Math.max(3, Math.min(7, h * 0.14));
+  const winY = doorY - winH - 3;
+  const windows: { x: number; w: number }[] = [];
+  if (w > 45) {
+    windows.push({ x: w * 0.25 - winW / 2, w: winW });
+    windows.push({ x: w * 0.75 - winW / 2, w: winW });
+  } else if (w > 30) {
+    windows.push({ x: w * 0.5 - winW / 2, w: winW });
+  }
+
+  const isLight = isLightColor(color);
+  const detailFill = isLight ? "oklch(0.25 0.02 160 / 0.55)" : "oklch(1 0 0 / 0.45)";
+
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      {/* Door */}
+      {type !== "garage" && type !== "lagerhal" && (
+        <rect x={doorX} y={doorY} width={doorW} height={doorH} rx={1} fill={detailFill} />
+      )}
+      {windows.map((win, i) => (
+        <rect key={i} x={win.x} y={winY} width={win.w} height={winH} rx={1} fill={detailFill} />
+      ))}
+    </g>
+  );
+}
+
+function isLightColor(hex: string): boolean {
+  // Quick heuristic for common hex colors
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+  return brightness > 140;
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 3 && clean.length !== 6) return null;
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  if (Number.isNaN(num)) return null;
+  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
 function statusLabel(status?: string | null) {
@@ -346,7 +769,7 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
               marginTop: 2,
             }}
           >
-            <span>{building.type}</span>
+            <span>{BUILDING_TYPE_LABEL[building.type]}</span>
             {building.lease_status && (
               <>
                 <span style={{ color: "hsl(var(--border))" }}>·</span>
@@ -468,46 +891,6 @@ function MetricCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function BuildingMapLegend() {
-  const items = Object.entries(BUILDING_TYPE_COLOR).map(([type, color]) => ({
-    color,
-    label: BUILDING_TYPE_LABEL[type as BuildingType],
-  }));
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 10,
-        marginTop: 16,
-        padding: "10px 12px",
-        background: "hsl(var(--card))",
-        border: "1px solid hsl(var(--border))",
-        borderRadius: "var(--radius-lg)",
-        fontSize: 12,
-        color: "hsl(var(--muted-foreground))",
-        boxShadow: "0 1px 6px oklch(0.35 0.02 160 / 0.04)",
-      }}
-    >
-      {items.map((it) => (
-        <div key={it.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: "var(--radius-sm)",
-              background: it.color,
-              display: "inline-block",
-              boxShadow: "0 1px 3px oklch(0.35 0.02 160 / 0.15)",
-            }}
-          />
-          <span style={{ fontWeight: 500 }}>{it.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function UtilityIconRow({ building }: { building: BuildingWithLease }) {
   const items: { on: boolean | null | undefined; icon: React.ReactNode; title: string }[] = [
     { on: building.has_electricity, icon: <Bolt size={13} />, title: "El" },
@@ -539,7 +922,6 @@ function UnitOverlay({
   height: number;
 }) {
   if (units.length === 0) return null;
-  // Use viewBox in same units as building box (px). Convert percentages → px.
   return (
     <svg
       width={width}
@@ -586,3 +968,49 @@ function UnitOverlay({
     </svg>
   );
 }
+
+function SlidersIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  );
+}
+
+function useMapBackgroundUrl(path: string | null) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!path) {
+      setUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getMapBackgroundSignedUrl({ data: { path } })
+      .then((r) => {
+        if (!cancelled) setUrl(r.url);
+      })
+      .catch(() => setUrl(null));
+    return () => { cancelled = true; };
+  }, [path]);
+  return url;
+}
+
+export { BuildingMapLegend };

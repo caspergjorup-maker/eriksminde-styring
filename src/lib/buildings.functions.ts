@@ -14,6 +14,26 @@ export const BUILDING_TYPES = [
 ] as const;
 export type BuildingType = (typeof BUILDING_TYPES)[number];
 
+export const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
+  stuehus: "Stuehus",
+  lade: "Lade",
+  maskinhus: "Maskinhus",
+  lagerhal: "Lagerhal",
+  vaerksted: "Værksted",
+  smedie: "Smedie",
+  garage: "Garage",
+};
+
+export const BUILDING_TYPE_COLOR: Record<BuildingType, string> = {
+  stuehus: "#B94E48",
+  lade: "#D4A23A",
+  maskinhus: "#5B7A9C",
+  lagerhal: "#C27A3E",
+  vaerksted: "#3F8DDB",
+  smedie: "#4A4A4A",
+  garage: "#8A9A8C",
+};
+
 export const LEASE_STATUSES = [
   "active",
   "pending_payment",
@@ -35,6 +55,7 @@ export type Building = {
   map_w: number | null;
   map_h: number | null;
   map_shape: string | null;
+  map_angle: number | null;
   build_year: number | null;
   area_m2_gross: number | null;
   area_m2_net: number | null;
@@ -52,10 +73,17 @@ export type Building = {
   has_internet: boolean | null;
   parcel_id: string | null;
   internal_notes: string | null;
+  height_m: number | null;
+  roof_type: RoofType | null;
+  roof_color: string | null;
+  wall_color: string | null;
 };
 
 export const BUILDING_CONDITIONS = ["god", "vedligeholdelse_nødvendig", "renovering_nødvendig"] as const;
 export type BuildingCondition = (typeof BUILDING_CONDITIONS)[number];
+
+export const ROOF_TYPES = ["fladt", "saddeltag", "pulttag", "valmtag", "skur_tag"] as const;
+export type RoofType = (typeof ROOF_TYPES)[number];
 
 export const BUILDING_LEASE_STATUSES = ["udlejet", "ledig", "ikke_klar", "intern_brug", "udlejes_ikke"] as const;
 export type BuildingLeaseStatus = (typeof BUILDING_LEASE_STATUSES)[number];
@@ -121,6 +149,11 @@ const buildingInput = z.object({
   has_internet: z.boolean(),
   parcel_id: z.string().uuid().nullable(),
   internal_notes: z.string().trim().max(5000).nullable(),
+  height_m: z.number().min(0).max(200).nullable(),
+  roof_type: z.enum(ROOF_TYPES).nullable(),
+  roof_color: z.string().trim().max(50).nullable(),
+  wall_color: z.string().trim().max(50).nullable(),
+  map_angle: z.number().min(-180).max(180).nullable(),
 });
 
 const leaseInput = z.object({
@@ -136,7 +169,7 @@ const leaseInput = z.object({
 });
 
 const BUILDING_COLS =
-  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape, build_year, area_m2_gross, area_m2_net, floors, condition, last_inspection, lease_status, lease_status_note, estimated_monthly_rent, has_electricity, has_water, has_heating, heating_type, has_sewage, has_internet, parcel_id, internal_notes";
+  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape, map_angle, build_year, area_m2_gross, area_m2_net, floors, condition, last_inspection, lease_status, lease_status_note, estimated_monthly_rent, has_electricity, has_water, has_heating, heating_type, has_sewage, has_internet, parcel_id, internal_notes, height_m, roof_type, roof_color, wall_color";
 
 export const listBuildings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

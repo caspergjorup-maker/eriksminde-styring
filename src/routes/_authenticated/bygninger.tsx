@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { createFileRoute, ErrorComponent } from "@tanstack/react-router";
-import { buildingsMapQuery, buildingUnitsQuery } from "@/components/building-map/building-map";
+import { buildingsMapQuery, buildingUnitsQuery, siteSettingsQuery } from "@/components/building-map/building-map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BygningerPage } from "@/components/pages/bygninger-tab";
 import { BygningsplanPage } from "@/components/pages/bygningsplan-tab";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/bygninger")({
     Promise.all([
       context.queryClient.ensureQueryData(buildingsMapQuery),
       context.queryClient.ensureQueryData(buildingUnitsQuery),
+      context.queryClient.ensureQueryData(siteSettingsQuery),
     ]),
   component: BygningerTabsPage,
   errorComponent: ErrorComponent,

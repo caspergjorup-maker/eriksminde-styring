@@ -129,6 +129,11 @@ const buildingInput = z.object({
   has_internet: z.boolean(),
   parcel_id: z.string().uuid().nullable(),
   internal_notes: z.string().trim().max(5000).nullable(),
+  height_m: z.number().min(0).max(200).nullable(),
+  roof_type: z.enum(ROOF_TYPES).nullable(),
+  roof_color: z.string().trim().max(50).nullable(),
+  wall_color: z.string().trim().max(50).nullable(),
+  map_angle: z.number().min(-180).max(180).nullable(),
 });
 
 const leaseInput = z.object({

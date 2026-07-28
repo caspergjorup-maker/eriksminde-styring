@@ -67,7 +67,6 @@ export type RoofType = (typeof ROOF_TYPES)[number];
 
 export const BUILDING_LEASE_STATUSES = ["udlejet", "ledig", "ikke_klar", "intern_brug", "udlejes_ikke"] as const;
 export type BuildingLeaseStatus = (typeof BUILDING_LEASE_STATUSES)[number];
-export type BuildingLeaseStatus = (typeof BUILDING_LEASE_STATUSES)[number];
 
 export const HEATING_TYPES = ["fjernvarme", "olie", "varmepumpe", "elvarme", "ingen"] as const;
 export type HeatingType = (typeof HEATING_TYPES)[number];

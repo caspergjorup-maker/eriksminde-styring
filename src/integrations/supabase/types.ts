@@ -332,11 +332,13 @@ export type Database = {
           has_sewage: boolean | null
           has_water: boolean | null
           heating_type: string | null
+          height_m: number | null
           id: string
           internal_notes: string | null
           last_inspection: string | null
           lease_status: string | null
           lease_status_note: string | null
+          map_angle: number | null
           map_color: string | null
           map_h: number | null
           map_section: string | null
@@ -347,7 +349,10 @@ export type Database = {
           name: string
           parcel_id: string | null
           preferred_supplier_id: string | null
+          roof_color: string | null
+          roof_type: string | null
           type: string
+          wall_color: string | null
         }
         Insert: {
           area_m2_gross?: number | null
@@ -365,11 +370,13 @@ export type Database = {
           has_sewage?: boolean | null
           has_water?: boolean | null
           heating_type?: string | null
+          height_m?: number | null
           id?: string
           internal_notes?: string | null
           last_inspection?: string | null
           lease_status?: string | null
           lease_status_note?: string | null
+          map_angle?: number | null
           map_color?: string | null
           map_h?: number | null
           map_section?: string | null
@@ -380,7 +387,10 @@ export type Database = {
           name: string
           parcel_id?: string | null
           preferred_supplier_id?: string | null
+          roof_color?: string | null
+          roof_type?: string | null
           type: string
+          wall_color?: string | null
         }
         Update: {
           area_m2_gross?: number | null
@@ -398,11 +408,13 @@ export type Database = {
           has_sewage?: boolean | null
           has_water?: boolean | null
           heating_type?: string | null
+          height_m?: number | null
           id?: string
           internal_notes?: string | null
           last_inspection?: string | null
           lease_status?: string | null
           lease_status_note?: string | null
+          map_angle?: number | null
           map_color?: string | null
           map_h?: number | null
           map_section?: string | null
@@ -413,7 +425,10 @@ export type Database = {
           name?: string
           parcel_id?: string | null
           preferred_supplier_id?: string | null
+          roof_color?: string | null
+          roof_type?: string | null
           type?: string
+          wall_color?: string | null
         }
         Relationships: [
           {
@@ -1239,6 +1254,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_settings: {
+        Row: {
+          created_at: string
+          id: string
+          map_background_opacity: number
+          map_background_url: string | null
+          map_scale_m_per_px: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          map_background_opacity?: number
+          map_background_url?: string | null
+          map_scale_m_per_px?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          map_background_opacity?: number
+          map_background_url?: string | null
+          map_scale_m_per_px?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       straw_inventory: {
         Row: {

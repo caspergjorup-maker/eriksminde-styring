@@ -934,6 +934,80 @@ function BuildingDialog({
           </section>
 
           <section className="space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Bygningsplan (visuelt)</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Tagtype</Label>
+                <Select
+                  value={v.roof_type ?? "saddeltag"}
+                  onValueChange={(x) => setV({ ...v, roof_type: x as RoofType })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ROOF_TYPES.map((r) => <SelectItem key={r} value={r}>{ROOF_LABEL[r]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="hm">Højde (m)</Label>
+                <Input id="hm" type="number" min={0} max={200} step={0.1} value={v.height_m}
+                  onChange={(e) => setV({ ...v, height_m: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="wc">Vægfarve</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="wc"
+                    type="color"
+                    value={v.wall_color || BUILDING_TYPE_COLOR[v.type] || "#8A9A8C"}
+                    onChange={(e) => setV({ ...v, wall_color: e.target.value })}
+                    className="w-10 h-10 p-0 border rounded cursor-pointer"
+                  />
+                  <Input
+                    value={v.wall_color}
+                    placeholder="Standard"
+                    onChange={(e) => setV({ ...v, wall_color: e.target.value })}
+                    className="flex-1"
+                  />
+                  {v.wall_color && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setV({ ...v, wall_color: "" })}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="rc">Tagfarve</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="rc"
+                    type="color"
+                    value={v.roof_color || v.wall_color || BUILDING_TYPE_COLOR[v.type] || "#8A9A8C"}
+                    onChange={(e) => setV({ ...v, roof_color: e.target.value })}
+                    className="w-10 h-10 p-0 border rounded cursor-pointer"
+                  />
+                  <Input
+                    value={v.roof_color}
+                    placeholder="Samme som væg"
+                    onChange={(e) => setV({ ...v, roof_color: e.target.value })}
+                    className="flex-1"
+                  />
+                  {v.roof_color && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setV({ ...v, roof_color: "" })}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ma">Vinkel på plan (°)</Label>
+                <Input id="ma" type="number" min={-180} max={180} step={1} value={v.map_angle}
+                  onChange={(e) => setV({ ...v, map_angle: e.target.value })} />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
             <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Interne noter</h3>
             <Textarea rows={3} maxLength={5000} placeholder="Ikke synlig for lejere"
               value={v.internal_notes} onChange={(e) => setV({ ...v, internal_notes: e.target.value })} />

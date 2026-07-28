@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Bolt, Droplet, Flame, ImageIcon, MapPin, Upload, Waves, Wifi, X } from "lucide-react";
+import { Bolt, Droplet, Flame, Upload, Waves, Wifi, X } from "lucide-react";
 
 import { BuildingMapLegend } from "./building-map-legend";
 
-import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingType, type BuildingWithLease } from "@/lib/buildings.functions";
+import { listBuildingsWithLeases, type BuildingMapLease, type BuildingLeaseStatus, type BuildingWithLease } from "@/lib/buildings.functions";
+import { BUILDING_TYPE_COLOR, BUILDING_TYPE_LABEL, type BuildingType } from "@/lib/buildings.functions";
 import { listBuildingUnits, type BuildingUnit } from "@/lib/building-units.functions";
-import { getMapBackgroundSignedUrl, getMapBackgroundUploadUrl, getSiteSettings, updateSiteSettings, type SiteSettings } from "@/lib/site-settings.functions";
+import { getMapBackgroundSignedUrl, getMapBackgroundUploadUrl, getSiteSettings, updateSiteSettings } from "@/lib/site-settings.functions";
 import { formatDKK, formatDate, daysUntil } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -27,26 +28,6 @@ const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }
   ikke_klar: { bg: "#FEF3C7", fg: "#854D0E" },
   intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
   udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
-};
-
-const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
-  stuehus: "Stuehus",
-  lade: "Lade",
-  maskinhus: "Maskinhus",
-  lagerhal: "Lagerhal",
-  vaerksted: "Værksted",
-  smedie: "Smedie",
-  garage: "Garage",
-};
-
-const BUILDING_TYPE_COLOR: Record<BuildingType, string> = {
-  stuehus: "#B94E48",
-  lade: "#D4A23A",
-  maskinhus: "#5B7A9C",
-  lagerhal: "#C27A3E",
-  vaerksted: "#3F8DDB",
-  smedie: "#4A4A4A",
-  garage: "#8A9A8C",
 };
 
 function getBuildingTypeColor(type: BuildingType | null): string {

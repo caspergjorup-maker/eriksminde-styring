@@ -99,6 +99,14 @@ const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   udlejes_ikke: "Udlejes ikke",
 };
 
+const ROOF_LABEL: Record<RoofType, string> = {
+  fladt: "Fladt tag",
+  saddeltag: "Saddeltag",
+  pulttag: "Pulttag",
+  valmtag: "Valmtag",
+  skur_tag: "Skur-tag",
+};
+
 export const LEASE_STATUS_TONE: Record<BuildingLeaseStatus, string> = {
   udlejet: "bg-emerald-100 text-emerald-900",
   ledig: "bg-blue-100 text-blue-900",

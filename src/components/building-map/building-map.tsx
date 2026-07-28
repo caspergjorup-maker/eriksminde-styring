@@ -856,6 +856,150 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
   );
 }
 
+const CONDITION_LABEL: Record<string, string> = {
+  god: "God",
+  "vedligeholdelse_nødvendig": "Vedligeholdelse nødvendig",
+  "renovering_nødvendig": "Renovering nødvendig",
+};
+
+const ROOF_TYPE_LABEL: Record<string, string> = {
+  fladt: "Fladt tag",
+  saddeltag: "Saddeltag",
+  pulttag: "Pulttag",
+  valmtag: "Valmtag",
+  skur_tag: "Skurtag",
+};
+
+const HEATING_LABEL: Record<string, string> = {
+  fjernvarme: "Fjernvarme",
+  olie: "Olie",
+  varmepumpe: "Varmepumpe",
+  elvarme: "Elvarme",
+  ingen: "Ingen",
+};
+
+function num(v: number | null | undefined, suffix = ""): string {
+  if (v == null) return "—";
+  return `${new Intl.NumberFormat("da-DK", { maximumFractionDigits: 2 }).format(v)}${suffix}`;
+}
+
+function yesNo(v: boolean | null | undefined): string {
+  if (v == null) return "—";
+  return v ? "Ja" : "Nej";
+}
+
+function MetaGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginTop: 16 }}>
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: 0.6,
+          textTransform: "uppercase",
+          color: "hsl(var(--muted-foreground))",
+          margin: "0 0 8px",
+        }}
+      >
+        {title}
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function BuildingMetaSection({ building: b }: { building: BuildingWithLease }) {
+  const { data: allUnits } = useSuspenseQuery(buildingUnitsQuery);
+  const units = allUnits.filter((u) => u.building_id === b.id);
+
+  return (
+    <div style={{ borderTop: "1px solid hsl(var(--border))", marginTop: 16, paddingTop: 4 }}>
+      <MetaGroup title="Stamdata">
+        <MetricCard label="Bygningsnr." value={b.building_nr ?? "—"} />
+        <MetricCard label="Type" value={BUILDING_TYPE_LABEL[b.type] ?? b.type} />
+        <MetricCard label="Byggeår" value={b.build_year != null ? String(b.build_year) : "—"} />
+        <MetricCard label="Etager" value={b.floors != null ? String(b.floors) : "—"} />
+        <MetricCard label="Bruttoareal" value={num(b.area_m2_gross, " m²")} />
+        <MetricCard label="Nettoareal" value={num(b.area_m2_net, " m²")} />
+        <MetricCard label="Højde" value={num(b.height_m, " m")} />
+        <MetricCard label="Stand" value={b.condition ? (CONDITION_LABEL[b.condition] ?? b.condition) : "—"} />
+        <MetricCard label="Sidste tilsyn" value={b.last_inspection ? formatDate(b.last_inspection) : "—"} />
+      </MetaGroup>
+
+      <MetaGroup title="Udlejning">
+        <MetricCard label="Udlejningsstatus" value={b.lease_status ? LEASE_STATUS_LABEL[b.lease_status] : "—"} />
+        <MetricCard
+          label="Udlejningspot./md."
+          value={b.estimated_monthly_rent ? formatDKK(b.estimated_monthly_rent) : "—"}
+        />
+        <MetricCard label="Statusnote" value={b.lease_status_note ?? "—"} />
+      </MetaGroup>
+
+      <MetaGroup title="Forsyning">
+        <MetricCard label="El" value={yesNo(b.has_electricity)} />
+        <MetricCard label="Vand" value={yesNo(b.has_water)} />
+        <MetricCard label="Varme" value={yesNo(b.has_heating)} />
+        <MetricCard label="Varmekilde" value={b.heating_type ? (HEATING_LABEL[b.heating_type] ?? b.heating_type) : "—"} />
+        <MetricCard label="Kloak" value={yesNo(b.has_sewage)} />
+        <MetricCard label="Internet" value={yesNo(b.has_internet)} />
+      </MetaGroup>
+
+      <MetaGroup title="Bygningsplan (visuelt)">
+        <MetricCard label="Tagtype" value={b.roof_type ? (ROOF_TYPE_LABEL[b.roof_type] ?? b.roof_type) : "—"} />
+        <MetricCard label="Vinkel" value={b.map_angle != null ? `${b.map_angle}°` : "—"} />
+        <MetricCard label="Vægfarve" value={b.wall_color ?? "—"} />
+        <MetricCard label="Tagfarve" value={b.roof_color ?? "—"} />
+        <MetricCard label="Placering" value={b.map_x != null && b.map_y != null ? `${b.map_x}, ${b.map_y}` : "—"} />
+        <MetricCard
+          label="Mål på plan"
+          value={b.map_w != null && b.map_h != null ? `${b.map_w} × ${b.map_h}` : "—"}
+        />
+      </MetaGroup>
+
+      {units.length > 0 && (
+        <MetaGroup title={`Enheder (${units.length})`}>
+          {units.map((u) => (
+            <MetricCard
+              key={u.id}
+              label={u.name}
+              value={[
+                u.area_m2 != null ? num(u.area_m2, " m²") : null,
+                u.lease_status ? (LEASE_STATUS_LABEL[u.lease_status as BuildingLeaseStatus] ?? u.lease_status) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "—"}
+            />
+          ))}
+        </MetaGroup>
+      )}
+
+      {(b.description || b.internal_notes) && (
+        <div style={{ marginTop: 16 }}>
+          {b.description && (
+            <>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", margin: "0 0 4px" }}>
+                Beskrivelse
+              </p>
+              <p style={{ fontSize: 13, margin: "0 0 10px", whiteSpace: "pre-wrap" }}>{b.description}</p>
+            </>
+          )}
+          {b.internal_notes && (
+            <>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "hsl(var(--muted-foreground))", margin: "0 0 4px" }}>
+                Interne noter
+              </p>
+              <p style={{ fontSize: 13, margin: 0, whiteSpace: "pre-wrap" }}>{b.internal_notes}</p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function HomeIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -14,6 +14,26 @@ export const BUILDING_TYPES = [
 ] as const;
 export type BuildingType = (typeof BUILDING_TYPES)[number];
 
+export const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
+  stuehus: "Stuehus",
+  lade: "Lade",
+  maskinhus: "Maskinhus",
+  lagerhal: "Lagerhal",
+  vaerksted: "Værksted",
+  smedie: "Smedie",
+  garage: "Garage",
+};
+
+export const BUILDING_TYPE_COLOR: Record<BuildingType, string> = {
+  stuehus: "#B94E48",
+  lade: "#D4A23A",
+  maskinhus: "#5B7A9C",
+  lagerhal: "#C27A3E",
+  vaerksted: "#3F8DDB",
+  smedie: "#4A4A4A",
+  garage: "#8A9A8C",
+};
+
 export const LEASE_STATUSES = [
   "active",
   "pending_payment",

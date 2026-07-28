@@ -8,12 +8,7 @@ export function EriksmindeLogo({ className = "" }: { className?: string }) {
         alt="Eriksminde"
         className="w-full max-w-[180px] h-auto"
       />
-      <div
-        className="font-serif text-[10px] text-[var(--brand-900)]/80"
-        style={{ letterSpacing: "0.28em" }}
-      >
-        FAMILIEN GJØRUP
-      </div>
     </div>
   );
 }
+

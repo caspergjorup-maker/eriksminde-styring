@@ -800,6 +800,11 @@ function BuildingDialog({
                 has_sewage: v.has_sewage,
                 has_internet: v.has_internet,
                 internal_notes: v.internal_notes.trim() || null,
+                height_m: numOrNull(v.height_m),
+                roof_type: v.roof_type,
+                roof_color: v.roof_color.trim() || null,
+                wall_color: v.wall_color.trim() || null,
+                map_angle: numOrNull(v.map_angle),
               });
             } finally { setSaving(false); }
           }}

@@ -8,7 +8,6 @@ export const UNIT_LEASE_STATUSES = [
   "ledig",
   "ikke_klar",
   "intern_brug",
-  "udlejes_ikke",
 ] as const;
 export type UnitLeaseStatus = (typeof UNIT_LEASE_STATUSES)[number];
 
@@ -17,7 +16,6 @@ export const UNIT_LEASE_STATUS_LABEL: Record<UnitLeaseStatus, string> = {
   ledig: "Ledig",
   ikke_klar: "Ikke klar endnu",
   intern_brug: "Intern brug",
-  udlejes_ikke: "Udlejes ikke",
 };
 
 export const UNIT_LEASE_STATUS_TONE: Record<UnitLeaseStatus, string> = {
@@ -25,7 +23,6 @@ export const UNIT_LEASE_STATUS_TONE: Record<UnitLeaseStatus, string> = {
   ledig: "bg-blue-100 text-blue-900",
   ikke_klar: "bg-yellow-100 text-yellow-900",
   intern_brug: "bg-teal-100 text-teal-900",
-  udlejes_ikke: "bg-gray-200 text-gray-800",
 };
 
 export type UnitLeaseSummary = {

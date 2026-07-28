@@ -167,7 +167,15 @@ function RentalPotentialSection({
 
   const totals = useMemo(() => {
     let totalPotential = 0;
+    let totalArea = 0;
     const byStatus: Record<BuildingLeaseStatus, number> = {
+      udlejet: 0,
+      ledig: 0,
+      ikke_klar: 0,
+      intern_brug: 0,
+      udlejes_ikke: 0,
+    };
+    const areaByStatus: Record<BuildingLeaseStatus, number> = {
       udlejet: 0,
       ledig: 0,
       ikke_klar: 0,
@@ -180,13 +188,19 @@ function RentalPotentialSection({
       totalPotential += potential;
       const status = b.lease_status ?? "ledig";
       byStatus[status] = (byStatus[status] ?? 0) + potential;
+      if (b.type !== "stuehus") {
+        const area = b.area_m2_gross ?? 0;
+        totalArea += area;
+        areaByStatus[status] = (areaByStatus[status] ?? 0) + area;
+      }
     }
 
     const actualIncome = leases.reduce((s, l) => s + (l.monthly_rent ?? 0), 0);
     const unrealized = totalPotential - actualIncome;
 
-    return { totalPotential, byStatus, actualIncome, unrealized };
+    return { totalPotential, byStatus, actualIncome, unrealized, totalArea, areaByStatus };
   }, [buildings, units, leases]);
+
 
   const cards = [
     {
@@ -223,7 +237,14 @@ function RentalPotentialSection({
         : "af potentialet",
       tone: "text-[var(--brand-900)]",
     },
+    {
+      label: "Samlet areal (ekskl. stuehus)",
+      value: `${totals.totalArea.toLocaleString("da-DK")} m²`,
+      sub: "Bruttoareal",
+      tone: "text-[var(--brand-900)]",
+    },
   ];
+
 
   return (
     <section>
@@ -251,6 +272,17 @@ function RentalPotentialSection({
           </span>
         ))}
       </div>
+      <div className="bg-card border border-border rounded-xl px-4 py-3 flex flex-wrap gap-4 text-sm mt-3">
+        <span className="text-muted-foreground">Areal efter status (ekskl. stuehus):</span>
+        {BUILDING_LEASE_STATUSES.map((s) => (
+          <span key={s} className="inline-flex items-center gap-1.5">
+            <span className={`inline-block w-2 h-2 rounded-full ${LEASE_STATUS_TONE[s].split(" ")[0].replace("bg-", "bg-").replace("100", "500")}`} />
+            <span className="text-muted-foreground">{LEASE_STATUS_LABEL[s]}:</span>
+            <span className="font-medium tabular-nums">{totals.areaByStatus[s].toLocaleString("da-DK")} m²</span>
+          </span>
+        ))}
+      </div>
+
     </section>
   );
 }

@@ -272,6 +272,17 @@ function RentalPotentialSection({
           </span>
         ))}
       </div>
+      <div className="bg-card border border-border rounded-xl px-4 py-3 flex flex-wrap gap-4 text-sm mt-3">
+        <span className="text-muted-foreground">Areal efter status (ekskl. stuehus):</span>
+        {BUILDING_LEASE_STATUSES.map((s) => (
+          <span key={s} className="inline-flex items-center gap-1.5">
+            <span className={`inline-block w-2 h-2 rounded-full ${LEASE_STATUS_TONE[s].split(" ")[0].replace("bg-", "bg-").replace("100", "500")}`} />
+            <span className="text-muted-foreground">{LEASE_STATUS_LABEL[s]}:</span>
+            <span className="font-medium tabular-nums">{totals.areaByStatus[s].toLocaleString("da-DK")} m²</span>
+          </span>
+        ))}
+      </div>
+
     </section>
   );
 }

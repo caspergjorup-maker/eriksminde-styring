@@ -167,7 +167,15 @@ function RentalPotentialSection({
 
   const totals = useMemo(() => {
     let totalPotential = 0;
+    let totalArea = 0;
     const byStatus: Record<BuildingLeaseStatus, number> = {
+      udlejet: 0,
+      ledig: 0,
+      ikke_klar: 0,
+      intern_brug: 0,
+      udlejes_ikke: 0,
+    };
+    const areaByStatus: Record<BuildingLeaseStatus, number> = {
       udlejet: 0,
       ledig: 0,
       ikke_klar: 0,
@@ -180,13 +188,19 @@ function RentalPotentialSection({
       totalPotential += potential;
       const status = b.lease_status ?? "ledig";
       byStatus[status] = (byStatus[status] ?? 0) + potential;
+      if (b.type !== "stuehus") {
+        const area = b.area_m2_gross ?? 0;
+        totalArea += area;
+        areaByStatus[status] = (areaByStatus[status] ?? 0) + area;
+      }
     }
 
     const actualIncome = leases.reduce((s, l) => s + (l.monthly_rent ?? 0), 0);
     const unrealized = totalPotential - actualIncome;
 
-    return { totalPotential, byStatus, actualIncome, unrealized };
+    return { totalPotential, byStatus, actualIncome, unrealized, totalArea, areaByStatus };
   }, [buildings, units, leases]);
+
 
   const cards = [
     {

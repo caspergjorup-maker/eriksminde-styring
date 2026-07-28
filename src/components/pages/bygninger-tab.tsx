@@ -237,7 +237,14 @@ function RentalPotentialSection({
         : "af potentialet",
       tone: "text-[var(--brand-900)]",
     },
+    {
+      label: "Samlet areal (ekskl. stuehus)",
+      value: `${totals.totalArea.toLocaleString("da-DK")} m²`,
+      sub: "Bruttoareal",
+      tone: "text-[var(--brand-900)]",
+    },
   ];
+
 
   return (
     <section>

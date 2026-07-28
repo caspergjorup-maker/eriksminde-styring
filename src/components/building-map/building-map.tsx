@@ -17,14 +17,12 @@ import { toast } from "sonner";
 const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   udlejet: "Udlejet",
   ledig: "Ledig",
-  ikke_klar: "Ikke klar endnu",
   intern_brug: "Intern brug",
 };
 
 const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }> = {
   udlejet: { bg: "#D1FAE5", fg: "#065F46" },
   ledig: { bg: "#DBEAFE", fg: "#1E3A8A" },
-  ikke_klar: { bg: "#FEF3C7", fg: "#854D0E" },
   intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
 };
 

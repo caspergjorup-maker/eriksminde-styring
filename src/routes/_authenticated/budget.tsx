@@ -558,9 +558,14 @@ function LinesTable({
                 <TableCell className="font-medium">{l.label}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{CATEGORY_LABEL[l.category] ?? l.category}</TableCell>
                 {monthlyView ? (
-                  MONTHS.map((_, m) => (
-                    <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
-                  ))
+                  <>
+                    {MONTHS.map((_, m) => (
+                      <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
+                    ))}
+                    <TableCell className="text-right tabular-nums text-sm font-semibold">
+                      {formatDKK(MONTHS.reduce((s, _, m) => s + monthlyOf(l, m), 0))}
+                    </TableCell>
+                  </>
                 ) : (
                   <>
                     <TableCell className="text-right tabular-nums">{formatDKK(l.annual_amount)}</TableCell>

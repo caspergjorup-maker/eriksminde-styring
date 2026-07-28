@@ -329,6 +329,11 @@ function BuildingsSection({
       has_sewage: !!b.has_sewage,
       has_internet: !!b.has_internet,
       internal_notes: b.internal_notes ?? null,
+      height_m: b.height_m ?? null,
+      roof_type: b.roof_type ?? null,
+      roof_color: b.roof_color ?? null,
+      wall_color: b.wall_color ?? null,
+      map_angle: b.map_angle ?? null,
       ...patch,
     });
   }

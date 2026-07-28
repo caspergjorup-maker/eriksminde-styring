@@ -97,7 +97,6 @@ const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   ledig: "Ledig",
   ikke_klar: "Ikke klar endnu",
   intern_brug: "Intern brug",
-  udlejes_ikke: "Udlejes ikke",
 };
 
 const ROOF_LABEL: Record<RoofType, string> = {
@@ -113,7 +112,6 @@ export const LEASE_STATUS_TONE: Record<BuildingLeaseStatus, string> = {
   ledig: "bg-blue-100 text-blue-900",
   ikke_klar: "bg-yellow-100 text-yellow-900",
   intern_brug: "bg-teal-100 text-teal-900",
-  udlejes_ikke: "bg-gray-200 text-gray-800",
 };
 
 const HEATING_LABEL: Record<HeatingType, string> = {
@@ -173,14 +171,12 @@ function RentalPotentialSection({
       ledig: 0,
       ikke_klar: 0,
       intern_brug: 0,
-      udlejes_ikke: 0,
     };
     const areaByStatus: Record<BuildingLeaseStatus, number> = {
       udlejet: 0,
       ledig: 0,
       ikke_klar: 0,
       intern_brug: 0,
-      udlejes_ikke: 0,
     };
 
     for (const b of buildings) {
@@ -807,7 +803,7 @@ function BuildingDialog({
     setLastKey(key);
     setV(editing ? toForm(editing) : emptyBuilding);
   }
-  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "udlejes_ikke";
+  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "intern_brug";
   const numOrNull = (s: string) => (s.trim() === "" ? null : Number(s));
 
   return (
@@ -1411,7 +1407,7 @@ function UnitDialog({
     } : emptyUnit);
   }
 
-  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "udlejes_ikke";
+  const showLeaseNote = v.lease_status === "ikke_klar" || v.lease_status === "intern_brug";
   const buildingId = editing?.building_id ?? building?.id ?? null;
 
   async function submit(e: React.FormEvent) {

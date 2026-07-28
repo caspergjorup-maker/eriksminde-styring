@@ -19,7 +19,6 @@ const LEASE_STATUS_LABEL: Record<BuildingLeaseStatus, string> = {
   ledig: "Ledig",
   ikke_klar: "Ikke klar endnu",
   intern_brug: "Intern brug",
-  udlejes_ikke: "Udlejes ikke",
 };
 
 const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }> = {
@@ -27,7 +26,6 @@ const LEASE_STATUS_STYLE: Record<BuildingLeaseStatus, { bg: string; fg: string }
   ledig: { bg: "#DBEAFE", fg: "#1E3A8A" },
   ikke_klar: { bg: "#FEF3C7", fg: "#854D0E" },
   intern_brug: { bg: "#CCFBF1", fg: "#115E59" },
-  udlejes_ikke: { bg: "#E5E7EB", fg: "#374151" },
 };
 
 function getBuildingTypeColor(type: BuildingType | null): string {

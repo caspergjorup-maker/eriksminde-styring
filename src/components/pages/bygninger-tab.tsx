@@ -666,6 +666,11 @@ type BuildingForm = {
   has_sewage: boolean;
   has_internet: boolean;
   internal_notes: string;
+  height_m: string;
+  roof_type: RoofType | null;
+  roof_color: string;
+  wall_color: string;
+  map_angle: string;
 };
 
 const emptyBuilding: BuildingForm = {
@@ -677,6 +682,7 @@ const emptyBuilding: BuildingForm = {
   has_electricity: false, has_water: false, has_heating: false, heating_type: null,
   has_sewage: false, has_internet: false,
   internal_notes: "",
+  height_m: "", roof_type: "saddeltag", roof_color: "", wall_color: "", map_angle: "0",
 };
 
 function toForm(b: Building): BuildingForm {
@@ -701,6 +707,11 @@ function toForm(b: Building): BuildingForm {
     has_sewage: !!b.has_sewage,
     has_internet: !!b.has_internet,
     internal_notes: b.internal_notes ?? "",
+    height_m: b.height_m != null ? String(b.height_m) : "",
+    roof_type: b.roof_type ?? "saddeltag",
+    roof_color: b.roof_color ?? "",
+    wall_color: b.wall_color ?? "",
+    map_angle: b.map_angle != null ? String(b.map_angle) : "0",
   };
 }
 
@@ -715,6 +726,11 @@ export type BuildingSubmit = {
   heating_type: HeatingType | null;
   has_sewage: boolean; has_internet: boolean;
   internal_notes: string | null;
+  height_m: number | null;
+  roof_type: RoofType | null;
+  roof_color: string | null;
+  wall_color: string | null;
+  map_angle: number | null;
 };
 
 

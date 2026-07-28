@@ -538,7 +538,10 @@ function LinesTable({
               <TableHead>Post</TableHead>
               <TableHead>Kategori</TableHead>
               {monthlyView ? (
-                MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)
+                <>
+                  {MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)}
+                  <TableHead className="text-right font-semibold">I alt</TableHead>
+                </>
               ) : (
                 <>
                   <TableHead className="text-right">Pr. år</TableHead>
@@ -555,9 +558,14 @@ function LinesTable({
                 <TableCell className="font-medium">{l.label}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{CATEGORY_LABEL[l.category] ?? l.category}</TableCell>
                 {monthlyView ? (
-                  MONTHS.map((_, m) => (
-                    <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
-                  ))
+                  <>
+                    {MONTHS.map((_, m) => (
+                      <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
+                    ))}
+                    <TableCell className="text-right tabular-nums text-sm font-semibold">
+                      {formatDKK(MONTHS.reduce((s, _, m) => s + monthlyOf(l, m), 0))}
+                    </TableCell>
+                  </>
                 ) : (
                   <>
                     <TableCell className="text-right tabular-nums">{formatDKK(l.annual_amount)}</TableCell>
@@ -573,7 +581,7 @@ function LinesTable({
             ))}
             {lines.length === 0 && (
               <TableRow>
-                <TableCell colSpan={monthlyView ? 14 : 5} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={monthlyView ? 15 : 5} className="text-center text-muted-foreground py-6">
                   Ingen linjer endnu.
                 </TableCell>
               </TableRow>
@@ -584,11 +592,16 @@ function LinesTable({
               <TableRow>
                 <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
                 {monthlyView ? (
-                  MONTHS.map((_, m) => (
-                    <TableCell key={m} className="text-right tabular-nums font-semibold">
-                      {formatDKK(lines.reduce((s, l) => s + monthlyOf(l, m), 0))}
+                  <>
+                    {MONTHS.map((_, m) => (
+                      <TableCell key={m} className="text-right tabular-nums font-semibold">
+                        {formatDKK(lines.reduce((s, l) => s + monthlyOf(l, m), 0))}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right tabular-nums font-bold">
+                      {formatDKK(lines.reduce((s, l) => s + MONTHS.reduce((a, _, m) => a + monthlyOf(l, m), 0), 0))}
                     </TableCell>
-                  ))
+                  </>
                 ) : (
                   <>
                     <TableCell className="text-right tabular-nums font-semibold">{formatDKK(total)}</TableCell>

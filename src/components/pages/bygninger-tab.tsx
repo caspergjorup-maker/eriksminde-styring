@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, MapPin, Pencil, Plus, Shapes, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Pencil, Plus, Shapes, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { BuildingUnitEditor } from "@/components/building-map/building-unit-editor";
 

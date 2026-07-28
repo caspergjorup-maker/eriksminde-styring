@@ -11,6 +11,7 @@ import {
   BUILDING_CONDITIONS,
   BUILDING_LEASE_STATUSES,
   HEATING_TYPES,
+  ROOF_TYPES,
   LEASE_STATUSES,
   createBuilding,
   createBuildingLease,
@@ -28,6 +29,7 @@ import {
   type BuildingType,
   type HeatingType,
   type LeaseStatus,
+  type RoofType,
 } from "@/lib/buildings.functions";
 import {
   UNIT_LEASE_STATUSES,

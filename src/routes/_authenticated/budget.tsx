@@ -538,7 +538,10 @@ function LinesTable({
               <TableHead>Post</TableHead>
               <TableHead>Kategori</TableHead>
               {monthlyView ? (
-                MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)
+                <>
+                  {MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)}
+                  <TableHead className="text-right font-semibold">I alt</TableHead>
+                </>
               ) : (
                 <>
                   <TableHead className="text-right">Pr. år</TableHead>

@@ -149,7 +149,7 @@ const leaseInput = z.object({
 });
 
 const BUILDING_COLS =
-  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape, build_year, area_m2_gross, area_m2_net, floors, condition, last_inspection, lease_status, lease_status_note, estimated_monthly_rent, has_electricity, has_water, has_heating, heating_type, has_sewage, has_internet, parcel_id, internal_notes";
+  "id, name, type, description, building_nr, map_color, map_section, map_x, map_y, map_w, map_h, map_shape, map_angle, build_year, area_m2_gross, area_m2_net, floors, condition, last_inspection, lease_status, lease_status_note, estimated_monthly_rent, has_electricity, has_water, has_heating, heating_type, has_sewage, has_internet, parcel_id, internal_notes, height_m, roof_type, roof_color, wall_color";
 
 export const listBuildings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

@@ -73,3 +73,37 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const getMapBackgroundUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ filename: z.string().trim().min(1).max(200) }).parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ path: string; signedUrl: string; token: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const safeName = data.filename
+      .toLowerCase()
+      .replace(/[^a-z0-9æøå_.-]/g, "_")
+      .replace(/_+/g, "_");
+    const path = `map-backgrounds/${context.userId}/${crypto.randomUUID()}/${safeName}`;
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("documents")
+      .createSignedUploadUrl(path, { upsert: false });
+    if (error) throw new Error(error.message);
+    return { path, signedUrl: signed.signedUrl, token: signed.token };
+  });
+
+export const getMapBackgroundSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ path: z.string().trim().min(1) }).parse(d)
+  )
+  .handler(async ({ data, context }): Promise<{ url: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("documents")
+      .createSignedUrl(data.path, 60 * 60); // 1 hour
+    if (error) throw new Error(error.message);
+    return { url: signed.signedUrl };
+  });
+

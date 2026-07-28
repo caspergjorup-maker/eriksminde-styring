@@ -834,6 +834,9 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
         </p>
       )}
 
+      <BuildingMetaSection building={building} />
+
+
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <Link
           to="/dokumenter"

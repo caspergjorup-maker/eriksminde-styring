@@ -35,6 +35,7 @@ export type Building = {
   map_w: number | null;
   map_h: number | null;
   map_shape: string | null;
+  map_angle: number | null;
   build_year: number | null;
   area_m2_gross: number | null;
   area_m2_net: number | null;
@@ -52,6 +53,10 @@ export type Building = {
   has_internet: boolean | null;
   parcel_id: string | null;
   internal_notes: string | null;
+  height_m: number | null;
+  roof_type: RoofType | null;
+  roof_color: string | null;
+  wall_color: string | null;
 };
 
 export const BUILDING_CONDITIONS = ["god", "vedligeholdelse_nødvendig", "renovering_nødvendig"] as const;

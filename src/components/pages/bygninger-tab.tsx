@@ -416,6 +416,19 @@ function BuildingsSection({
   });
   const filteredBuildings = tableFilters.rows;
 
+  const totals = useMemo(() => {
+    let area = 0;
+    let potential = 0;
+    for (const b of filteredBuildings) {
+      area += b.area_m2_gross ?? 0;
+      const bUnits = unitsByBuilding.get(b.id) ?? [];
+      const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
+      potential += unitSum > 0 ? unitSum : (b.estimated_monthly_rent ?? 0);
+    }
+    return { area, potential, count: filteredBuildings.length };
+  }, [filteredBuildings, unitsByBuilding]);
+
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -621,7 +634,24 @@ function BuildingsSection({
               );
             })}
           </tbody>
+          <tfoot className="bg-muted/50 border-t border-border font-medium text-sm">
+            <tr>
+              <td className="px-4 py-2.5 text-muted-foreground">I alt ({totals.count})</td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                {totals.area > 0 ? `${totals.area.toLocaleString("da-DK")} m²` : "—"}
+              </td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                {totals.potential > 0 ? `${formatDKK(totals.potential)}/md.` : "—"}
+              </td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5" />
+            </tr>
+          </tfoot>
         </table>
+
       </div>
 
       <BuildingDialog

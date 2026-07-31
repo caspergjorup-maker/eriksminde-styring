@@ -416,6 +416,19 @@ function BuildingsSection({
   });
   const filteredBuildings = tableFilters.rows;
 
+  const totals = useMemo(() => {
+    let area = 0;
+    let potential = 0;
+    for (const b of filteredBuildings) {
+      area += b.area_m2_gross ?? 0;
+      const bUnits = unitsByBuilding.get(b.id) ?? [];
+      const unitSum = bUnits.reduce((s, u) => s + (u.estimated_monthly_rent ?? 0), 0);
+      potential += unitSum > 0 ? unitSum : (b.estimated_monthly_rent ?? 0);
+    }
+    return { area, potential, count: filteredBuildings.length };
+  }, [filteredBuildings, unitsByBuilding]);
+
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">

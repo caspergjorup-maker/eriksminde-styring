@@ -634,7 +634,24 @@ function BuildingsSection({
               );
             })}
           </tbody>
+          <tfoot className="bg-muted/50 border-t border-border font-medium text-sm">
+            <tr>
+              <td className="px-4 py-2.5 text-muted-foreground">I alt ({totals.count})</td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                {totals.area > 0 ? `${totals.area.toLocaleString("da-DK")} m²` : "—"}
+              </td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                {totals.potential > 0 ? `${formatDKK(totals.potential)}/md.` : "—"}
+              </td>
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5" />
+              <td className="px-4 py-2.5" />
+            </tr>
+          </tfoot>
         </table>
+
       </div>
 
       <BuildingDialog

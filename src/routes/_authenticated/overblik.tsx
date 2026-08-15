@@ -80,6 +80,12 @@ function Badge({
   );
 }
 
+function contractKindToPath(kind: "land" | "building" | "hunting") {
+  if (kind === "land") return "/landbrugsjord";
+  if (kind === "building") return "/bygninger";
+  return "/jagtleje";
+}
+
 function DashboardPage() {
   const fetchSummary = useServerFn(getDashboardSummary);
   const { data, isLoading } = useQuery({
@@ -127,6 +133,11 @@ function DashboardPage() {
               : data?.nextContractEnd
                 ? `${daysUntil(data.nextContractEnd) ?? 0} dage`
                 : "Ingen registreret"
+          }
+          to={
+            data?.upcomingContracts && data.upcomingContracts.length > 0
+              ? contractKindToPath(data.upcomingContracts[0].kind)
+              : "/landbrugsjord"
           }
         />
       </div>

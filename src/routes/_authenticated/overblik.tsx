@@ -30,14 +30,21 @@ function MetricCard({
   label,
   value,
   sub,
+  to,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   sub?: string;
+  to?: string;
 }) {
-  return (
-    <div className="bg-card border border-border rounded-xl p-5">
+  const card = (
+    <div
+      className={[
+        "bg-card border border-border rounded-xl p-5",
+        to ? "hover:border-[var(--brand-500)] hover:shadow-sm transition-colors cursor-pointer" : "",
+      ].join(" ")}
+    >
       <div className="flex items-start justify-between">
         <div className="text-sm text-muted-foreground">{label}</div>
         <div className="h-9 w-9 rounded-lg bg-[var(--brand-50)] flex items-center justify-center text-[var(--brand-700)]">
@@ -48,6 +55,9 @@ function MetricCard({
       {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
     </div>
   );
+
+  if (to) return <Link to={to} className="block">{card}</Link>;
+  return card;
 }
 
 function Badge({
@@ -68,6 +78,12 @@ function Badge({
       {children}
     </span>
   );
+}
+
+function contractKindToPath(kind: "land" | "building" | "hunting") {
+  if (kind === "land") return "/landbrugsjord";
+  if (kind === "building") return "/bygninger";
+  return "/jagtleje";
 }
 
 function DashboardPage() {
@@ -117,6 +133,11 @@ function DashboardPage() {
               : data?.nextContractEnd
                 ? `${daysUntil(data.nextContractEnd) ?? 0} dage`
                 : "Ingen registreret"
+          }
+          to={
+            data?.upcomingContracts && data.upcomingContracts.length > 0
+              ? contractKindToPath(data.upcomingContracts[0].kind)
+              : "/landbrugsjord"
           }
         />
       </div>

@@ -1159,13 +1159,14 @@ function LeasesSection({
               <SortableHeader label="Depositum" sortKey="deposit" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
               <SortableHeader label="Status" sortKey="status" sort={leaseFilters.sort} onToggle={leaseFilters.toggleSort} className="px-4 py-2.5" />
+              <th className="px-4 py-2.5 font-medium">Oprettet af</th>
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+            {loading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
             {!loading && filteredLeases.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">{leases.length === 0 ? "Ingen lejemål endnu." : "Ingen lejemål matcher filtrene."}</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">{leases.length === 0 ? "Ingen lejemål endnu." : "Ingen lejemål matcher filtrene."}</td></tr>
             )}
             {filteredLeases.map((l) => (
               <tr key={l.id} className="hover:bg-muted/30">
@@ -1181,6 +1182,7 @@ function LeasesSection({
                     {STATUS_LABEL[l.status]}
                   </span>
                 </td>
+                <td className="px-4 py-2.5 text-xs text-muted-foreground">{l.created_by_name ?? "—"}</td>
                 <td className="px-4 py-2.5 text-right">
                   <button onClick={() => setEditing(l)} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                   <button onClick={() => setToDelete(l)} className="p-1.5 rounded hover:bg-muted text-red-600"><Trash2 className="h-4 w-4" /></button>

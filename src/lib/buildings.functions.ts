@@ -94,6 +94,7 @@ export type HeatingType = (typeof HEATING_TYPES)[number];
 
 export type BuildingLease = {
   id: string;
+  created_by_name?: string | null;
   building_id: string | null;
   building_name: string | null;
   unit_id: string | null;

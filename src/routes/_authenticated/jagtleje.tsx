@@ -198,13 +198,14 @@ function JagtlejePage() {
                 <th className="px-4 py-2.5 font-medium text-right">Årlig leje</th>
                 <th className="px-4 py-2.5 font-medium">Periode</th>
                 <th className="px-4 py-2.5 font-medium">Udløb</th>
+                <th className="px-4 py-2.5 font-medium">Oprettet af</th>
                 <th className="px-4 py-2.5 w-24"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {leasesLoading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
+              {leasesLoading && <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>}
               {!leasesLoading && leases.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Ingen aftaler endnu.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Ingen aftaler endnu.</td></tr>
               )}
               {leases.map((l) => {
                 const days = daysUntil(l.contract_end);
@@ -222,6 +223,7 @@ function JagtlejePage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{l.created_by_name ?? "—"}</td>
                     <td className="px-4 py-2.5 text-right">
                       <button onClick={() => setEditingLease(l)} className="p-1.5 rounded hover:bg-muted" aria-label="Rediger"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => setToDeleteLease(l)} className="p-1.5 rounded hover:bg-muted text-red-600" aria-label="Slet"><Trash2 className="h-4 w-4" /></button>

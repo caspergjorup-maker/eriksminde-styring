@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorNames } from "./creators.server";
 
 export const BUILDING_TYPES = [
   "stuehus",
@@ -254,12 +255,17 @@ export const listBuildingLeases = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("building_leases")
       .select(
-        "id, building_id, unit_id, tenant_id, monthly_rent, deposit, contract_start, contract_end, status, notes, buildings:building_id(name), building_units:unit_id(name), contacts:tenant_id(name)",
+        "id, created_by, building_id, unit_id, tenant_id, monthly_rent, deposit, contract_start, contract_end, status, notes, buildings:building_id(name), building_units:unit_id(name), contacts:tenant_id(name)",
       )
       .order("contract_end", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
+    const creators = await resolveCreatorNames(
+      context.supabase,
+      (data ?? []).map((r) => (r as { created_by?: string | null }).created_by),
+    );
     return (data ?? []).map((r) => ({
       id: r.id,
+      created_by_name: creators.get((r as { created_by?: string | null }).created_by ?? "") ?? null,
       building_id: r.building_id,
       building_name: (r.buildings as { name?: string } | null)?.name ?? null,
       unit_id: (r as { unit_id?: string | null }).unit_id ?? null,

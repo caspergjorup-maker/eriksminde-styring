@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorNames } from "./creators.server";
 
 export type LandLease = {
   id: string;
@@ -14,6 +15,7 @@ export type LandLease = {
   contract_end: string | null;
   notes: string | null;
   field_names: string[];
+  created_by_name: string | null;
 };
 
 const input = z.object({
@@ -30,9 +32,13 @@ export const listLandLeases = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<LandLease[]> => {
     const { data, error } = await context.supabase
       .from("land_leases")
-      .select("id, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name), parcels:parcels!parcels_land_lease_id_fkey(field_parcels(fields(name)))")
+      .select("id, created_by, leaseholder_id, area_ha, price_per_ha, annual_fee, contract_start, contract_end, notes, contacts:leaseholder_id(name), parcels:parcels!parcels_land_lease_id_fkey(field_parcels(fields(name)))")
       .order("contract_end", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
+    const creators = await resolveCreatorNames(
+      context.supabase,
+      (data ?? []).map((r) => (r as { created_by?: string | null }).created_by),
+    );
     return (data ?? []).map((r) => {
       const parcels = (r.parcels ?? []) as Array<{
         field_parcels: Array<{ fields: { name: string } | null }> | null;
@@ -55,6 +61,8 @@ export const listLandLeases = createServerFn({ method: "GET" })
         contract_end: r.contract_end,
         notes: r.notes,
         field_names: names,
+        created_by_name:
+          creators.get((r as { created_by?: string | null }).created_by ?? "") ?? null,
       };
     });
   });

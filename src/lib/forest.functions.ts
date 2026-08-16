@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveCreatorNames } from "./creators.server";
 
 // ============ Constants ============
 
@@ -119,6 +120,7 @@ export type HuntingLeaseRow = {
   notes: string | null;
   created_at: string;
   tenant_name?: string | null;
+  created_by_name?: string | null;
 };
 
 export type HuntingRecordRow = {
@@ -315,11 +317,20 @@ export const listHuntingLeases = createServerFn({ method: "GET" })
       .select("*, contacts(name)")
       .order("name");
     if (error) throw new Error(error.message);
+    const creators = await resolveCreatorNames(
+      context.supabase,
+      (data ?? []).map((r) => (r as { created_by?: string | null }).created_by),
+    );
     return (data ?? []).map((r) => {
       const { contacts, ...rest } = r as typeof r & {
         contacts?: { name: string } | null;
       };
-      return { ...rest, tenant_name: contacts?.name ?? null };
+      return {
+        ...rest,
+        tenant_name: contacts?.name ?? null,
+        created_by_name:
+          creators.get((r as { created_by?: string | null }).created_by ?? "") ?? null,
+      };
     }) as HuntingLeaseRow[];
   });
 

@@ -180,6 +180,7 @@ export type Database = {
           contract_end: string | null
           contract_start: string | null
           created_at: string
+          created_by: string | null
           deposit: number | null
           id: string
           monthly_rent: number
@@ -193,6 +194,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           deposit?: number | null
           id?: string
           monthly_rent?: number
@@ -206,6 +208,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           deposit?: number | null
           id?: string
           monthly_rent?: number
@@ -786,6 +789,7 @@ export type Database = {
           contract_end: string | null
           contract_start: string | null
           created_at: string
+          created_by: string | null
           id: string
           name: string
           notes: string | null
@@ -797,6 +801,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -808,6 +813,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -930,6 +936,7 @@ export type Database = {
           contract_end: string | null
           contract_start: string | null
           created_at: string
+          created_by: string | null
           id: string
           leaseholder_id: string | null
           notes: string | null
@@ -941,6 +948,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           leaseholder_id?: string | null
           notes?: string | null
@@ -952,6 +960,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           leaseholder_id?: string | null
           notes?: string | null
@@ -1200,6 +1209,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
       }
       service_logs: {
         Row: {

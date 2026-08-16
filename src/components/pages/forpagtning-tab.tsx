@@ -151,15 +151,16 @@ export function LandbrugsjordPage() {
               <SortableHeader label="Årlig leje" sortKey="annual_fee" sort={filters.sort} onToggle={filters.toggleSort} align="right" className="px-4 py-2.5" />
               <th className="px-4 py-2.5 font-medium">Periode</th>
               <SortableHeader label="Udløb" sortKey="contract_end" sort={filters.sort} onToggle={filters.toggleSort} className="px-4 py-2.5" />
+              <th className="px-4 py-2.5 font-medium">Oprettet af</th>
               <th className="px-4 py-2.5 w-24"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>
+              <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">Indlæser…</td></tr>
             )}
             {!isLoading && rows.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Ingen forpagtninger endnu.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">Ingen forpagtninger endnu.</td></tr>
             )}
             {rows.map((r) => {
               const days = daysUntil(r.contract_end);
@@ -198,6 +199,7 @@ export function LandbrugsjordPage() {
                       {days == null ? "—" : days < 0 ? `${-days} d siden` : `${days} dage`}
                     </span>
                   </td>
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.created_by_name ?? "—"}</td>
                   <td className="px-4 py-2.5 text-right">
                     <button onClick={() => setEditing(r)} className="p-1.5 rounded hover:bg-muted" aria-label="Rediger"><Pencil className="h-4 w-4" /></button>
                     <button onClick={() => setToDelete(r)} className="p-1.5 rounded hover:bg-muted text-red-600" aria-label="Slet"><Trash2 className="h-4 w-4" /></button>

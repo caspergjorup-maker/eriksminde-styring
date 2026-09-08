@@ -149,7 +149,7 @@ export function BuildingMap({
   async function handleOpacityChange(v: number[]) {
     const opacity = v[0] ?? 0.55;
     try {
-      await updateSiteSettings({ data: { map_background_opacity: opacity } });
+      await updateSiteSettings({ data: { map_background_opacity: opacity } as never });
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -772,15 +772,15 @@ function BuildingInfoPanel({ building }: { building: BuildingWithLease }) {
                 <span
                   title={building.lease_status_note ?? undefined}
                   style={{
-                    background: LEASE_STATUS_STYLE[building.lease_status].bg,
-                    color: LEASE_STATUS_STYLE[building.lease_status].fg,
+                    background: (LEASE_STATUS_STYLE[building.lease_status] ?? LEASE_STATUS_STYLE.intern_brug).bg,
+                    color: (LEASE_STATUS_STYLE[building.lease_status] ?? LEASE_STATUS_STYLE.intern_brug).fg,
                     padding: "2px 8px",
                     borderRadius: 999,
                     fontSize: 11,
                     fontWeight: 500,
                   }}
                 >
-                  {LEASE_STATUS_LABEL[building.lease_status]}
+                  {LEASE_STATUS_LABEL[building.lease_status] ?? LEASE_STATUS_LABEL.intern_brug}
                 </span>
               </>
             )}
@@ -929,7 +929,7 @@ function BuildingMetaSection({ building: b }: { building: BuildingWithLease }) {
       </MetaGroup>
 
       <MetaGroup title="Udlejning">
-        <MetricCard label="Udlejningsstatus" value={b.lease_status ? LEASE_STATUS_LABEL[b.lease_status] : "—"} />
+        <MetricCard label="Udlejningsstatus" value={b.lease_status ? (LEASE_STATUS_LABEL[b.lease_status] ?? LEASE_STATUS_LABEL.intern_brug) : "—"} />
         <MetricCard
           label="Udlejningspot./md."
           value={b.estimated_monthly_rent ? formatDKK(b.estimated_monthly_rent) : "—"}

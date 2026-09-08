@@ -43,7 +43,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      map_background_url: z.string().trim().max(2000).nullable(),
+      map_background_url: z.string().trim().max(2000).nullable().optional(),
       map_background_opacity: z.number().min(0).max(1).optional(),
       map_scale_m_per_px: z.number().min(0).max(100).nullable().optional(),
     }).parse(d)
@@ -58,11 +58,14 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     if (fetchErr && fetchErr.code !== "PGRST116") throw new Error(fetchErr.message);
 
     const id = existing?.id ?? SETTINGS_ID;
-    const payload = {
-      map_background_url: data.map_background_url,
-      map_background_opacity: data.map_background_opacity,
-      map_scale_m_per_px: data.map_scale_m_per_px,
-    };
+    const payload: {
+      map_background_url?: string | null;
+      map_background_opacity?: number;
+      map_scale_m_per_px?: number | null;
+    } = {};
+    if (data.map_background_url !== undefined) payload.map_background_url = data.map_background_url;
+    if (data.map_background_opacity !== undefined) payload.map_background_opacity = data.map_background_opacity;
+    if (data.map_scale_m_per_px !== undefined) payload.map_scale_m_per_px = data.map_scale_m_per_px;
 
     if (existing) {
       const { error } = await context.supabase.from("site_settings").update(payload).eq("id", id);

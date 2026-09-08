@@ -265,7 +265,7 @@ export function DocumentsPage() {
       related_contact_id: string | null;
       upload_date: string | null;
       notes: string | null;
-    }) => updateDocumentFn({ data: { ...data, file_path: null } }),
+    }) => updateDocumentFn({ data }),
     onSuccess: () => {
       toast.success("Dokument opdateret");
       setEditDoc(null);

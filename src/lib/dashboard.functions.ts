@@ -63,7 +63,11 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
         .select("id, invoice_number, total_amount, contacts:contact_id(name)")
         .eq("status", "ready")
         .limit(5),
-      supabase.from("budgets").select("category, budgeted_amount").eq("year", year),
+      supabase
+        .from("budget_lines")
+        .select("category, annual_amount, kind, budget_scenarios!inner(year)")
+        .eq("kind", "income")
+        .eq("budget_scenarios.year", year),
       supabase
         .from("invoices")
         .select("category, total_amount")

@@ -140,11 +140,19 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       const k = r.category ?? "andet";
       realizedByCat[k] = (realizedByCat[k] ?? 0) + Number(r.total_amount ?? 0);
     }
-    const budgetProgress = (budgetsRes.data ?? []).map((b) => ({
-      category: b.category,
-      budget: Number(b.budgeted_amount ?? 0),
-      realized: realizedByCat[b.category] ?? 0,
-    }));
+    const budgetByCat: Record<string, number> = {};
+    for (const b of budgetsRes.data ?? []) {
+      const k = (b as { category: string }).category ?? "andet";
+      budgetByCat[k] =
+        (budgetByCat[k] ?? 0) + Number((b as { annual_amount: number }).annual_amount ?? 0);
+    }
+    const budgetProgress = Object.entries(budgetByCat)
+      .map(([category, budget]) => ({
+        category,
+        budget,
+        realized: realizedByCat[category] ?? 0,
+      }))
+      .sort((a, b) => b.budget - a.budget);
 
     const openTasks = (tasksRes.data ?? []).map((r) => ({
       id: r.id,

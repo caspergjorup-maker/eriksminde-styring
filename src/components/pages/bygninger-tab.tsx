@@ -571,10 +571,10 @@ function BuildingsSection({
                         </span>
                       ) : b.lease_status ? (
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status]}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${LEASE_STATUS_TONE[b.lease_status] ?? LEASE_STATUS_TONE.intern_brug}`}
                           title={b.lease_status_note ?? undefined}
                         >
-                          {LEASE_STATUS_LABEL[b.lease_status]}
+                          {LEASE_STATUS_LABEL[b.lease_status] ?? LEASE_STATUS_LABEL.intern_brug}
                         </span>
                       ) : "—"}
                     </td>
@@ -617,10 +617,10 @@ function BuildingsSection({
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${UNIT_LEASE_STATUS_TONE[u.lease_status]}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ${UNIT_LEASE_STATUS_TONE[u.lease_status] ?? UNIT_LEASE_STATUS_TONE.intern_brug}`}
                           title={u.lease_status_note ?? undefined}
                         >
-                          {UNIT_LEASE_STATUS_LABEL[u.lease_status]}
+                          {UNIT_LEASE_STATUS_LABEL[u.lease_status] ?? UNIT_LEASE_STATUS_LABEL.intern_brug}
                         </span>
                       </td>
                       <td className="px-4 py-2 text-right">

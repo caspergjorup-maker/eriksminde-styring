@@ -190,9 +190,10 @@ export const updateDocument = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).and(documentInput).parse(data))
   .handler(async ({ data, context }): Promise<Document> => {
     const { id, file_path, ...rest } = data;
+    // Only touch file_url when a new file path is supplied; metadata-only edits keep the file.
     const update = {
       ...rest,
-      file_url: file_path ? `${file_path}` : null,
+      ...(file_path ? { file_url: `${file_path}` } : {}),
     } as Database["public"]["Tables"]["documents"]["Update"];
     const { data: row, error } = await context.supabase
       .from("documents")

@@ -58,11 +58,10 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     if (fetchErr && fetchErr.code !== "PGRST116") throw new Error(fetchErr.message);
 
     const id = existing?.id ?? SETTINGS_ID;
-    const payload = {
-      map_background_url: data.map_background_url,
-      map_background_opacity: data.map_background_opacity,
-      map_scale_m_per_px: data.map_scale_m_per_px,
-    };
+    const payload: Record<string, unknown> = {};
+    if (data.map_background_url !== undefined) payload.map_background_url = data.map_background_url;
+    if (data.map_background_opacity !== undefined) payload.map_background_opacity = data.map_background_opacity;
+    if (data.map_scale_m_per_px !== undefined) payload.map_scale_m_per_px = data.map_scale_m_per_px;
 
     if (existing) {
       const { error } = await context.supabase.from("site_settings").update(payload).eq("id", id);

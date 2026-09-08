@@ -43,7 +43,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      map_background_url: z.string().trim().max(2000).nullable(),
+      map_background_url: z.string().trim().max(2000).nullable().optional(),
       map_background_opacity: z.number().min(0).max(1).optional(),
       map_scale_m_per_px: z.number().min(0).max(100).nullable().optional(),
     }).parse(d)

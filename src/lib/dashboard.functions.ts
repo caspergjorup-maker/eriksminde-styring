@@ -63,7 +63,11 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
         .select("id, invoice_number, total_amount, contacts:contact_id(name)")
         .eq("status", "ready")
         .limit(5),
-      supabase.from("budgets").select("category, budgeted_amount").eq("year", year),
+      supabase
+        .from("budget_lines")
+        .select("category, annual_amount, kind, budget_scenarios!inner(year)")
+        .eq("kind", "income")
+        .eq("budget_scenarios.year", year),
       supabase
         .from("invoices")
         .select("category, total_amount")
@@ -136,11 +140,19 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       const k = r.category ?? "andet";
       realizedByCat[k] = (realizedByCat[k] ?? 0) + Number(r.total_amount ?? 0);
     }
-    const budgetProgress = (budgetsRes.data ?? []).map((b) => ({
-      category: b.category,
-      budget: Number(b.budgeted_amount ?? 0),
-      realized: realizedByCat[b.category] ?? 0,
-    }));
+    const budgetByCat: Record<string, number> = {};
+    for (const b of budgetsRes.data ?? []) {
+      const k = (b as { category: string }).category ?? "andet";
+      budgetByCat[k] =
+        (budgetByCat[k] ?? 0) + Number((b as { annual_amount: number }).annual_amount ?? 0);
+    }
+    const budgetProgress = Object.entries(budgetByCat)
+      .map(([category, budget]) => ({
+        category,
+        budget,
+        realized: realizedByCat[category] ?? 0,
+      }))
+      .sort((a, b) => b.budget - a.budget);
 
     const openTasks = (tasksRes.data ?? []).map((r) => ({
       id: r.id,

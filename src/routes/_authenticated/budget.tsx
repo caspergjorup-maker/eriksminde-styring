@@ -553,39 +553,89 @@ function LinesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {lines.map((l) => (
+            {lines.map((l) => {
+              const months = MONTHS.map((_, m) => monthlyOf(l, m));
+              const setMonth = (m: number, val: number) => {
+                const next = months.map((x) => Math.round(x));
+                next[m] = val;
+                updateMut.mutate({ id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) });
+              };
+              const setAnnual = (val: number) => {
+                if (!l.monthly_override) {
+                  updateMut.mutate({ id: l.id, annual_amount: val });
+                  return;
+                }
+                const sum = months.reduce((s, x) => s + x, 0);
+                const active = months.map((x, i) => (x !== 0 ? i : -1)).filter((i) => i >= 0);
+                const next = sum !== 0
+                  ? scaleRounded(months, val / sum, val)
+                  : distribute(val, active.length ? active : MONTHS.map((_, i) => i));
+                updateMut.mutate({ id: l.id, annual_amount: val, monthly_override: next });
+              };
+              const applyDist = (next: number[] | null) => {
+                const total = months.reduce((s, x) => s + x, 0);
+                updateMut.mutate(
+                  next === null
+                    ? { id: l.id, monthly_override: null, annual_amount: Math.round(total) }
+                    : { id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) },
+                );
+              };
+              return (
               <TableRow key={l.id}>
-                <TableCell className="font-medium">{l.label}</TableCell>
+                <TableCell className="font-medium min-w-40">
+                  <EditableText value={l.label} onCommit={(v) => v && updateMut.mutate({ id: l.id, label: v })} />
+                </TableCell>
                 <TableCell className="text-muted-foreground text-sm">{CATEGORY_LABEL[l.category] ?? l.category}</TableCell>
                 {monthlyView ? (
                   <>
-                    {MONTHS.map((_, m) => (
-                      <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
+                    {months.map((v, m) => (
+                      <TableCell key={m} className="text-right text-sm p-1 min-w-20">
+                        <EditableNumber value={v} onCommit={(n) => setMonth(m, n)} />
+                      </TableCell>
                     ))}
                     <TableCell className="text-right tabular-nums text-sm font-semibold">
-                      {formatDKK(MONTHS.reduce((s, _, m) => s + monthlyOf(l, m), 0))}
+                      {formatDKK(months.reduce((s, x) => s + x, 0))}
                     </TableCell>
                   </>
                 ) : (
                   <>
-                    <TableCell className="text-right tabular-nums">{formatDKK(l.annual_amount)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(l.annual_amount / 12)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{l.source_note ?? "—"}</TableCell>
+                    <TableCell className="text-right p-1 min-w-28">
+                      <EditableNumber value={l.annual_amount} onCommit={setAnnual} />
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {formatDKK(l.annual_amount / 12)}
+                      {l.monthly_override && <div className="text-[10px]">manuel fordeling</div>}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground min-w-40">
+                      <EditableText value={l.source_note ?? ""} placeholder="—" onCommit={(v) => updateMut.mutate({ id: l.id, source_note: v || null })} />
+                    </TableCell>
                   </>
                 )}
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
+                  <DistributionMenu total={months.reduce((s, x) => s + x, 0)} onApply={applyDist} />
                   <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
             {lines.length === 0 && (
               <TableRow>
-                <TableCell colSpan={monthlyView ? 15 : 5} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={monthlyView ? 16 : 6} className="text-center text-muted-foreground py-6">
                   Ingen linjer endnu.
                 </TableCell>
               </TableRow>
             )}
+            <QuickAddRow
+              colSpan={monthlyView ? 16 : 6}
+              pending={createMut.isPending}
+              onAdd={(label, amount) =>
+                createMut.mutate({
+                  scenario_id: scenarioId, kind, category: kind === "income" ? "andet" : "andet",
+                  label, annual_amount: amount, monthly_override: null, source_note: null, sort_order: lines.length,
+                })
+              }
+            />
           </TableBody>
           {lines.length > 0 && (
             <TableFooter>

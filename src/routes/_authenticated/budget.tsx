@@ -1031,20 +1031,24 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Navn</TableHead>
-              <TableHead className="w-40 text-right">Månedlig ydelse</TableHead>
-              <TableHead className="w-40 text-right">Årlig ydelse</TableHead>
-              <TableHead className="w-32 text-right">Handling</TableHead>
+              <TableHead className="w-64">Navn</TableHead>
+              {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+              <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
+              <TableHead className="w-24 text-right">Handling</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loans.map((l) => {
-              const c = calcLoan(l);
+              const months = MONTHS.map((_, m) => loanMonthly(l, year, m));
               return (
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{l.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(c.monthlyPayment)}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(loanYearTotal(l, year))}</TableCell>
+                  {months.map((v, m) => (
+                    <TableCell key={m} className="text-right tabular-nums">
+                      {v !== 0 ? formatDKK(v) : <span className="text-muted-foreground">–</span>}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right tabular-nums font-medium">{formatDKK(loanYearTotal(l, year))}</TableCell>
                   <TableCell className="text-right">
                     {l.monthly_payment == null && l.principal > 0 && (
                       <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
@@ -1057,7 +1061,7 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
             })}
             {loans.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
+                <TableCell colSpan={14} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -1065,8 +1069,12 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
             <TableFooter>
               <TableRow>
                 <TableCell className="font-semibold">I alt</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(loans.reduce((s, l) => s + calcLoan(l).monthlyPayment, 0))}</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
+                {MONTHS.map((_, m) => (
+                  <TableCell key={m} className="text-right tabular-nums font-semibold">
+                    {formatDKK(loans.reduce((s, l) => s + loanMonthly(l, year, m), 0))}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right tabular-nums font-bold">{formatDKK(totalAnnual)}</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>

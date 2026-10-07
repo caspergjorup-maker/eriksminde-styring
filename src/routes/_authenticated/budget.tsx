@@ -1065,7 +1065,7 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
             <TableFooter>
               <TableRow>
                 <TableCell className="font-semibold">I alt</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual / 12)}</TableCell>
+                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(loans.reduce((s, l) => s + calcLoan(l).monthlyPayment, 0))}</TableCell>
                 <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
                 <TableCell />
               </TableRow>

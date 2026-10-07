@@ -15,12 +15,12 @@ import {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
-function lineMonthly(l: BudgetLine, m: number): number {
+export function lineMonthly(l: BudgetLine, m: number): number {
   return l.monthly_override ? (l.monthly_override[m] ?? 0) : l.annual_amount / 12;
 }
 
 /** Månedlig ydelse for et lån i en given måned af året — 0 før startdato og efter løbetidens udløb. */
-function loanMonthly(loan: BudgetLoan, year: number, m: number): number {
+export function loanMonthly(loan: BudgetLoan, year: number, m: number): number {
   const { monthlyPayment } = calcLoan(loan);
   if (monthlyPayment <= 0) return 0;
   if (loan.start_date) {
@@ -33,7 +33,7 @@ function loanMonthly(loan: BudgetLoan, year: number, m: number): number {
   return monthlyPayment;
 }
 
-function OpeningBalance({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
+export function OpeningBalance({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   const commit = () => {
@@ -76,13 +76,19 @@ export function BudgetLiquidity({
   incomes,
   expenses,
   loans,
+  opening: props_opening,
+  onOpeningChange,
 }: {
   year: number;
   incomes: BudgetLine[];
   expenses: BudgetLine[];
   loans: BudgetLoan[];
+  opening?: number;
+  onOpeningChange?: (n: number) => void;
 }) {
-  const [opening, setOpening] = useState(0);
+  const [localOpening, setLocalOpening] = useState(0);
+  const opening = props_opening ?? localOpening;
+  const setOpening = onOpeningChange ?? setLocalOpening;
 
   const inc = MONTHS.map((_, m) => incomes.reduce((s, l) => s + lineMonthly(l, m), 0));
   const exp = MONTHS.map((_, m) => expenses.reduce((s, l) => s + lineMonthly(l, m), 0));
@@ -190,3 +196,14 @@ export function BudgetLiquidity({
     </div>
   );
 }
+
+/** Netto cashflow pr. måned for et budgetår. */
+export function monthlyNet(year: number, lines: BudgetLine[], loans: BudgetLoan[]): number[] {
+  return MONTHS.map((_, m) => {
+    const inc = lines.filter((l) => l.kind === "income").reduce((s, l) => s + lineMonthly(l, m), 0);
+    const exp = lines.filter((l) => l.kind !== "income").reduce((s, l) => s + lineMonthly(l, m), 0);
+    const ln = loans.reduce((s, l) => s + loanMonthly(l, year, m), 0);
+    return inc - exp - ln;
+  });
+}
+export { MONTHS as LIQ_MONTHS };

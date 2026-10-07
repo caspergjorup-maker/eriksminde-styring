@@ -1028,12 +1028,12 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
       </div>
 
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
               <TableHead>Navn</TableHead>
-              <TableHead className="text-right">Månedlig ydelse</TableHead>
-              <TableHead className="text-right">Årlig ydelse</TableHead>
+              <TableHead className="w-40 text-right">Månedlig ydelse</TableHead>
+              <TableHead className="w-40 text-right">Årlig ydelse</TableHead>
               <TableHead className="w-32 text-right">Handling</TableHead>
             </TableRow>
           </TableHeader>

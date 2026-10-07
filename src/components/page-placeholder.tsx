@@ -6,7 +6,7 @@ export function PagePlaceholder({
   description?: string;
 }) {
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto">
+    <div className="px-6 py-6 w-full mx-auto">
       <h1 className="text-2xl font-semibold text-[var(--brand-900)]">{title}</h1>
       {description && (
         <p className="text-sm text-muted-foreground mt-1">{description}</p>

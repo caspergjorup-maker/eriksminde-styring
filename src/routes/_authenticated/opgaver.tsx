@@ -174,7 +174,7 @@ function OpgaverPage() {
   const open = creating || editing != null;
 
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto">
+    <div className="px-6 py-6 w-full mx-auto">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Opgaver</h1>

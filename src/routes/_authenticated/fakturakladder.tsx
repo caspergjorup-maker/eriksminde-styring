@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_authenticated/fakturakladder")({
 
 function FakturaerPage() {
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto">
+    <div className="px-6 py-6 w-full mx-auto">
       <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         Dinero-integration ikke konfigureret — tilføj API-nøgle under Indstillinger
       </div>

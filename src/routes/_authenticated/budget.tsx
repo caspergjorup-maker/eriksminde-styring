@@ -24,6 +24,7 @@ import {
 } from "@/lib/budget.functions";
 import { buildAmortization, calcLoan } from "@/lib/loan-math";
 import { formatDKK } from "@/lib/format";
+import { BudgetLiquidity } from "@/components/budget-liquidity";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -481,6 +482,8 @@ function BudgetPage() {
           />
 
           <LoansSection scenarioId={scenario.id} loans={loans} />
+
+          <BudgetLiquidity year={scenario.year} incomes={incomes} expenses={expenses} loans={loans} />
 
           <div className="bg-card border-2 border-[var(--brand-500)] rounded-xl p-5">
             <div className="flex items-center justify-between">

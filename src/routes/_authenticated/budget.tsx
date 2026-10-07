@@ -1121,75 +1121,31 @@ function LoanDialog({
   onOpenChange: (v: boolean) => void;
   title: string;
   initial: BudgetLoan | null;
-  onSubmit: (v: {
-    name: string;
-    principal: number;
-    interest_rate: number;
-    term_months: number;
-    loan_type: LoanType;
-    start_date: string | null;
-    notes: string | null;
-  }) => void;
+  onSubmit: (v: { name: string; monthly_payment: number }) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [principal, setPrincipal] = useState(String(initial?.principal ?? 0));
-  const [rate, setRate] = useState(String(((initial?.interest_rate ?? 0) * 100).toFixed(3)));
-  const [years, setYears] = useState(String(initial?.term_months ? Math.round(initial.term_months / 12) : 30));
-  const [type, setType] = useState<LoanType>(initial?.loan_type ?? "annuity");
-  const [startDate, setStartDate] = useState(initial?.start_date ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [monthly, setMonthly] = useState(
+    initial ? String(initial.monthly_payment ?? Math.round(calcLoan(initial).monthlyPayment)) : "",
+  );
 
-  const preview = calcLoan({
-    id: "", scenario_id: "", name, principal: Number(principal) || 0, interest_rate: (Number(rate) || 0) / 100,
-    term_months: (Number(years) || 0) * 12, loan_type: type, start_date: null, notes: null, sort_order: 0,
-  });
+  const monthlyNum = Number(monthly) || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (LandkrediT)" /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Hovedstol (kr.)</Label><Input type="number" value={principal} onChange={(e) => setPrincipal(e.target.value)} /></div>
-            <div><Label>Rente (% p.a.)</Label><Input type="number" step="0.001" value={rate} onChange={(e) => setRate(e.target.value)} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Løbetid (år)</Label><Input type="number" value={years} onChange={(e) => setYears(e.target.value)} /></div>
-            <div>
-              <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as LoanType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="annuity">Annuitet</SelectItem>
-                  <SelectItem value="interest_only">Rente-only</SelectItem>
-                  <SelectItem value="standing">Stående / rente- og afdragsfrit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div><Label>Startdato</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-          <div><Label>Noter</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
-
+          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (Nykredit)" /></div>
+          <div><Label>Månedlig ydelse (kr.)</Label><Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="Fx 18.965" /></div>
           <div className="rounded-lg bg-muted p-3 text-sm">
-            <div className="flex justify-between"><span>Årlig ydelse</span><span className="tabular-nums font-semibold">{formatDKK(preview.annualPayment)}</span></div>
-            <div className="flex justify-between text-muted-foreground"><span>Månedlig ydelse</span><span className="tabular-nums">{formatDKK(preview.monthlyPayment)}</span></div>
-            <div className="flex justify-between text-muted-foreground"><span>Renter i alt</span><span className="tabular-nums">{formatDKK(preview.totalInterest)}</span></div>
+            <div className="flex justify-between"><span>Årlig ydelse</span><span className="tabular-nums font-semibold">{formatDKK(monthlyNum * 12)}</span></div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
           <Button
-            disabled={!name.trim()}
-            onClick={() => onSubmit({
-              name: name.trim(),
-              principal: Number(principal) || 0,
-              interest_rate: (Number(rate) || 0) / 100,
-              term_months: (Number(years) || 0) * 12,
-              loan_type: type,
-              start_date: startDate || null,
-              notes: notes.trim() || null,
-            })}
+            disabled={!name.trim() || monthlyNum <= 0}
+            onClick={() => onSubmit({ name: name.trim(), monthly_payment: monthlyNum })}
           >
             Gem
           </Button>

@@ -720,21 +720,21 @@ function LinesTable({
       </div>
 
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Post</TableHead>
-              <TableHead>Kategori</TableHead>
+              <TableHead className="w-64">Post</TableHead>
+              <TableHead className="w-44">Kategori</TableHead>
               {monthlyView ? (
                 <>
-                  {MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)}
-                  <TableHead className="text-right font-semibold">I alt</TableHead>
+                  {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+                  <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
                 </>
               ) : (
                 <>
-                  <TableHead className="text-right">Pr. år</TableHead>
-                  <TableHead className="text-right">Pr. måned</TableHead>
-                  <TableHead>Kilde</TableHead>
+                  <TableHead className="w-36 text-right">Pr. år</TableHead>
+                  <TableHead className="w-36 text-right">Pr. måned</TableHead>
+                  <TableHead className="w-32">Kilde</TableHead>
                 </>
               )}
               <TableHead className="w-24 text-right">Handling</TableHead>

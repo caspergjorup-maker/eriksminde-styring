@@ -67,8 +67,194 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+// ---------- Spreadsheet helpers ----------
+
+function parseAmount(s: string): number | null {
+  const cleaned = s.replace(/\s|kr\.?/gi, "").replace(/\./g, "").replace(",", ".");
+  if (cleaned === "" || cleaned === "-") return 0;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
+/** Fordeler et beløb på de givne måneder i hele kroner; rest lægges i sidste måned. */
+function distribute(total: number, monthIdx: number[]): number[] {
+  const out = Array(12).fill(0) as number[];
+  if (monthIdx.length === 0) return out;
+  const each = Math.round(total / monthIdx.length);
+  monthIdx.forEach((m) => (out[m] = each));
+  out[monthIdx[monthIdx.length - 1]] += Math.round(total) - each * monthIdx.length;
+  return out;
+}
+
+function scaleRounded(values: number[], factor: number, target: number): number[] {
+  const out = values.map((v) => Math.round(v * factor));
+  const diff = Math.round(target) - out.reduce((s, x) => s + x, 0);
+  let last = -1;
+  out.forEach((v, i) => { if (v !== 0) last = i; });
+  out[last >= 0 ? last : 11] += diff;
+  return out;
+}
+
+function EditableNumber({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState("");
+  const commit = () => {
+    setEditing(false);
+    const n = parseAmount(text);
+    if (n !== null && n !== Math.round(value)) onCommit(n);
+  };
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        inputMode="decimal"
+        className="w-full min-w-16 text-right tabular-nums bg-background border border-[var(--brand-500)] rounded px-1.5 py-0.5 outline-none"
+        value={text}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") setEditing(false);
+        }}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      title="Klik for at rette"
+      className="w-full text-right tabular-nums rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)]"
+      onClick={() => { setText(String(Math.round(value))); setEditing(true); }}
+      onFocus={() => { setText(String(Math.round(value))); setEditing(true); }}
+    >
+      {formatDKK(value)}
+    </button>
+  );
+}
+
+function EditableText({ value, onCommit, placeholder }: { value: string; onCommit: (v: string) => void; placeholder?: string }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(value);
+  const commit = () => {
+    setEditing(false);
+    if (text.trim() !== value) onCommit(text.trim());
+  };
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        className="w-full bg-background border border-[var(--brand-500)] rounded px-1.5 py-0.5 outline-none"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") setEditing(false);
+        }}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      title="Klik for at rette"
+      className="w-full text-left rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border"
+      onClick={() => { setText(value); setEditing(true); }}
+    >
+      {value || <span className="text-muted-foreground">{placeholder ?? "—"}</span>}
+    </button>
+  );
+}
+
+function DistributionMenu({ total, onApply }: { total: number; onApply: (months: number[] | null) => void }) {
+  const all = MONTHS.map((_, i) => i);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="ghost" title="Fordel på måneder">
+          <CalendarDays className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Fordel {formatDKK(total)}
+        </DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => onApply(null)}>Ligeligt (1/12)</DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Fra måned og resten af året</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {MONTHS.map((m, i) => (
+              <DropdownMenuItem key={m} onSelect={() => onApply(distribute(total, all.slice(i)))}>
+                Fra {m}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [0, 3, 6, 9]))}>Kvartalsvis (jan/apr/jul/okt)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [2, 5, 8, 11]))}>Kvartalsvis bagud (mar/jun/sep/dec)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [3, 9]))}>Halvårligt (apr/okt)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [5, 11]))}>Halvårligt (jun/dec)</DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Engangsbeløb i måned</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {MONTHS.map((m, i) => (
+              <DropdownMenuItem key={m} onSelect={() => onApply(distribute(total, [i]))}>{m}</DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-red-600" onSelect={() => onApply(Array(12).fill(0))}>
+          Nulstil alle måneder
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function QuickAddRow({ colSpan, pending, onAdd }: { colSpan: number; pending: boolean; onAdd: (label: string, amount: number) => void }) {
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const submit = () => {
+    if (!label.trim()) return;
+    onAdd(label.trim(), parseAmount(amount) ?? 0);
+    setLabel("");
+    setAmount("");
+  };
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell colSpan={colSpan} className="py-2">
+        <div className="flex items-center gap-2">
+          <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+          <Input
+            className="h-8 max-w-xs"
+            placeholder="Tilføj linje — skriv navn…"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+          />
+          <Input
+            className="h-8 w-36 text-right"
+            placeholder="Beløb pr. år"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+          />
+          <Button size="sm" variant="outline" disabled={!label.trim() || pending} onClick={submit}>Tilføj</Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/budget")({
   component: BudgetPage,
@@ -553,39 +739,89 @@ function LinesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {lines.map((l) => (
+            {lines.map((l) => {
+              const months = MONTHS.map((_, m) => monthlyOf(l, m));
+              const setMonth = (m: number, val: number) => {
+                const next = months.map((x) => Math.round(x));
+                next[m] = val;
+                updateMut.mutate({ id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) });
+              };
+              const setAnnual = (val: number) => {
+                if (!l.monthly_override) {
+                  updateMut.mutate({ id: l.id, annual_amount: val });
+                  return;
+                }
+                const sum = months.reduce((s, x) => s + x, 0);
+                const active = months.map((x, i) => (x !== 0 ? i : -1)).filter((i) => i >= 0);
+                const next = sum !== 0
+                  ? scaleRounded(months, val / sum, val)
+                  : distribute(val, active.length ? active : MONTHS.map((_, i) => i));
+                updateMut.mutate({ id: l.id, annual_amount: val, monthly_override: next });
+              };
+              const applyDist = (next: number[] | null) => {
+                const total = months.reduce((s, x) => s + x, 0);
+                updateMut.mutate(
+                  next === null
+                    ? { id: l.id, monthly_override: null, annual_amount: Math.round(total) }
+                    : { id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) },
+                );
+              };
+              return (
               <TableRow key={l.id}>
-                <TableCell className="font-medium">{l.label}</TableCell>
+                <TableCell className="font-medium min-w-40">
+                  <EditableText value={l.label} onCommit={(v) => v && updateMut.mutate({ id: l.id, label: v })} />
+                </TableCell>
                 <TableCell className="text-muted-foreground text-sm">{CATEGORY_LABEL[l.category] ?? l.category}</TableCell>
                 {monthlyView ? (
                   <>
-                    {MONTHS.map((_, m) => (
-                      <TableCell key={m} className="text-right tabular-nums text-sm">{formatDKK(monthlyOf(l, m))}</TableCell>
+                    {months.map((v, m) => (
+                      <TableCell key={m} className="text-right text-sm p-1 min-w-20">
+                        <EditableNumber value={v} onCommit={(n) => setMonth(m, n)} />
+                      </TableCell>
                     ))}
                     <TableCell className="text-right tabular-nums text-sm font-semibold">
-                      {formatDKK(MONTHS.reduce((s, _, m) => s + monthlyOf(l, m), 0))}
+                      {formatDKK(months.reduce((s, x) => s + x, 0))}
                     </TableCell>
                   </>
                 ) : (
                   <>
-                    <TableCell className="text-right tabular-nums">{formatDKK(l.annual_amount)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(l.annual_amount / 12)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{l.source_note ?? "—"}</TableCell>
+                    <TableCell className="text-right p-1 min-w-28">
+                      <EditableNumber value={l.annual_amount} onCommit={setAnnual} />
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {formatDKK(l.annual_amount / 12)}
+                      {l.monthly_override && <div className="text-[10px]">manuel fordeling</div>}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground min-w-40">
+                      <EditableText value={l.source_note ?? ""} placeholder="—" onCommit={(v) => updateMut.mutate({ id: l.id, source_note: v || null })} />
+                    </TableCell>
                   </>
                 )}
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
+                  <DistributionMenu total={months.reduce((s, x) => s + x, 0)} onApply={applyDist} />
                   <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
             {lines.length === 0 && (
               <TableRow>
-                <TableCell colSpan={monthlyView ? 15 : 5} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={monthlyView ? 16 : 6} className="text-center text-muted-foreground py-6">
                   Ingen linjer endnu.
                 </TableCell>
               </TableRow>
             )}
+            <QuickAddRow
+              colSpan={monthlyView ? 16 : 6}
+              pending={createMut.isPending}
+              onAdd={(label, amount) =>
+                createMut.mutate({
+                  scenario_id: scenarioId, kind, category: kind === "income" ? "andet" : "andet",
+                  label, annual_amount: amount, monthly_override: null, source_note: null, sort_order: lines.length,
+                })
+              }
+            />
           </TableBody>
           {lines.length > 0 && (
             <TableFooter>

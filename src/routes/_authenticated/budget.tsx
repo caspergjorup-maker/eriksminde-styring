@@ -995,17 +995,17 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
 
   const createMut = useMutation({
     mutationFn: (data: {
-      scenario_id: string; name: string; principal: number; interest_rate: number;
-      term_months: number; loan_type: LoanType; start_date: string | null; notes: string | null; sort_order: number;
-    }) => createFn({ data }),
+      scenario_id: string; name: string; monthly_payment: number; sort_order: number;
+    }) => createFn({ data: {
+      ...data,
+      principal: 0, interest_rate: 0, term_months: 0, loan_type: "standing" as LoanType,
+      start_date: null, notes: null,
+    } }),
     onSuccess: () => { toast.success("Lån tilføjet"); invalidate(); setCreating(false); },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: {
-      id: string; name?: string; principal?: number; interest_rate?: number;
-      term_months?: number; loan_type?: LoanType; start_date?: string | null; notes?: string | null; sort_order?: number;
-    }) => updateFn({ data }),
+    mutationFn: (data: { id: string; name?: string; monthly_payment?: number }) => updateFn({ data }),
     onSuccess: () => { invalidate(); setEditing(null); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1014,7 +1014,6 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
     onSuccess: () => { toast.success("Lån slettet"); invalidate(); setConfirmDelete(null); },
   });
 
-  const totalPrincipal = loans.reduce((s, l) => s + l.principal, 0);
   const totalAnnual = loans.reduce((s, l) => s + calcLoan(l).annualPayment, 0);
 
   return (
@@ -1031,12 +1030,8 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
           <TableHeader>
             <TableRow>
               <TableHead>Navn</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Hovedstol</TableHead>
-              <TableHead className="text-right">Rente</TableHead>
-              <TableHead className="text-right">Løbetid</TableHead>
+              <TableHead className="text-right">Månedlig ydelse</TableHead>
               <TableHead className="text-right">Årlig ydelse</TableHead>
-              <TableHead className="text-right">/ md</TableHead>
               <TableHead className="w-32 text-right">Handling</TableHead>
             </TableRow>
           </TableHeader>
@@ -1046,14 +1041,12 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
               return (
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{l.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{LOAN_TYPE_LABEL[l.loan_type]}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(l.principal)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{(l.interest_rate * 100).toFixed(3)}%</TableCell>
-                  <TableCell className="text-right tabular-nums">{l.term_months > 0 ? `${Math.round(l.term_months / 12)} år` : "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(c.annualPayment)}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(c.monthlyPayment)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatDKK(c.monthlyPayment)}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(c.annualPayment)}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                    {l.monthly_payment == null && l.principal > 0 && (
+                      <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </TableCell>
@@ -1062,18 +1055,16 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
             })}
             {loans.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
               </TableRow>
             )}
           </TableBody>
           {loans.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalPrincipal)}</TableCell>
-                <TableCell colSpan={2} />
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
+                <TableCell className="font-semibold">I alt</TableCell>
                 <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual / 12)}</TableCell>
+                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>

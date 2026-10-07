@@ -197,6 +197,7 @@ export const copyBudgetToYear = createServerFn({ method: "POST" })
         interest_rate: Number(r.interest_rate ?? 0),
         term_months: Number(r.term_months ?? 0),
         loan_type: r.loan_type as LoanType,
+        monthly_payment: r.monthly_payment != null ? Number(r.monthly_payment) : null,
         start_date: (r.start_date as string | null) ?? null,
         notes: (r.notes as string | null) ?? null,
         sort_order: (r.sort_order as number) ?? 0,

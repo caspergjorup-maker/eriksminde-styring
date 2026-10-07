@@ -296,11 +296,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   andet: "Andet",
 };
 
-const LOAN_TYPE_LABEL: Record<LoanType, string> = {
-  annuity: "Annuitet",
-  interest_only: "Rente-only",
-  standing: "Stående / rente- og afdragsfrit",
-};
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 

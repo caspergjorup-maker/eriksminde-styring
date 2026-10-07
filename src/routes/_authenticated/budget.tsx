@@ -296,11 +296,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   andet: "Andet",
 };
 
-const LOAN_TYPE_LABEL: Record<LoanType, string> = {
-  annuity: "Annuitet",
-  interest_only: "Rente-only",
-  standing: "Stående / rente- og afdragsfrit",
-};
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
@@ -995,17 +990,17 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
 
   const createMut = useMutation({
     mutationFn: (data: {
-      scenario_id: string; name: string; principal: number; interest_rate: number;
-      term_months: number; loan_type: LoanType; start_date: string | null; notes: string | null; sort_order: number;
-    }) => createFn({ data }),
+      scenario_id: string; name: string; monthly_payment: number; sort_order: number;
+    }) => createFn({ data: {
+      ...data,
+      principal: 0, interest_rate: 0, term_months: 0, loan_type: "standing" as LoanType,
+      start_date: null, notes: null,
+    } }),
     onSuccess: () => { toast.success("Lån tilføjet"); invalidate(); setCreating(false); },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: {
-      id: string; name?: string; principal?: number; interest_rate?: number;
-      term_months?: number; loan_type?: LoanType; start_date?: string | null; notes?: string | null; sort_order?: number;
-    }) => updateFn({ data }),
+    mutationFn: (data: { id: string; name?: string; monthly_payment?: number }) => updateFn({ data }),
     onSuccess: () => { invalidate(); setEditing(null); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1014,7 +1009,6 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
     onSuccess: () => { toast.success("Lån slettet"); invalidate(); setConfirmDelete(null); },
   });
 
-  const totalPrincipal = loans.reduce((s, l) => s + l.principal, 0);
   const totalAnnual = loans.reduce((s, l) => s + calcLoan(l).annualPayment, 0);
 
   return (
@@ -1031,12 +1025,8 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
           <TableHeader>
             <TableRow>
               <TableHead>Navn</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Hovedstol</TableHead>
-              <TableHead className="text-right">Rente</TableHead>
-              <TableHead className="text-right">Løbetid</TableHead>
+              <TableHead className="text-right">Månedlig ydelse</TableHead>
               <TableHead className="text-right">Årlig ydelse</TableHead>
-              <TableHead className="text-right">/ md</TableHead>
               <TableHead className="w-32 text-right">Handling</TableHead>
             </TableRow>
           </TableHeader>
@@ -1046,14 +1036,12 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
               return (
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{l.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{LOAN_TYPE_LABEL[l.loan_type]}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(l.principal)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{(l.interest_rate * 100).toFixed(3)}%</TableCell>
-                  <TableCell className="text-right tabular-nums">{l.term_months > 0 ? `${Math.round(l.term_months / 12)} år` : "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(c.annualPayment)}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(c.monthlyPayment)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatDKK(c.monthlyPayment)}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(c.annualPayment)}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                    {l.monthly_payment == null && l.principal > 0 && (
+                      <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </TableCell>
@@ -1062,18 +1050,16 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
             })}
             {loans.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
               </TableRow>
             )}
           </TableBody>
           {loans.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalPrincipal)}</TableCell>
-                <TableCell colSpan={2} />
-                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
+                <TableCell className="font-semibold">I alt</TableCell>
                 <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual / 12)}</TableCell>
+                <TableCell className="text-right tabular-nums font-semibold">{formatDKK(totalAnnual)}</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
@@ -1130,75 +1116,31 @@ function LoanDialog({
   onOpenChange: (v: boolean) => void;
   title: string;
   initial: BudgetLoan | null;
-  onSubmit: (v: {
-    name: string;
-    principal: number;
-    interest_rate: number;
-    term_months: number;
-    loan_type: LoanType;
-    start_date: string | null;
-    notes: string | null;
-  }) => void;
+  onSubmit: (v: { name: string; monthly_payment: number }) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [principal, setPrincipal] = useState(String(initial?.principal ?? 0));
-  const [rate, setRate] = useState(String(((initial?.interest_rate ?? 0) * 100).toFixed(3)));
-  const [years, setYears] = useState(String(initial?.term_months ? Math.round(initial.term_months / 12) : 30));
-  const [type, setType] = useState<LoanType>(initial?.loan_type ?? "annuity");
-  const [startDate, setStartDate] = useState(initial?.start_date ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [monthly, setMonthly] = useState(
+    initial ? String(initial.monthly_payment ?? Math.round(calcLoan(initial).monthlyPayment)) : "",
+  );
 
-  const preview = calcLoan({
-    id: "", scenario_id: "", name, principal: Number(principal) || 0, interest_rate: (Number(rate) || 0) / 100,
-    term_months: (Number(years) || 0) * 12, loan_type: type, start_date: null, notes: null, sort_order: 0,
-  });
+  const monthlyNum = Number(monthly) || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (LandkrediT)" /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Hovedstol (kr.)</Label><Input type="number" value={principal} onChange={(e) => setPrincipal(e.target.value)} /></div>
-            <div><Label>Rente (% p.a.)</Label><Input type="number" step="0.001" value={rate} onChange={(e) => setRate(e.target.value)} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Løbetid (år)</Label><Input type="number" value={years} onChange={(e) => setYears(e.target.value)} /></div>
-            <div>
-              <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as LoanType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="annuity">Annuitet</SelectItem>
-                  <SelectItem value="interest_only">Rente-only</SelectItem>
-                  <SelectItem value="standing">Stående / rente- og afdragsfrit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div><Label>Startdato</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-          <div><Label>Noter</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
-
+          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (Nykredit)" /></div>
+          <div><Label>Månedlig ydelse (kr.)</Label><Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="Fx 18.965" /></div>
           <div className="rounded-lg bg-muted p-3 text-sm">
-            <div className="flex justify-between"><span>Årlig ydelse</span><span className="tabular-nums font-semibold">{formatDKK(preview.annualPayment)}</span></div>
-            <div className="flex justify-between text-muted-foreground"><span>Månedlig ydelse</span><span className="tabular-nums">{formatDKK(preview.monthlyPayment)}</span></div>
-            <div className="flex justify-between text-muted-foreground"><span>Renter i alt</span><span className="tabular-nums">{formatDKK(preview.totalInterest)}</span></div>
+            <div className="flex justify-between"><span>Årlig ydelse</span><span className="tabular-nums font-semibold">{formatDKK(monthlyNum * 12)}</span></div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
           <Button
-            disabled={!name.trim()}
-            onClick={() => onSubmit({
-              name: name.trim(),
-              principal: Number(principal) || 0,
-              interest_rate: (Number(rate) || 0) / 100,
-              term_months: (Number(years) || 0) * 12,
-              loan_type: type,
-              start_date: startDate || null,
-              notes: notes.trim() || null,
-            })}
+            disabled={!name.trim() || monthlyNum <= 0}
+            onClick={() => onSubmit({ name: name.trim(), monthly_payment: monthlyNum })}
           >
             Gem
           </Button>

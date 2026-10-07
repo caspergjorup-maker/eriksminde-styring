@@ -23,6 +23,13 @@ import {
   type LoanType,
 } from "@/lib/budget.functions";
 import { buildAmortization, calcLoan } from "@/lib/loan-math";
+import { loanMonthly } from "@/components/budget-liquidity";
+
+function loanYearTotal(l: BudgetLoan, year: number) {
+  let t = 0;
+  for (let m = 0; m < 12; m++) t += loanMonthly(l, year, m);
+  return t;
+}
 import { formatDKK } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
@@ -380,7 +387,7 @@ function BudgetPage() {
 
   const totalIncome = incomes.reduce((s, l) => s + l.annual_amount, 0);
   const totalExpense = expenses.reduce((s, l) => s + l.annual_amount, 0);
-  const totalLoanPayments = loans.reduce((s, l) => s + calcLoan(l).annualPayment, 0);
+  const totalLoanPayments = loans.reduce((s, l) => s + loanYearTotal(l, currentYear ?? thisYear), 0);
   const result = totalIncome - totalExpense - totalLoanPayments;
 
   const nextYear = currentYear !== null ? currentYear + 1 : thisYear + 1;
@@ -475,7 +482,7 @@ function BudgetPage() {
             monthlyView={monthlyView}
           />
 
-          <LoansSection scenarioId={scenario.id} loans={loans} />
+          <LoansSection scenarioId={scenario.id} loans={loans} year={scenario.year} />
 
           <div className="bg-card border-2 border-[var(--brand-500)] rounded-xl p-5">
             <div className="flex items-center justify-between">
@@ -975,7 +982,7 @@ function LineDialog({
 
 // ---------- Loans ----------
 
-function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: BudgetLoan[] }) {
+function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: BudgetLoan[]; year: number }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createLoan);
   const updateFn = useServerFn(updateLoan);
@@ -1009,7 +1016,7 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
     onSuccess: () => { toast.success("Lån slettet"); invalidate(); setConfirmDelete(null); },
   });
 
-  const totalAnnual = loans.reduce((s, l) => s + calcLoan(l).annualPayment, 0);
+  const totalAnnual = loans.reduce((s, l) => s + loanYearTotal(l, year), 0);
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -1037,7 +1044,7 @@ function LoansSection({ scenarioId, loans }: { scenarioId: string; loans: Budget
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{l.name}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatDKK(c.monthlyPayment)}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(c.annualPayment)}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{formatDKK(loanYearTotal(l, year))}</TableCell>
                   <TableCell className="text-right">
                     {l.monthly_payment == null && l.principal > 0 && (
                       <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>

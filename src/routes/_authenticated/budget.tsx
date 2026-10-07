@@ -30,6 +30,10 @@ function loanYearTotal(l: BudgetLoan, year: number) {
   for (let m = 0; m < 12; m++) t += loanMonthly(l, year, m);
   return t;
 }
+
+function lineMonthly(l: BudgetLine, m: number) {
+  return l.monthly_override ? l.monthly_override[m] ?? 0 : l.annual_amount / 12;
+}
 import { formatDKK } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
@@ -483,6 +487,59 @@ function BudgetPage() {
           />
 
           <LoansSection scenarioId={scenario.id} loans={loans} year={scenario.year} />
+
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="p-4 pb-2">
+              <h2 className="font-semibold text-[var(--brand-900)]">Resultat pr. måned</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Indtægter − driftsudgifter − låneydelser</p>
+            </div>
+            <div className="overflow-x-auto">
+              <Table className="table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-64" />
+                    {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+                    <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(() => {
+                    const incomeM = MONTHS.map((_, m) => incomes.reduce((s, l) => s + lineMonthly(l, m), 0));
+                    const expenseM = MONTHS.map((_, m) => expenses.reduce((s, l) => s + lineMonthly(l, m), 0));
+                    const loanM = MONTHS.map((_, m) => loans.reduce((s, l) => s + loanMonthly(l, scenario.year, m), 0));
+                    const resultM = MONTHS.map((_, m) => incomeM[m] - expenseM[m] - loanM[m]);
+                    const rows: Array<{ label: string; values: number[]; bold?: boolean; signed?: boolean }> = [
+                      { label: "Indtægter", values: incomeM },
+                      { label: "Driftsudgifter", values: expenseM },
+                      { label: "Låneydelser", values: loanM },
+                      { label: "Resultat", values: resultM, bold: true, signed: true },
+                    ];
+                    return rows.map((r) => (
+                      <TableRow key={r.label}>
+                        <TableCell className={r.bold ? "font-semibold" : ""}>{r.label}</TableCell>
+                        {r.values.map((v, m) => (
+                          <TableCell key={m} className="text-right tabular-nums">
+                            {v !== 0 ? (
+                              <span className={r.signed && v < 0 ? "text-red-700" : r.bold && v >= 0 ? "text-emerald-700" : r.bold ? "text-red-700" : ""}>
+                                {r.signed && v > 0 ? "+" : ""}{formatDKK(v)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">–</span>
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right tabular-nums font-semibold">
+                          {r.signed && r.values.reduce((s, x) => s + x, 0) >= 0 ? "+" : ""}
+                          {formatDKK(r.values.reduce((s, x) => s + x, 0))}
+                        </TableCell>
+                      </TableRow>
+                    ));
+                  })()}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
 
           <div className="bg-card border-2 border-[var(--brand-500)] rounded-xl p-5">
             <div className="flex items-center justify-between">

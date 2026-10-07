@@ -16,6 +16,7 @@ import {
   Wrench,
   ListTodo,
   LogOut,
+  Wallet,
 } from "lucide-react";
 
 import { EriksmindeLogo } from "./eriksminde-logo";
@@ -48,6 +49,7 @@ const sections: Section[] = [
       { label: "Årsresultat", to: "/oekonomi", icon: BarChart3 },
       { label: "Fakturakladder", to: "/fakturakladder", icon: FileText },
       { label: "Budget", to: "/budget", icon: Calculator },
+      { label: "Likviditet", to: "/likviditet", icon: Wallet },
     ],
   },
   {

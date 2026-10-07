@@ -16,6 +16,10 @@ export type AmortizationYear = {
 };
 
 export function calcLoan(loan: BudgetLoan): LoanCalc {
+  if (loan.monthly_payment != null && loan.monthly_payment > 0) {
+    const monthly = loan.monthly_payment;
+    return { annualPayment: monthly * 12, monthlyPayment: monthly, totalInterest: 0, totalPaid: monthly * loan.term_months };
+  }
   const P = loan.principal;
   const r = loan.interest_rate; // annual decimal
   const n = loan.term_months;

@@ -37,6 +37,7 @@ export type BudgetLoan = {
   start_date: string | null;
   notes: string | null;
   sort_order: number;
+  monthly_payment: number | null;
 };
 
 export type ScenarioBundle = {
@@ -119,6 +120,7 @@ export const getBudgetByYear = createServerFn({ method: "GET" })
         principal: Number(r.principal ?? 0),
         interest_rate: Number(r.interest_rate ?? 0),
         term_months: Number(r.term_months ?? 0),
+        monthly_payment: r.monthly_payment != null ? Number(r.monthly_payment) : null,
       })) as BudgetLoan[],
     };
   });
@@ -303,6 +305,7 @@ const loanInput = z.object({
   start_date: z.string().nullable(),
   notes: z.string().trim().max(2000).nullable(),
   sort_order: z.number().int().default(0),
+  monthly_payment: z.number().min(0).nullable().optional(),
 });
 
 export const createLoan = createServerFn({ method: "POST" })

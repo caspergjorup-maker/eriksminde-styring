@@ -70,6 +70,7 @@ export type Database = {
           id: string
           interest_rate: number
           loan_type: string
+          monthly_payment: number | null
           name: string
           notes: string | null
           principal: number
@@ -84,6 +85,7 @@ export type Database = {
           id?: string
           interest_rate?: number
           loan_type?: string
+          monthly_payment?: number | null
           name: string
           notes?: string | null
           principal?: number
@@ -98,6 +100,7 @@ export type Database = {
           id?: string
           interest_rate?: number
           loan_type?: string
+          monthly_payment?: number | null
           name?: string
           notes?: string | null
           principal?: number

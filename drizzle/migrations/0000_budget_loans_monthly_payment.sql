@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_loans ADD COLUMN monthly_payment numeric; COMMENT ON COLUMN public.budget_loans.monthly_payment IS 'Valgfri fast månedlig ydelse; tilsidesætter beregning ud fra hovedstol/rente/løbetid';

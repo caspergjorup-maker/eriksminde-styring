@@ -159,7 +159,7 @@ function JagtlejePage() {
   const recordOpen = creatingRecord || editingRecord != null;
 
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto space-y-8">
+    <div className="px-6 py-6 w-full mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Jagtleje</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Jagtlejeaftaler og afskydningsrapporter</p>

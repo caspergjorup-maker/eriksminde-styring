@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { parseMatrikelGml } from "@/lib/matrikel-gml";
 
 type WfsFeature = {
   type: "Feature";
@@ -14,14 +17,30 @@ type WfsCollection = {
 export const Route = createFileRoute("/api/matrikel")({
   server: {
     handlers: {
-      GET: async () => {
-        // DAWA (Dataforsyningen) leverer matrikelkortet gratis som GeoJSON
-        // uden authentication. Datafordelerens WFS understøtter ikke
-        // CQL/GeoJSON pålideligt for Jordstykke_Gaeldende.
-        const wfsUrl = new URL("https://api.dataforsyningen.dk/jordstykker");
-        wfsUrl.searchParams.set("ejerlavkode", "850551"); // Harre By, Harre
-        wfsUrl.searchParams.set("format", "geojson");
-        wfsUrl.searchParams.set("srid", "4326");
+      GET: async ({ request }) => {
+        const authorization = request.headers.get("Authorization");
+        if (!authorization?.startsWith("Bearer ")) return Response.json({ error: "Log ind for at hente matrikler." }, { status: 401 });
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+        const apiKey = process.env.DATAFORDELER_API_KEY;
+        if (!url || !key || !apiKey) return Response.json({ error: "Adgang til matrikeltjenesten mangler." }, { status: 503 });
+        const supabase = createClient<Database>(url, key, {
+          global: { headers: { Authorization: authorization } },
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data: auth, error: authError } = await supabase.auth.getUser(authorization.slice(7));
+        if (authError || !auth.user) return Response.json({ error: "Log ind igen for at hente matrikler." }, { status: 401 });
+
+        // DAWA is retired. The official replacement returns GML in longitude/latitude order.
+        const wfsUrl = new URL("https://wfs.datafordeler.dk/MATRIKLEN2/MatGaeldendeOgForeloebigWFS/1.0.0/WFS");
+        wfsUrl.searchParams.set("apikey", apiKey);
+        wfsUrl.searchParams.set("service", "WFS");
+        wfsUrl.searchParams.set("version", "2.0.0");
+        wfsUrl.searchParams.set("request", "GetFeature");
+        wfsUrl.searchParams.set("typenames", "mat:Jordstykke_Gaeldende");
+        wfsUrl.searchParams.set("srsName", "urn:ogc:def:crs:OGC::CRS84");
+        wfsUrl.searchParams.set("count", "500");
+        wfsUrl.searchParams.set("filter", '<fes:Filter xmlns:fes="http://www.opengis.net/fes/2.0"><fes:PropertyIsEqualTo><fes:ValueReference>mat:ejerlavskode</fes:ValueReference><fes:Literal>850551</fes:Literal></fes:PropertyIsEqualTo></fes:Filter>');
 
         const TARGET_PARCELS = new Set([
           "57", "2cc", "2cb", "2a", "2cf", "2g", "58", "1m", "2cd", "3i", "45b",
@@ -29,24 +48,24 @@ export const Route = createFileRoute("/api/matrikel")({
 
         let geojson: WfsCollection;
         try {
-          const wfsRes = await fetch(wfsUrl.toString());
+          const wfsRes = await fetch(wfsUrl.toString(), { signal: AbortSignal.timeout(30_000) });
           const text = await wfsRes.text();
           if (!wfsRes.ok) {
-            console.error("DAWA matrikel error", wfsRes.status, text.slice(0, 500));
+            console.error("Datafordeler matrikel status", wfsRes.status);
             return Response.json(
-              { error: "Matrikel-API fejl", status: wfsRes.status },
+              { error: "Datafordeleren kunne ikke levere matrikelkortet.", status: wfsRes.status },
               { status: 502 },
             );
           }
-          geojson = JSON.parse(text) as WfsCollection;
+          geojson = parseMatrikelGml(text) as WfsCollection;
         } catch (err) {
-          console.error("DAWA fetch failed", err);
+          // Never log a fetch error containing the credential-bearing upstream URL.
+          console.error("Datafordeler matrikel request failed", err instanceof Error ? err.name : "UnknownError");
           return Response.json({ error: "Matrikel-API kunne ikke kontaktes" }, { status: 502 });
         }
 
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: parcels } = await supabaseAdmin
+        const { data: parcels, error: parcelError } = await supabase
           .from("parcels")
           .select(
             `id, matrikel_id, ejerlav, use_type, net_area_ha, field_area_ha, notes, custom_geometry,
@@ -56,6 +75,7 @@ export const Route = createFileRoute("/api/matrikel")({
                leaseholder:leaseholder_id ( name, phone, email )
              )`,
           );
+        if (parcelError) return Response.json({ error: "Matrikeloplysninger kunne ikke hentes." }, { status: 500 });
 
         type FieldRec = {
           id: string;
@@ -105,7 +125,7 @@ export const Route = createFileRoute("/api/matrikel")({
             // field link still produces one feature with parcel.field = null,
             // so the matrikel view always renders the matrikel.
             for (const match of matches) {
-              const geom = match.custom_geometry ?? f.geometry;
+              const geom = f.geometry;
               const links = (match.field_parcels ?? [])
                 .map((fp) => fp.fields)
                 .filter((x): x is FieldRec => !!x);
@@ -146,13 +166,14 @@ export const Route = createFileRoute("/api/matrikel")({
         geojson.features = outputFeatures;
 
         // Also load all fields so orphan fields (no parcel link) still appear in the UI
-        const { data: allFields } = await supabaseAdmin
+        const { data: allFields, error: fieldError } = await supabase
           .from("fields")
           .select("id, name, use_type, notes, lease_area_ha, lease_price_per_ha, soil_type, is_drained, has_irrigation, eligible_area_ha, non_eligible_area_ha, geometry");
+        if (fieldError) return Response.json({ error: "Markoplysninger kunne ikke hentes." }, { status: 500 });
 
         return Response.json(
           { ...geojson, allFields: allFields ?? [] },
-          { headers: { "Cache-Control": "private, max-age=60" } },
+          { headers: { "Cache-Control": "private, no-store" } },
         );
       },
     },

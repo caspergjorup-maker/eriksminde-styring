@@ -4,3 +4,7 @@
 ## Authentication
 - Return broker OAuth to the public `/auth` page, verify the session after an in-place login, and navigate to `/overblik` only afterward so both popup and full-page logins reach the protected app.
 - Keep one root identity-change subscription and defer router/cache invalidation outside its callback so session updates stay current without re-entering the auth lock or refetching on sign-out.
+
+## Cadastral data
+- Load official parcel boundaries from Datafordeler Matriklen2 WFS as CRS84 GML, parsed with fast-xml-parser; DAWA jordstykker is retired and user-drawn geometry must never replace parcel boundaries.
+- Both parcel tables and the map use the shared bearer-authenticated request helper; the server verifies the caller and reads app metadata with the user's RLS-scoped client rather than admin access.

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { geometryAreaHa } from "@/lib/geo-area";
+import { requestMatrikel } from "@/lib/matrikel-request";
 
 
 export type UseType = "omdrift" | "skov" | "gaard";
@@ -106,9 +107,7 @@ type AllFieldRow = {
 
 
 async function fetchMatrikel(): Promise<{ fields: FieldRow[]; matrikler: MatrikelRow[] }> {
-  const r = await fetch("/api/matrikel");
-  if (!r.ok) throw new Error(`Kunne ikke hente matrikeldata (HTTP ${r.status})`);
-  const gj = (await r.json()) as { features: Feature[]; allFields?: AllFieldRow[] };
+  const gj = (await requestMatrikel()) as { features: Feature[]; allFields?: AllFieldRow[] };
 
   const byField = new Map<string, Feature[]>();
   const matrikelByKey = new Map<string, MatrikelRow>();

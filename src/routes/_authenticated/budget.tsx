@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil, Plus, Trash2, CalendarDays, Copy, MoreHorizontal } from "lucide-react";
+import { Pencil, Plus, Trash2, CalendarDays, Copy, MoreHorizontal, List } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -140,15 +140,15 @@ function EditableNumber({ value, onCommit }: { value: number; onCommit: (n: numb
     );
   }
   return (
-    <button
+    <Button
       type="button"
       title="Klik for at rette"
-      className="w-full text-right tabular-nums rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)]"
+      variant="ghost" className="h-auto w-full justify-end text-right tabular-nums rounded-none px-2 py-1 cursor-text font-normal hover:bg-muted focus:ring-ring"
       onClick={() => { setText(String(Math.round(value))); setEditing(true); }}
       onFocus={() => { setText(String(Math.round(value))); setEditing(true); }}
     >
       {formatDKK(value)}
-    </button>
+    </Button>
   );
 }
 
@@ -175,14 +175,14 @@ function EditableText({ value, onCommit, placeholder }: { value: string; onCommi
     );
   }
   return (
-    <button
+    <Button
       type="button"
       title="Klik for at rette"
       className="w-full text-left rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border"
       onClick={() => { setText(value); setEditing(true); }}
     >
       {value || <span className="text-muted-foreground">{placeholder ?? "—"}</span>}
-    </button>
+    </Button>
   );
 }
 
@@ -191,7 +191,7 @@ function DistributionMenu({ total, onApply }: { total: number; onApply: (months:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="ghost" title="Fordel på måneder">
+        <Button size="icon" className="h-8 w-8" variant="ghost" title="Fordel på måneder">
           <CalendarDays className="h-3.5 w-3.5" />
         </Button>
       </DropdownMenuTrigger>
@@ -223,7 +223,7 @@ function DistributionMenu({ total, onApply }: { total: number; onApply: (months:
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600" onSelect={() => onApply(Array(12).fill(0))}>
+        <DropdownMenuItem className="text-destructive" onSelect={() => onApply(Array(12).fill(0))}>
           Nulstil alle måneder
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -268,6 +268,14 @@ function QuickAddRow({ colSpan, pending, onAdd }: { colSpan: number; pending: bo
 }
 
 export const Route = createFileRoute("/_authenticated/budget")({
+  head: () => ({ meta: [
+    { title: "Budget | Eriksminde" },
+    { name: "description", content: "Eriksmindes årsbudget med månedlige indtægter, driftsudgifter, låneydelser og resultat." },
+    { property: "og:title", content: "Budget | Eriksminde" },
+    { property: "og:description", content: "Overblik over Eriksmindes budget og resultat måned for måned." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: BudgetPage,
 });
 
@@ -310,6 +318,21 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
+const MONTHLY_TABLE_CLASS = "table-fixed min-w-[1800px] [&_thead]:bg-muted/60 [&_th]:border-r [&_th]:border-border/50 [&_td]:border-r [&_td]:border-border/40 [&_td]:tabular-nums";
+
+function MonthlyColumns() {
+  return (
+    <colgroup>
+      <col className="w-64" />
+      <col className="w-44" />
+      {MONTHS.map((month) => <col key={month} />)}
+      <col className="w-32" />
+      <col className="w-32" />
+    </colgroup>
+  );
+}
+
+
 function BudgetPage() {
   const qc = useQueryClient();
   const fetchYears = useServerFn(listBudgetYears);
@@ -320,7 +343,7 @@ function BudgetPage() {
   const deleteYearFn = useServerFn(deleteBudgetYear);
 
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [monthlyView, setMonthlyView] = useState(false);
+  const [monthlyView, setMonthlyView] = useState(true);
   const [copyOpen, setCopyOpen] = useState(false);
 
   const yearsQ = useQuery({
@@ -335,7 +358,10 @@ function BudgetPage() {
 
   const bundleQ = useQuery({
     queryKey: ["budget-year", currentYear],
-    queryFn: () => fetchBudget({ data: { year: currentYear! } }),
+    queryFn: () => {
+      if (currentYear === null) throw new Error("Vælg et budgetår.");
+      return fetchBudget({ data: { year: currentYear } });
+    },
     enabled: currentYear !== null,
   });
 
@@ -401,8 +427,8 @@ function BudgetPage() {
     <div className="px-6 py-6 w-full mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Budget</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Drift og finansiering — ét budget pr. år</p>
+          <h1 className="text-2xl font-semibold text-brand-900">Budget</h1>
+          
         </div>
         <div className="flex items-center gap-2">
           {years.length > 0 && (
@@ -451,23 +477,28 @@ function BudgetPage() {
             onDelete={() => deleteYearMut.mutate(scenario.year)}
           />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Kpi label="Indtægter / år" value={formatDKK(totalIncome)} sub={`${formatDKK(totalIncome / 12)} / md`} tone="green" />
-            <Kpi label="Driftsudgifter / år" value={formatDKK(totalExpense)} sub={`${formatDKK(totalExpense / 12)} / md`} tone="red" />
-            <Kpi label="Låneydelser / år" value={formatDKK(totalLoanPayments)} sub={`${formatDKK(totalLoanPayments / 12)} / md`} tone="red" />
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border border-y border-border py-4">
+            <Kpi label="Indtægter / år" value={formatDKK(totalIncome)} tone="green" />
+            <Kpi label="Driftsudgifter / år" value={formatDKK(totalExpense)} tone="red" />
+            <Kpi label="Låneydelser / år" value={formatDKK(totalLoanPayments)} tone="red" />
             <Kpi
               label="Resultat / år"
               value={formatDKK(result)}
-              sub={`${formatDKK(result / 12)} / md`}
               tone={result >= 0 ? "green" : "red"}
               emphasise
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="monthly-toggle" className="text-sm">Vis månedsfordeling</Label>
-            <Switch id="monthly-toggle" checked={monthlyView} onCheckedChange={setMonthlyView} />
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-medium text-muted-foreground">Budget {scenario.year} · Beløb i kr.</h2>
+            <div role="group" aria-label="Budgetvisning" className="flex gap-1 rounded-md border border-border p-1">
+              <Button size="sm" variant={monthlyView ? "secondary" : "ghost"} aria-pressed={monthlyView} onClick={() => setMonthlyView(true)}>
+                <CalendarDays className="h-4 w-4" /> Månedsvisning
+              </Button>
+              <Button size="sm" variant={!monthlyView ? "secondary" : "ghost"} aria-pressed={!monthlyView} onClick={() => setMonthlyView(false)}>
+                <List className="h-4 w-4" /> Årsvisning
+              </Button>
+            </div>
           </div>
 
           <LinesTable
@@ -488,18 +519,21 @@ function BudgetPage() {
 
           <LoansSection scenarioId={scenario.id} loans={loans} year={scenario.year} />
 
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="p-4 pb-2">
-              <h2 className="font-semibold text-[var(--brand-900)]">Resultat pr. måned</h2>
+          <div className="border-t border-border">
+            <div className="py-3">
+              <h2 className="font-semibold text-brand-900">Resultat pr. måned</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Indtægter − driftsudgifter − låneydelser</p>
             </div>
             <div className="overflow-x-auto">
-              <Table className="table-fixed">
+              <Table className={MONTHLY_TABLE_CLASS} aria-label="Resultat pr. måned">
+                <MonthlyColumns />
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-64" />
+                    <TableHead>Post</TableHead>
+                    <TableHead aria-label="Kategori" />
                     {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
-                    <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
+                    <TableHead className="text-right font-semibold bg-muted">I alt</TableHead>
+                    <TableHead aria-label="Handlinger" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -515,12 +549,13 @@ function BudgetPage() {
                       { label: "Resultat", values: resultM, bold: true, signed: true },
                     ];
                     return rows.map((r) => (
-                      <TableRow key={r.label}>
+                      <TableRow key={r.label} className={r.bold ? "bg-accent font-semibold border-t-2 border-border" : ""}>
                         <TableCell className={r.bold ? "font-semibold" : ""}>{r.label}</TableCell>
+                        <TableCell />
                         {r.values.map((v, m) => (
                           <TableCell key={m} className="text-right tabular-nums">
                             {v !== 0 ? (
-                              <span className={r.signed && v < 0 ? "text-red-700" : r.bold && v >= 0 ? "text-emerald-700" : r.bold ? "text-red-700" : ""}>
+                              <span className={r.signed && v < 0 ? "text-destructive" : r.bold && v >= 0 ? "text-brand-700" : r.bold ? "text-destructive" : ""}>
                                 {r.signed && v > 0 ? "+" : ""}{formatDKK(v)}
                               </span>
                             ) : (
@@ -532,6 +567,7 @@ function BudgetPage() {
                           {r.signed && r.values.reduce((s, x) => s + x, 0) >= 0 ? "+" : ""}
                           {formatDKK(r.values.reduce((s, x) => s + x, 0))}
                         </TableCell>
+                        <TableCell />
                       </TableRow>
                     ));
                   })()}
@@ -541,22 +577,7 @@ function BudgetPage() {
           </div>
 
 
-          <div className="bg-card border-2 border-[var(--brand-500)] rounded-xl p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Årsresultat (indtægter − drift − låneydelser)</div>
-                <div className={`text-3xl font-semibold ${result >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                  {formatDKK(result)}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">Pr. måned</div>
-                <div className={`text-xl font-semibold ${result >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                  {formatDKK(result / 12)}
-                </div>
-              </div>
-            </div>
-          </div>
+
         </>
       )}
 
@@ -587,9 +608,9 @@ function Kpi({
   tone: "green" | "red";
   emphasise?: boolean;
 }) {
-  const color = tone === "green" ? "text-emerald-700" : "text-red-700";
+  const color = tone === "green" ? "text-brand-700" : "text-destructive";
   return (
-    <div className={`bg-card border ${emphasise ? "border-[var(--brand-500)]" : "border-border"} rounded-xl p-4`}>
+    <div className={`px-4 ${emphasise ? "bg-accent/40" : ""}`}>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`mt-1 text-xl font-semibold ${color}`}>{value}</div>
       {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
@@ -612,9 +633,9 @@ function ScenarioHeader({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-4">
+    <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <div className="text-lg font-semibold text-[var(--brand-900)]">
+        <div className="text-lg font-semibold text-brand-900">
           {scenario.name} <span className="text-muted-foreground font-normal">· {scenario.year}</span>
         </div>
         {scenario.notes && <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{scenario.notes}</div>}
@@ -630,7 +651,7 @@ function ScenarioHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="text-red-600" onSelect={() => setConfirmDelete(true)}>
+            <DropdownMenuItem className="text-destructive" onSelect={() => setConfirmDelete(true)}>
               <Trash2 className="h-4 w-4 mr-2" /> Slet budget {scenario.year}
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -768,16 +789,17 @@ function LinesTable({
     l.monthly_override ? l.monthly_override[m] ?? 0 : l.annual_amount / 12;
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 pb-2">
-        <h2 className="font-semibold text-[var(--brand-900)]">{title}</h2>
+    <div className="border-t border-border">
+      <div className="flex items-center justify-between py-3">
+        <h2 className="font-semibold text-brand-900">{title}</h2>
         <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4 mr-1" /> Ny linje
         </Button>
       </div>
 
       <div className="overflow-x-auto">
-        <Table className="table-fixed">
+        <Table className={monthlyView ? MONTHLY_TABLE_CLASS : "table-fixed"} aria-label={title}>
+          {monthlyView && <MonthlyColumns />}
           <TableHeader>
             <TableRow>
               <TableHead className="w-64">Post</TableHead>
@@ -834,7 +856,7 @@ function LinesTable({
                 {monthlyView ? (
                   <>
                     {months.map((v, m) => (
-                      <TableCell key={m} className="text-right text-sm p-1 min-w-20">
+                      <TableCell key={m} className="text-right text-sm px-0 py-1">
                         <EditableNumber value={v} onCommit={(n) => setMonth(m, n)} />
                       </TableCell>
                     ))}
@@ -858,8 +880,8 @@ function LinesTable({
                 )}
                 <TableCell className="text-right whitespace-nowrap">
                   <DistributionMenu total={months.reduce((s, x) => s + x, 0)} onApply={applyDist} />
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" className="h-8 w-8" variant="ghost" title="Rediger" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" className="h-8 w-8" variant="ghost" title="Slet" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </TableCell>
               </TableRow>
               );
@@ -1076,19 +1098,21 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
   const totalAnnual = loans.reduce((s, l) => s + loanYearTotal(l, year), 0);
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 pb-2">
-        <h2 className="font-semibold text-[var(--brand-900)]">Lån & finansiering</h2>
+    <div className="border-t border-border">
+      <div className="flex items-center justify-between py-3">
+        <h2 className="font-semibold text-brand-900">Lån & finansiering</h2>
         <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4 mr-1" /> Nyt lån
         </Button>
       </div>
 
       <div className="overflow-x-auto">
-        <Table className="table-fixed">
+        <Table className={MONTHLY_TABLE_CLASS} aria-label="Lån & finansiering">
+          <MonthlyColumns />
           <TableHeader>
             <TableRow>
-              <TableHead className="w-64">Navn</TableHead>
+              <TableHead>Navn</TableHead>
+              <TableHead>Kategori</TableHead>
               {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
               <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
               <TableHead className="w-24 text-right">Handling</TableHead>
@@ -1099,33 +1123,34 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
               const months = MONTHS.map((_, m) => loanMonthly(l, year, m));
               return (
                 <TableRow key={l.id}>
-                  <TableCell className="font-medium">{l.name}</TableCell>
+                  <TableCell className="font-medium break-words">{l.name}</TableCell>
+                  <TableCell className="text-muted-foreground">Finansiering</TableCell>
                   {months.map((v, m) => (
                     <TableCell key={m} className="text-right tabular-nums">
                       {v !== 0 ? formatDKK(v) : <span className="text-muted-foreground">–</span>}
                     </TableCell>
                   ))}
                   <TableCell className="text-right tabular-nums font-medium">{formatDKK(loanYearTotal(l, year))}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap">
                     {l.monthly_payment == null && l.principal > 0 && (
-                      <Button size="sm" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                      <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" className="h-8 w-8" variant="ghost" title="Rediger" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" className="h-8 w-8" variant="ghost" title="Slet" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </TableCell>
                 </TableRow>
               );
             })}
             {loans.length === 0 && (
               <TableRow>
-                <TableCell colSpan={14} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
+                <TableCell colSpan={16} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
               </TableRow>
             )}
           </TableBody>
           {loans.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell className="font-semibold">I alt</TableCell>
+                <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
                 {MONTHS.map((_, m) => (
                   <TableCell key={m} className="text-right tabular-nums font-semibold">
                     {formatDKK(loans.reduce((s, l) => s + loanMonthly(l, year, m), 0))}

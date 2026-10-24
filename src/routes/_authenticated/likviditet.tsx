@@ -47,7 +47,10 @@ function LiquidityPage() {
     const b = bundles[i]?.data;
     yearOpening[y] = run;
     if (!b) return;
+    // Kurven starter i oktober 2026 (overtagelsen) — ingen punkter før.
+    const from = y === 2026 ? 9 : 0;
     monthlyNet(y, b.lines, b.loans).forEach((n, m) => {
+      if (m < from) return;
       run += n;
       points.push({ label: `${LIQ_MONTHS[m]} ${String(y).slice(2)}`, saldo: Math.round(run) });
     });
@@ -66,7 +69,7 @@ function LiquidityPage() {
           <p className="text-sm text-muted-foreground mt-0.5">Penge ind og ud — baseret på budgetterne</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Startbeløb {years[0] ? `1. jan ${years[0]}` : ""}:</span>
+          <span className="text-muted-foreground">Startbeløb {years[0] ? (years[0] === 2026 ? "1. okt" : "1. jan") + " " + years[0] : ""}:</span>
           <OpeningBalance value={opening} onCommit={setOpening} />
         </div>
       </div>

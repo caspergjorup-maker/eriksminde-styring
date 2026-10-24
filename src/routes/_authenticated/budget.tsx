@@ -178,7 +178,8 @@ function EditableText({ value, onCommit, placeholder }: { value: string; onCommi
     <Button
       type="button"
       title="Klik for at rette"
-      className="w-full text-left rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border"
+      variant="ghost"
+      className="h-auto w-full justify-start whitespace-normal text-left rounded px-1.5 py-1 cursor-text font-medium hover:bg-muted hover:ring-1 hover:ring-border"
       onClick={() => { setText(value); setEditing(true); }}
     >
       {value || <span className="text-muted-foreground">{placeholder ?? "—"}</span>}

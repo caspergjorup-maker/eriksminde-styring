@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/eriksminde-logo.png.asset.json";
+import logoAsset from "@/assets/eriksminde-logo.svg.asset.json";
 
 export function EriksmindeLogo({ className = "" }: { className?: string }) {
   return (
@@ -11,4 +11,3 @@ export function EriksmindeLogo({ className = "" }: { className?: string }) {
     </div>
   );
 }
-

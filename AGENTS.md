@@ -1,5 +1,6 @@
 ## Budget calculations
 - Keep loan month eligibility in `loanMonthly` and use it for annual totals, monthly results, liquidity, and loan-dialog estimates so all views agree.
+- Budget monthly tables share one column definition, including reserved category and action columns, so months and totals align across all sections.
 
 ## Authentication
 - Return broker OAuth to the public `/auth` page, verify the session after an in-place login, and navigate to `/overblik` only afterward so both popup and full-page logins reach the protected app.

@@ -117,24 +117,24 @@ export function BudgetLiquidity({
         </div>
       </div>
 
-      {/* Mini søjlediagram over netto cashflow */}
-      <div className="px-4 pt-2">
-        <div className="grid grid-cols-12 gap-1 items-end h-24 border-b border-border">
-          {net.map((n, m) => (
-            <div key={m} className="flex flex-col items-center justify-end h-full gap-0.5" title={`${MONTHS[m]}: ${formatDKK(n)}`}>
-              <div
-                className={`w-full max-w-10 rounded-sm ${n >= 0 ? "bg-emerald-500/70" : "bg-red-500/70"}`}
-                style={{ height: `${Math.max(2, (Math.abs(n) / maxAbs) * 100)}%` }}
-              />
-              <span className="text-[10px] text-muted-foreground">{MONTHS[m]}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
+            {/* The bars share the table's actual month columns, including horizontal scrolling. */}
+            <TableRow className="hover:bg-transparent">
+              <TableHead />
+              {net.map((n, m) => (
+                <TableHead key={m} className="h-28 align-bottom pb-0 pt-3" aria-label={`${MONTHS[m]} netto cashflow: ${formatDKK(n)}`}>
+                  <div className="flex h-24 items-end justify-end" title={`${MONTHS[m]}: ${formatDKK(n)}`}>
+                    <div
+                      className={`w-10 max-w-full rounded-t-sm ${n >= 0 ? "bg-success/70" : "bg-destructive/70"}`}
+                      style={{ height: `${Math.max(2, (Math.abs(n) / maxAbs) * 100)}%` }}
+                    />
+                  </div>
+                </TableHead>
+              ))}
+              <TableHead />
+            </TableRow>
             <TableRow>
               <TableHead className="min-w-44"></TableHead>
               {MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)}

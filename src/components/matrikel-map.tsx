@@ -12,6 +12,7 @@ import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import { formatDKK, formatDate } from "@/lib/format";
 import { saveFieldGeometry, createField } from "@/lib/fields-geometry.functions";
+import { requestMatrikel } from "@/lib/matrikel-request";
 
 
 type UseType = "omdrift" | "skov" | "gaard";
@@ -198,11 +199,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
       maxZoom: 19,
     }).addTo(map);
 
-    fetch("/api/matrikel")
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
+    requestMatrikel()
       .then((geojson: { type: "FeatureCollection"; features: ParcelFeature[]; allFields?: Array<{ id: string; name: string; use_type: UseType | null; geometry: Polygon | MultiPolygon | null; lease_area_ha: number | null; lease_price_per_ha: number | null; soil_type: string | null; is_drained: boolean | null; has_irrigation: boolean | null; eligible_area_ha: number | null; non_eligible_area_ha: number | null; notes: string | null }> }) => {
         if (ignored) return;
         rawGeojson.current = geojson;
@@ -488,7 +485,7 @@ export const MatrikelMap = forwardRef<MatrikelMapHandle, Props>(function Matrike
         if (ignored) return;
         console.error(err);
         setLoading(false);
-        setError("Kunne ikke hente matrikeldata fra Datafordeler.");
+        setError(err instanceof Error ? err.message : "Kunne ikke hente matrikeldata fra Datafordeler.");
       });
 
     return () => {

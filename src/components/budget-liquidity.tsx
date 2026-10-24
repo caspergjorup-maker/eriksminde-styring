@@ -21,6 +21,8 @@ export function lineMonthly(l: BudgetLine, m: number): number {
 
 /** Månedlig ydelse for et lån i en given måned af året — 0 før startdato og efter løbetidens udløb. */
 export function loanMonthly(loan: BudgetLoan, year: number, m: number): number {
+  // Ejerskabet starter 1. november 2026, uanset lånets startdato.
+  if (year === 2026 && m < 10) return 0;
   const { monthlyPayment } = calcLoan(loan);
   if (monthlyPayment <= 0) return 0;
   if (loan.start_date) {

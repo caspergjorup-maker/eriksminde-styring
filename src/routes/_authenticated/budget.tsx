@@ -1058,7 +1058,7 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
     }) => createFn({ data: {
       ...data,
       principal: 0, interest_rate: 0, term_months: 0, loan_type: "standing" as LoanType,
-      start_date: null, notes: null,
+      start_date: `${year}-${year === 2026 ? "11" : "01"}-01`, notes: null,
     } }),
     onSuccess: () => { toast.success("Lån tilføjet"); invalidate(); setCreating(false); },
     onError: (e: Error) => toast.error(e.message),
@@ -1144,6 +1144,7 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
           open
           onOpenChange={setCreating}
           title="Nyt lån"
+          year={year}
           initial={null}
           onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, sort_order: loans.length, ...v })}
         />
@@ -1154,6 +1155,7 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
           open
           onOpenChange={(v) => !v && setEditing(null)}
           title="Rediger lån"
+          year={year}
           initial={editing}
           onSubmit={(v) => updateMut.mutate({ id: editing.id, ...v })}
         />
@@ -1181,12 +1183,14 @@ function LoanDialog({
   open,
   onOpenChange,
   title,
+  year,
   initial,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
+  year: number;
   initial: BudgetLoan | null;
   onSubmit: (v: { name: string; monthly_payment: number }) => void;
 }) {
@@ -1196,6 +1200,14 @@ function LoanDialog({
   );
 
   const monthlyNum = Number(monthly) || 0;
+  const annualPayment = loanYearTotal({
+    ...(initial ?? {
+      id: "", scenario_id: "", name: "", principal: 0, interest_rate: 0,
+      term_months: 0, loan_type: "standing", notes: null, sort_order: 0,
+      start_date: `${year}-${year === 2026 ? "11" : "01"}-01`,
+    }),
+    monthly_payment: monthlyNum,
+  }, year);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1205,7 +1217,7 @@ function LoanDialog({
           <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (Nykredit)" /></div>
           <div><Label>Månedlig ydelse (kr.)</Label><Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="Fx 18.965" /></div>
           <div className="rounded-lg bg-muted p-3 text-sm">
-            <div className="flex justify-between"><span>Årlig ydelse</span><span className="tabular-nums font-semibold">{formatDKK(monthlyNum * 12)}</span></div>
+            <div className="flex justify-between"><span>Ydelse i {year}</span><span className="tabular-nums font-semibold">{formatDKK(annualPayment)}</span></div>
           </div>
         </div>
         <DialogFooter>

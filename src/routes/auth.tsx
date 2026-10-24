@@ -8,6 +8,16 @@ import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Log ind — Eriksminde" },
+      { name: "description", content: "Log ind på Eriksminde med din Google-konto." },
+      { property: "og:title", content: "Log ind — Eriksminde" },
+      { property: "og:description", content: "Log ind på Eriksminde med din Google-konto." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AuthPage,
 });
 
@@ -17,9 +27,11 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/overblik" });
+      if (active && data.user) void navigate({ to: "/overblik", replace: true });
     });
+    return () => { active = false; };
   }, [navigate]);
 
   async function handleGoogleSignIn() {
@@ -27,9 +39,15 @@ function AuthPage() {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/overblik",
+        redirect_uri: window.location.origin + "/auth",
       });
       if (result?.error) throw result.error;
+      if (result?.redirected) return;
+      const { data, error: sessionError } = await supabase.auth.getUser();
+      if (sessionError || !data.user) {
+        throw new Error("Login blev ikke gennemført. Prøv igen med Google.");
+      }
+      await navigate({ to: "/overblik", replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Noget gik galt");
     } finally {

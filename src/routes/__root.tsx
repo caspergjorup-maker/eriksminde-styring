@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -87,8 +88,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Eriksminde" },
       { name: "twitter:description", content: "Gårdstyring for Eriksminde: forpagtning, bygningsudlejning, halmsalg, skovdrift og jagtleje." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6d4c5df2-f275-4168-81c8-9677c3a65053/id-preview-3d0d78b9--c1b60405-68e1-475a-b4f8-f9714ca37900.lovable.app-1781130700099.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6d4c5df2-f275-4168-81c8-9677c3a65053/id-preview-3d0d78b9--c1b60405-68e1-475a-b4f8-f9714ca37900.lovable.app-1781130700099.png" },
     ],
     links: [
       {
@@ -120,6 +119,25 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Defer router work until Supabase has released its session lock.
+    const pending = new Set<ReturnType<typeof setTimeout>>();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      const timer = setTimeout(() => {
+        pending.delete(timer);
+        void router.invalidate();
+        if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
+      }, 0);
+      pending.add(timer);
+    });
+    return () => {
+      subscription.unsubscribe();
+      pending.forEach(clearTimeout);
+    };
+  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>

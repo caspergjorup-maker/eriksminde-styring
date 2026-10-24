@@ -1,3 +1,4 @@
+/// <reference types="bun" />
 import { describe, expect, test } from "bun:test";
 import type { BudgetLoan } from "../lib/budget.functions";
 import { loanMonthly, monthlyNet } from "./budget-liquidity";

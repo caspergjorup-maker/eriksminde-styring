@@ -130,3 +130,28 @@ function LiquidityPage() {
     </div>
   );
 }
+
+function DineroBankCard() {
+  const fn = useServerFn(getDineroBank);
+  const q = useQuery({ queryKey: ["dinero-bank"], queryFn: () => fn(), staleTime: 5 * 60_000 });
+  return (
+    <div className="bg-card border border-border rounded-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-semibold text-[var(--brand-900)]">Saldo i Dinero</h2>
+        {q.data && <span className="text-xs text-muted-foreground">{q.data.orgName} · bogført pr. {q.data.asOf}</span>}
+      </div>
+      {q.isLoading && <p className="text-sm text-muted-foreground">Henter fra Dinero…</p>}
+      {q.error && <p className="text-sm text-destructive">{(q.error as Error).message}</p>}
+      {q.data && (
+        <div className="flex flex-wrap gap-8">
+          {q.data.accounts.map((a) => (
+            <div key={a.number}>
+              <div className="text-xs text-muted-foreground">{a.name}</div>
+              <div className={`text-xl font-semibold tabular-nums ${a.balance < 0 ? "text-destructive" : ""}`}>{formatDKK(a.balance)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

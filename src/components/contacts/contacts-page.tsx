@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { syncContactsToDinero } from "@/lib/dinero.functions";
 import { toast } from "sonner";
 
 import {
@@ -94,6 +95,16 @@ export function ContactsPage({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const sync = useServerFn(syncContactsToDinero);
+  const syncMut = useMutation({
+    mutationFn: () => sync({ data: { kind } }),
+    onSuccess: (r) => {
+      toast.success(`Synkroniseret med Dinero: ${r.created} oprettet i Dinero, ${r.imported} hentet herind`);
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = data ?? [];
 
   return (
@@ -103,9 +114,14 @@ export function ContactsPage({
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">{title}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
+        <div className="flex gap-2">
+        <Button variant="outline" disabled={syncMut.isPending} onClick={() => syncMut.mutate()}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${syncMut.isPending ? "animate-spin" : ""}`} /> Synk med Dinero
+        </Button>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4 mr-1" /> Ny {kind === "suppliers" ? "leverandør" : "kontakt"}
         </Button>
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">

@@ -50,6 +50,7 @@ const sections: Section[] = [
       { label: "Fakturakladder", to: "/fakturakladder", icon: FileText },
       { label: "Budget", to: "/budget", icon: Calculator },
       { label: "Likviditet", to: "/likviditet", icon: Wallet },
+      { label: "Budget vs. bogført", to: "/bogfoert", icon: BarChart3 },
     ],
   },
   {

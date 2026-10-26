@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { getBudgetByYear, listBudgetYears } from "@/lib/budget.functions";
+import { getDineroBank } from "@/lib/dinero.functions";
 import { BudgetLiquidity, LIQ_MONTHS, OpeningBalance, monthlyNet } from "@/components/budget-liquidity";
 import { formatDKK } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,6 +74,8 @@ function LiquidityPage() {
           <OpeningBalance value={opening} onCommit={setOpening} />
         </div>
       </div>
+
+      <DineroBankCard />
 
       <div className="bg-card border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">

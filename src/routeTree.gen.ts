@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBogfoertRouteImport } from './routes/_authenticated/bogfoert'
 import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as AuthenticatedBygningerRouteImport } from './routes/_authenticated/bygninger'
 import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authenticated/dokumenter'
@@ -29,7 +30,6 @@ import { Route as AuthenticatedOverblikRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSkovRouteImport } from './routes/_authenticated/skov'
 import { Route as AuthenticatedVedligeholdRouteImport } from './routes/_authenticated/vedligehold'
 import { Route as ApiMatrikelRouteImport } from './routes/api/matrikel'
-import { Route as ApiDineroExportInvoiceRouteImport } from './routes/api/dinero/export-invoice'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -44,6 +44,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBogfoertRoute = AuthenticatedBogfoertRouteImport.update({
+  id: '/bogfoert',
+  path: '/bogfoert',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBudgetRoute = AuthenticatedBudgetRouteImport.update({
   id: '/budget',
@@ -134,15 +139,11 @@ const ApiMatrikelRoute = ApiMatrikelRouteImport.update({
   path: '/api/matrikel',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDineroExportInvoiceRoute = ApiDineroExportInvoiceRouteImport.update({
-  id: '/api/dinero/export-invoice',
-  path: '/api/dinero/export-invoice',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bogfoert': typeof AuthenticatedBogfoertRoute
   '/budget': typeof AuthenticatedBudgetRoute
   '/bygninger': typeof AuthenticatedBygningerRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
@@ -160,11 +161,11 @@ export interface FileRoutesByFullPath {
   '/skov': typeof AuthenticatedSkovRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bogfoert': typeof AuthenticatedBogfoertRoute
   '/budget': typeof AuthenticatedBudgetRoute
   '/bygninger': typeof AuthenticatedBygningerRoute
   '/dokumenter': typeof AuthenticatedDokumenterRoute
@@ -182,13 +183,13 @@ export interface FileRoutesByTo {
   '/skov': typeof AuthenticatedSkovRoute
   '/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/bogfoert': typeof AuthenticatedBogfoertRoute
   '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/bygninger': typeof AuthenticatedBygningerRoute
   '/_authenticated/dokumenter': typeof AuthenticatedDokumenterRoute
@@ -206,13 +207,13 @@ export interface FileRoutesById {
   '/_authenticated/skov': typeof AuthenticatedSkovRoute
   '/_authenticated/vedligehold': typeof AuthenticatedVedligeholdRoute
   '/api/matrikel': typeof ApiMatrikelRoute
-  '/api/dinero/export-invoice': typeof ApiDineroExportInvoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/bogfoert'
     | '/budget'
     | '/bygninger'
     | '/dokumenter'
@@ -230,11 +231,11 @@ export interface FileRouteTypes {
     | '/skov'
     | '/vedligehold'
     | '/api/matrikel'
-    | '/api/dinero/export-invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/bogfoert'
     | '/budget'
     | '/bygninger'
     | '/dokumenter'
@@ -252,12 +253,12 @@ export interface FileRouteTypes {
     | '/skov'
     | '/vedligehold'
     | '/api/matrikel'
-    | '/api/dinero/export-invoice'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/bogfoert'
     | '/_authenticated/budget'
     | '/_authenticated/bygninger'
     | '/_authenticated/dokumenter'
@@ -275,7 +276,6 @@ export interface FileRouteTypes {
     | '/_authenticated/skov'
     | '/_authenticated/vedligehold'
     | '/api/matrikel'
-    | '/api/dinero/export-invoice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -283,7 +283,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiMatrikelRoute: typeof ApiMatrikelRoute
-  ApiDineroExportInvoiceRoute: typeof ApiDineroExportInvoiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,6 +307,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/bogfoert': {
+      id: '/_authenticated/bogfoert'
+      path: '/bogfoert'
+      fullPath: '/bogfoert'
+      preLoaderRoute: typeof AuthenticatedBogfoertRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/budget': {
       id: '/_authenticated/budget'
@@ -428,17 +434,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMatrikelRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/dinero/export-invoice': {
-      id: '/api/dinero/export-invoice'
-      path: '/api/dinero/export-invoice'
-      fullPath: '/api/dinero/export-invoice'
-      preLoaderRoute: typeof ApiDineroExportInvoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBogfoertRoute: typeof AuthenticatedBogfoertRoute
   AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedBygningerRoute: typeof AuthenticatedBygningerRoute
   AuthenticatedDokumenterRoute: typeof AuthenticatedDokumenterRoute
@@ -458,6 +458,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBogfoertRoute: AuthenticatedBogfoertRoute,
   AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedBygningerRoute: AuthenticatedBygningerRoute,
   AuthenticatedDokumenterRoute: AuthenticatedDokumenterRoute,
@@ -484,7 +485,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiMatrikelRoute: ApiMatrikelRoute,
-  ApiDineroExportInvoiceRoute: ApiDineroExportInvoiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

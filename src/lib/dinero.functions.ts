@@ -139,7 +139,8 @@ export const createInvoiceDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => draftInput.parse(d))
   .handler(async ({ data, context }) => {
-    const vat = Math.round(data.amount_excl_vat * 25) / 100;
+    // Firmaet har kun momsfri salgskonto (1050) i Dinero.
+    const vat = 0;
     const { error } = await context.supabase.from("invoices").insert({
       ...data,
       vat_amount: vat,
@@ -182,7 +183,7 @@ export const exportInvoiceToDinero = createServerFn({ method: "POST" })
         Language: "da-DK",
         ShowLinesInclVat: false,
         ProductLines: [
-          { Description: inv.description ?? "Faktura", Quantity: 1, AccountNumber: 1000, Unit: "parts", BaseAmountValue: Number(inv.amount_excl_vat) },
+          { Description: inv.description ?? "Faktura", Quantity: 1, AccountNumber: 1050, Unit: "parts", BaseAmountValue: Number(inv.amount_excl_vat) },
         ],
       },
     });

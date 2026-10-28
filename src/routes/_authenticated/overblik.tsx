@@ -7,12 +7,24 @@ import {
   FileText,
   CalendarClock,
   ArrowRight,
+  Landmark,
 } from "lucide-react";
 
 import { getDashboardSummary } from "@/lib/dashboard.functions";
+import { getDineroBank } from "@/lib/dinero.functions";
 import { formatDKK, formatDate, formatNumber, daysUntil } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/overblik")({
+  head: () => ({
+    meta: [
+      { title: "Overblik — Eriksminde" },
+      { name: "description", content: "Overblik over Eriksmindes banksaldo, indtægter, lager og kommende opgaver." },
+      { property: "og:title", content: "Overblik — Eriksminde" },
+      { property: "og:description", content: "Overblik over Eriksmindes banksaldo, indtægter, lager og kommende opgaver." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DashboardPage,
 });
 
@@ -88,6 +100,12 @@ function contractKindToPath(kind: "land" | "building" | "hunting") {
 
 function DashboardPage() {
   const fetchSummary = useServerFn(getDashboardSummary);
+  const fetchBank = useServerFn(getDineroBank);
+  const bank = useQuery({
+    queryKey: ["dinero-bank"],
+    queryFn: () => fetchBank(),
+    staleTime: 5 * 60_000,
+  });
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: () => fetchSummary(),
@@ -104,7 +122,14 @@ function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
+        <MetricCard
+          icon={Landmark}
+          label="Saldo i banken"
+          value={bank.isLoading ? "…" : bank.error || !bank.data?.accounts.length ? "—" : formatDKK(bank.data.accounts.reduce((total, account) => total + account.balance, 0))}
+          sub={bank.error ? "Kunne ikke hente saldo fra Dinero" : bank.data ? bank.data.accounts.length ? `Bogført i Dinero pr. ${formatDate(bank.data.asOf)}` : "Ingen bankkonti i Dinero" : "Henter fra Dinero…"}
+          to="/likviditet"
+        />
         <MetricCard
           icon={TrendingUp}
           label="Realiseret indtægt år til dato"

@@ -2,13 +2,29 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { getBudgetByYear, listBudgetYears } from "@/lib/budget.functions";
 import { getDineroBank } from "@/lib/dinero.functions";
-import { BudgetLiquidity, LIQ_MONTHS, OpeningBalance, monthlyNet } from "@/components/budget-liquidity";
+import { BudgetLiquidity, OpeningBalance } from "@/components/budget-liquidity";
+import { MONTHS as LIQ_MONTHS, monthlyNet } from "@/lib/budget-math";
 import { formatDKK } from "@/lib/format";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/likviditet")({
   head: () => ({
@@ -16,7 +32,10 @@ export const Route = createFileRoute("/_authenticated/likviditet")({
       { title: "Likviditet — Eriksminde" },
       { name: "description", content: "Likviditet måned for måned på tværs af alle budgetår." },
       { property: "og:title", content: "Likviditet — Eriksminde" },
-      { property: "og:description", content: "Likviditet måned for måned på tværs af alle budgetår." },
+      {
+        property: "og:description",
+        content: "Likviditet måned for måned på tværs af alle budgetår.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -67,10 +86,14 @@ function LiquidityPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Likviditet</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Penge ind og ud — baseret på budgetterne</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Penge ind og ud — baseret på budgetterne
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Startbeløb {years[0] ? (years[0] === 2026 ? "1. okt" : "1. jan") + " " + years[0] : ""}:</span>
+          <span className="text-muted-foreground">
+            Startbeløb {years[0] ? (years[0] === 2026 ? "1. okt" : "1. jan") + " " + years[0] : ""}:
+          </span>
           <OpeningBalance value={opening} onCommit={setOpening} />
         </div>
       </div>
@@ -79,7 +102,9 @@ function LiquidityPage() {
 
       <div className="bg-card border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold text-[var(--brand-900)]">Likviditet over tid — alle budgetår</h2>
+          <h2 className="font-semibold text-[var(--brand-900)]">
+            Likviditet over tid — alle budgetår
+          </h2>
           {points.length > 0 && (
             <span className={`text-sm ${lowest < 0 ? "text-red-700" : "text-muted-foreground"}`}>
               Laveste punkt: {formatDKK(lowest)}
@@ -87,17 +112,31 @@ function LiquidityPage() {
           )}
         </div>
         {years.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-10 text-center">Der er endnu ingen budgetter.</p>
+          <p className="text-sm text-muted-foreground py-10 text-center">
+            Der er endnu ingen budgetter.
+          </p>
         ) : (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={points} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={60} />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+                  width={60}
+                />
                 <Tooltip formatter={(v: number) => formatDKK(v)} />
                 <ReferenceLine y={0} stroke="var(--destructive)" strokeDasharray="4 4" />
-                <Area type="monotone" dataKey="saldo" name="Likviditet" stroke="var(--brand-500)" fill="var(--brand-500)" fillOpacity={0.2} strokeWidth={2} />
+                <Area
+                  type="monotone"
+                  dataKey="saldo"
+                  name="Likviditet"
+                  stroke="var(--brand-500)"
+                  fill="var(--brand-500)"
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -107,10 +146,19 @@ function LiquidityPage() {
       {years.length > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Detaljer for år:</span>
-          <Select value={current !== null ? String(current) : ""} onValueChange={(v) => setSelected(Number(v))}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <Select
+            value={current !== null ? String(current) : ""}
+            onValueChange={(v) => setSelected(Number(v))}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -138,7 +186,11 @@ function DineroBankCard() {
     <div className="bg-card border border-border rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <h2 className="font-semibold text-[var(--brand-900)]">Saldo i Dinero</h2>
-        {q.data && <span className="text-xs text-muted-foreground">{q.data.orgName} · bogført pr. {q.data.asOf}</span>}
+        {q.data && (
+          <span className="text-xs text-muted-foreground">
+            {q.data.orgName} · bogført pr. {q.data.asOf}
+          </span>
+        )}
       </div>
       {q.isLoading && <p className="text-sm text-muted-foreground">Henter fra Dinero…</p>}
       {q.error && <p className="text-sm text-destructive">{(q.error as Error).message}</p>}
@@ -147,7 +199,11 @@ function DineroBankCard() {
           {q.data.accounts.map((a) => (
             <div key={a.number}>
               <div className="text-xs text-muted-foreground">{a.name}</div>
-              <div className={`text-xl font-semibold tabular-nums ${a.balance < 0 ? "text-destructive" : ""}`}>{formatDKK(a.balance)}</div>
+              <div
+                className={`text-xl font-semibold tabular-nums ${a.balance < 0 ? "text-destructive" : ""}`}
+              >
+                {formatDKK(a.balance)}
+              </div>
             </div>
           ))}
         </div>

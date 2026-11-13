@@ -5,14 +5,18 @@ import { supabaseForUser, json } from "../supabase";
 export default defineTool({
   name: "record_straw_movement",
   title: "Registrer halmsalg/-tilgang",
-  description: "Registrer salg (out) eller tilgang (in) af halmballer. Brug read_farm_data på contacts for at finde kundens id.",
+  description:
+    "Registrer salg (out) eller tilgang (in) af halmballer. Brug read_farm_data på contacts for at finde kundens id.",
   inputSchema: {
     bale_type: z.string().trim().min(1).max(60).describe("Balletype som i straw_inventory"),
     quantity: z.number().int().min(1).max(1_000_000),
     direction: z.enum(["in", "out"]),
     unit_price: z.number().min(0).max(1_000_000).describe("Pris pr. balle i kr."),
     contact_id: z.string().uuid().optional(),
-    movement_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    movement_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     notes: z.string().max(2000).optional(),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },

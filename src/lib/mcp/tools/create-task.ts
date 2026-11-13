@@ -10,7 +10,11 @@ export default defineTool({
     title: z.string().trim().min(1).max(200),
     description: z.string().max(4000).optional(),
     priority: z.enum(["low", "medium", "high", "critical"]).optional(),
-    due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Frist, YYYY-MM-DD"),
+    due_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional()
+      .describe("Frist, YYYY-MM-DD"),
     category: z.string().max(60).optional(),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },

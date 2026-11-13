@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Wallet } from "lucide-react";
 
 import type { BudgetLine, BudgetLoan } from "@/lib/budget.functions";
-import { calcLoan } from "@/lib/loan-math";
 import { formatDKK } from "@/lib/format";
+import { lineMonthly, loanMonthly, MONTHS } from "@/lib/budget-math";
 import {
   Table,
   TableBody,
@@ -13,34 +13,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
-
-export function lineMonthly(l: BudgetLine, m: number): number {
-  return l.monthly_override ? (l.monthly_override[m] ?? 0) : l.annual_amount / 12;
-}
-
-/** Månedlig ydelse for et lån i en given måned af året — 0 før startdato og efter løbetidens udløb. */
-export function loanMonthly(loan: BudgetLoan, year: number, m: number): number {
-  // Ejerskabet starter 1. november 2026, uanset lånets startdato.
-  if (year === 2026 && m < 10) return 0;
-  const { monthlyPayment } = calcLoan(loan);
-  if (monthlyPayment <= 0) return 0;
-  if (loan.start_date) {
-    const start = new Date(loan.start_date);
-    const startIdx = start.getFullYear() * 12 + start.getMonth();
-    const idx = year * 12 + m;
-    if (idx < startIdx) return 0;
-    if (loan.term_months > 0 && idx >= startIdx + loan.term_months) return 0;
-  }
-  return monthlyPayment;
-}
-
-export function OpeningBalance({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
+export function OpeningBalance({
+  value,
+  onCommit,
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   const commit = () => {
     setEditing(false);
-    const cleaned = text.replace(/\s|kr\.?/gi, "").replace(/\./g, "").replace(",", ".");
+    const cleaned = text
+      .replace(/\s|kr\.?/gi, "")
+      .replace(/\./g, "")
+      .replace(",", ".");
     const n = cleaned === "" || cleaned === "-" ? 0 : Number(cleaned);
     if (Number.isFinite(n) && Math.round(n) !== Math.round(value)) onCommit(Math.round(n));
   };
@@ -66,7 +53,10 @@ export function OpeningBalance({ value, onCommit }: { value: number; onCommit: (
       type="button"
       title="Klik for at rette startbeløbet"
       className="text-right tabular-nums font-semibold rounded px-1.5 py-0.5 cursor-text hover:bg-muted hover:ring-1 hover:ring-border"
-      onClick={() => { setText(String(Math.round(value))); setEditing(true); }}
+      onClick={() => {
+        setText(String(Math.round(value)));
+        setEditing(true);
+      }}
     >
       {formatDKK(value)}
     </button>
@@ -99,7 +89,10 @@ export function BudgetLiquidity({
 
   const cum: number[] = [];
   let run = opening;
-  net.forEach((n) => { run += n; cum.push(run); });
+  net.forEach((n) => {
+    run += n;
+    cum.push(run);
+  });
 
   const maxAbs = Math.max(1, ...net.map((n) => Math.abs(n)));
   const lowest = Math.min(...cum);
@@ -109,7 +102,9 @@ export function BudgetLiquidity({
       <div className="flex items-center justify-between gap-4 p-4 pb-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Wallet className="h-4 w-4 text-muted-foreground" />
-          <h2 className="font-semibold text-[var(--brand-900)]">Likviditet — penge ind og ud måned for måned</h2>
+          <h2 className="font-semibold text-[var(--brand-900)]">
+            Likviditet — penge ind og ud måned for måned
+          </h2>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Startbeløb 1. jan {year}:</span>
@@ -124,8 +119,15 @@ export function BudgetLiquidity({
             <TableRow className="hover:bg-transparent">
               <TableHead />
               {net.map((n, m) => (
-                <TableHead key={m} className="h-28 align-bottom pb-0 pt-3" aria-label={`${MONTHS[m]} netto cashflow: ${formatDKK(n)}`}>
-                  <div className="flex h-24 items-end justify-end" title={`${MONTHS[m]}: ${formatDKK(n)}`}>
+                <TableHead
+                  key={m}
+                  className="h-28 align-bottom pb-0 pt-3"
+                  aria-label={`${MONTHS[m]} netto cashflow: ${formatDKK(n)}`}
+                >
+                  <div
+                    className="flex h-24 items-end justify-end"
+                    title={`${MONTHS[m]}: ${formatDKK(n)}`}
+                  >
                     <div
                       className={`w-10 max-w-full rounded-t-sm ${n >= 0 ? "bg-success/70" : "bg-destructive/70"}`}
                       style={{ height: `${Math.max(2, (Math.abs(n) / maxAbs) * 100)}%` }}
@@ -137,7 +139,11 @@ export function BudgetLiquidity({
             </TableRow>
             <TableRow>
               <TableHead className="min-w-44"></TableHead>
-              {MONTHS.map((m) => <TableHead key={m} className="text-right">{m}</TableHead>)}
+              {MONTHS.map((m) => (
+                <TableHead key={m} className="text-right">
+                  {m}
+                </TableHead>
+              ))}
               <TableHead className="text-right font-semibold">I alt</TableHead>
             </TableRow>
           </TableHeader>
@@ -145,32 +151,49 @@ export function BudgetLiquidity({
             <TableRow>
               <TableCell className="font-medium">Indtægter</TableCell>
               {inc.map((v, m) => (
-                <TableCell key={m} className="text-right tabular-nums text-sm text-emerald-700">{v ? formatDKK(v) : "—"}</TableCell>
+                <TableCell key={m} className="text-right tabular-nums text-sm text-emerald-700">
+                  {v ? formatDKK(v) : "—"}
+                </TableCell>
               ))}
-              <TableCell className="text-right tabular-nums text-sm font-semibold text-emerald-700">{formatDKK(inc.reduce((s, x) => s + x, 0))}</TableCell>
+              <TableCell className="text-right tabular-nums text-sm font-semibold text-emerald-700">
+                {formatDKK(inc.reduce((s, x) => s + x, 0))}
+              </TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Driftsudgifter</TableCell>
               {exp.map((v, m) => (
-                <TableCell key={m} className="text-right tabular-nums text-sm text-red-700">{v ? `−${formatDKK(v)}` : "—"}</TableCell>
+                <TableCell key={m} className="text-right tabular-nums text-sm text-red-700">
+                  {v ? `−${formatDKK(v)}` : "—"}
+                </TableCell>
               ))}
-              <TableCell className="text-right tabular-nums text-sm font-semibold text-red-700">−{formatDKK(exp.reduce((s, x) => s + x, 0))}</TableCell>
+              <TableCell className="text-right tabular-nums text-sm font-semibold text-red-700">
+                −{formatDKK(exp.reduce((s, x) => s + x, 0))}
+              </TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Låneydelser</TableCell>
               {loan.map((v, m) => (
-                <TableCell key={m} className="text-right tabular-nums text-sm text-red-700">{v ? `−${formatDKK(v)}` : "—"}</TableCell>
+                <TableCell key={m} className="text-right tabular-nums text-sm text-red-700">
+                  {v ? `−${formatDKK(v)}` : "—"}
+                </TableCell>
               ))}
-              <TableCell className="text-right tabular-nums text-sm font-semibold text-red-700">−{formatDKK(loan.reduce((s, x) => s + x, 0))}</TableCell>
+              <TableCell className="text-right tabular-nums text-sm font-semibold text-red-700">
+                −{formatDKK(loan.reduce((s, x) => s + x, 0))}
+              </TableCell>
             </TableRow>
             <TableRow className="border-t-2 border-border">
               <TableCell className="font-semibold">Netto cashflow</TableCell>
               {net.map((v, m) => (
-                <TableCell key={m} className={`text-right tabular-nums text-sm font-medium ${v >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                <TableCell
+                  key={m}
+                  className={`text-right tabular-nums text-sm font-medium ${v >= 0 ? "text-emerald-700" : "text-red-700"}`}
+                >
                   {formatDKK(v)}
                 </TableCell>
               ))}
-              <TableCell className={`text-right tabular-nums text-sm font-bold ${net.reduce((s, x) => s + x, 0) >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+              <TableCell
+                className={`text-right tabular-nums text-sm font-bold ${net.reduce((s, x) => s + x, 0) >= 0 ? "text-emerald-700" : "text-red-700"}`}
+              >
                 {formatDKK(net.reduce((s, x) => s + x, 0))}
               </TableCell>
             </TableRow>
@@ -192,20 +215,10 @@ export function BudgetLiquidity({
 
       {lowest < 0 && (
         <div className="px-4 py-3 text-sm text-red-700 bg-red-50 border-t border-red-200">
-          Bemærk: Likviditeten går i minus i løbet af året (laveste punkt {formatDKK(lowest)}). Overvej at flytte udgifter eller aftale kredit.
+          Bemærk: Likviditeten går i minus i løbet af året (laveste punkt {formatDKK(lowest)}).
+          Overvej at flytte udgifter eller aftale kredit.
         </div>
       )}
     </div>
   );
 }
-
-/** Netto cashflow pr. måned for et budgetår. */
-export function monthlyNet(year: number, lines: BudgetLine[], loans: BudgetLoan[]): number[] {
-  return MONTHS.map((_, m) => {
-    const inc = lines.filter((l) => l.kind === "income").reduce((s, l) => s + lineMonthly(l, m), 0);
-    const exp = lines.filter((l) => l.kind !== "income").reduce((s, l) => s + lineMonthly(l, m), 0);
-    const ln = loans.reduce((s, l) => s + loanMonthly(l, year, m), 0);
-    return inc - exp - ln;
-  });
-}
-export { MONTHS as LIQ_MONTHS };

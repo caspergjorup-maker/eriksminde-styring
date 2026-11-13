@@ -12,14 +12,31 @@
   "mcp": {
     "server": {
       "name": "eriksminde-farm-hub",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "Eriksminde Farm Hub"
     },
     "tools": [
       {
+        "name": "farm_overview",
+        "title": "Samlet gårdoverblik",
+        "description": "Giv et samlet overblik over forfaldne og åbne opgaver, vedligehold, bygningers udlejningsstatus og lejepotentiale, aktive og udløbende lejeaftaler, halmlager, primært månedsbudget og åbne fakturakladder.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
         "name": "read_farm_data",
         "title": "Læs gårdens data",
-        "description": "Læs rækker fra en af Eriksmindes tabeller. Tabeller: fields (Marker (areal, afgrøde, forpagtningsareal)), parcels (Matrikler), field_parcels (Kobling mellem marker og matrikler), land_leases (Forpagtningsaftaler for jord), buildings (Bygninger og udlejningspotentiale), building_units (Bygningsenheder), building_leases (Lejeaftaler for bygninger), hunting_leases (Jagtlejeaftaler), straw_inventory (Halmlager), straw_movements (Halmsalg og -bevægelser), tasks (Opgaver), maintenance_tasks (Vedligehold), machines (Maskiner), contacts (Kunder og leverandører), invoices (Fakturakladder), budget_scenarios (Budgetter pr. år), budget_lines (Budgetlinjer (indtægter/udgifter, månedsfordeling)), budget_loans (Lån i budgettet), forest_parcels (Skovarealer), forest_activities (Skovaktiviteter (hugst m.m.)).",
+        "description": "Læs og filtrer rækker fra Eriksmindes tabeller. Understøtter lighedsfiltre, valg af kolonner, sortering, datointerval og tekstsøgning. Tabeller: fields (Marker (areal, afgrøde, forpagtningsareal)), parcels (Matrikler), field_parcels (Kobling mellem marker og matrikler), land_leases (Forpagtningsaftaler for jord), buildings (Bygninger og udlejningspotentiale), building_units (Bygningsenheder), building_leases (Lejeaftaler for bygninger), hunting_leases (Jagtlejeaftaler), straw_inventory (Halmlager), straw_movements (Halmsalg og -bevægelser), tasks (Opgaver), maintenance_tasks (Vedligehold), machines (Maskiner), contacts (Kunder og leverandører), invoices (Fakturakladder), budget_scenarios (Budgetter pr. år), budget_lines (Budgetlinjer (indtægter/udgifter, månedsfordeling)), budget_loans (Lån i budgettet), forest_parcels (Skovarealer), forest_activities (Skovaktiviteter (hugst m.m.)).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -60,10 +77,123 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 500
+            },
+            "filters": {
+              "description": "Lighedsfiltre, fx {\"lease_status\":\"ledig\"}.",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "columns": {
+              "description": "Kolonner der returneres; standard er alle.",
+              "minItems": 1,
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+              }
+            },
+            "order_by": {
+              "description": "Kolonne der sorteres efter.",
+              "type": "string",
+              "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+            },
+            "ascending": {
+              "description": "Stigende sortering; standard er sand.",
+              "type": "boolean"
+            },
+            "date_from": {
+              "description": "Fra og med dato på tabellens primære datokolonne.",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "date_to": {
+              "description": "Til og med dato på tabellens primære datokolonne.",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "search": {
+              "description": "Søg i tabellens name-, title- og description-felter, hvor de findes.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
             }
           },
           "required": [
             "table"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_record",
+        "title": "Hent én post med relationer",
+        "description": "Hent én række på id inklusive relaterede rækker, fx en bygning med enheder, lejeaftaler og vedligehold, en mark med matrikler og forpagtning eller en kontakt med fakturaer og halmbevægelser.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "table": {
+              "type": "string",
+              "enum": [
+                "fields",
+                "parcels",
+                "field_parcels",
+                "land_leases",
+                "buildings",
+                "building_units",
+                "building_leases",
+                "hunting_leases",
+                "straw_inventory",
+                "straw_movements",
+                "tasks",
+                "maintenance_tasks",
+                "machines",
+                "contacts",
+                "invoices",
+                "budget_scenarios",
+                "budget_lines",
+                "budget_loans",
+                "forest_parcels",
+                "forest_activities"
+              ],
+              "description": "Tabellen posten findes i."
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Postens UUID."
+            }
+          },
+          "required": [
+            "table",
+            "id"
           ],
           "additionalProperties": false
         },
@@ -112,6 +242,928 @@
           },
           "required": [
             "title"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_task",
+        "title": "Opdatér opgave",
+        "description": "Opdatér valgfrie felter på en eksisterende driftsopgave og returnér den opdaterede opgave. Brug null til at fjerne valgfri tekst, tilknytning eller dato.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Opgavens UUID."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "assigned_contact_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "category": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "in_progress",
+                "done",
+                "cancelled"
+              ]
+            },
+            "due_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "completed_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "complete_task",
+        "title": "Afslut opgave",
+        "description": "Markér en driftsopgave som færdig med dagens dato og returnér den opdaterede opgave.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Opgavens UUID."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_maintenance_task",
+        "title": "Opret vedligeholdelsesopgave",
+        "description": "Opret en vedligeholdelsesopgave knyttet til præcis én bygning eller maskine og returnér den oprettede række.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "building_id": {
+              "description": "Bygningens UUID; vælg enten bygning eller maskine.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "machine_id": {
+              "description": "Maskinens UUID; vælg enten bygning eller maskine.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "assigned_contact_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "preferred_supplier_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "category": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "in_progress",
+                "done",
+                "cancelled"
+              ]
+            },
+            "due_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "completed_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "estimated_cost": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actual_cost": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_maintenance_task",
+        "title": "Opdatér vedligeholdelsesopgave",
+        "description": "Opdatér valgfrie felter på vedligehold knyttet til en bygning eller maskine og returnér den opdaterede række. Ved skift af tilknytning fjernes den anden tilknytning automatisk.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Vedligeholdelsesopgavens UUID."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "building_id": {
+              "description": "Bygningens UUID; vælg enten bygning eller maskine.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "machine_id": {
+              "description": "Maskinens UUID; vælg enten bygning eller maskine.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "assigned_contact_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "preferred_supplier_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "category": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "in_progress",
+                "done",
+                "cancelled"
+              ]
+            },
+            "due_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "completed_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "estimated_cost": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actual_cost": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_building",
+        "title": "Opdatér bygning",
+        "description": "Opdatér en bygnings stamdata, stand, udlejningsstatus, estimeret månedlig leje eller noter og returnér den opdaterede bygning. Kortgeometri kan ikke ændres her.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Bygningens UUID."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "build_year": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1500,
+                  "maximum": 2100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "area_m2_gross": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "area_m2_net": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "floors": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 50
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "condition": {
+              "description": "Bygningens stand.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "god",
+                    "vedligeholdelse_nødvendig",
+                    "renovering_nødvendig"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "last_inspection": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lease_status": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "udlejet",
+                    "ledig",
+                    "intern_brug"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lease_status_note": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "estimated_monthly_rent": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "has_electricity": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "has_water": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "has_heating": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "heating_type": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "fjernvarme",
+                    "olie",
+                    "varmepumpe",
+                    "elvarme",
+                    "ingen"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "has_sewage": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "has_internet": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "parcel_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "internal_notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 5000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_contact",
+        "title": "Opret kontakt",
+        "description": "Opret en kunde, lejer, forpagter, jagtlejer eller leverandør med validerede kontaktoplysninger og returnér den oprettede kontakt.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "customer",
+                "tenant",
+                "leaseholder",
+                "hunting_tenant",
+                "supplier"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "cvr": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "phone": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "email": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "format": "email",
+                  "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "address": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_contact",
+        "title": "Opdatér kontakt",
+        "description": "Opdatér type, navn eller kontaktoplysninger på en eksisterende kontakt og returnér den opdaterede række. Brug null til at rydde valgfrie felter.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Kontaktens UUID."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "customer",
+                "tenant",
+                "leaseholder",
+                "hunting_tenant",
+                "supplier"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "cvr": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "phone": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "email": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "format": "email",
+                  "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "address": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         },
@@ -181,7 +1233,7 @@
       {
         "name": "create_invoice_draft",
         "title": "Opret fakturakladde",
-        "description": "Opret en fakturakladde (uden moms) i appen. Den sendes til Dinero fra siden Fakturakladder. Find kundens id via read_farm_data på contacts.",
+        "description": "Opret en fakturakladde (uden moms) i appen og returnér den oprettede række. Find kundens id via read_farm_data på contacts.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -216,6 +1268,94 @@
             "contact_id",
             "description",
             "amount_excl_vat"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_invoice_draft",
+        "title": "Opdatér fakturakladde",
+        "description": "Opdatér kunde, tekst, beløb, datoer eller status på en åben fakturakladde og returnér den opdaterede række. Eksporterede fakturaer kan ikke ændres.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Fakturakladdens UUID."
+            },
+            "contact_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "amount_excl_vat": {
+              "description": "Beløb i kr.; momsen forbliver 0.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100000000
+            },
+            "invoice_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "due_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "category": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "ready"
+              ]
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         },

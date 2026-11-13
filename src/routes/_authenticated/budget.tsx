@@ -23,7 +23,7 @@ import {
   type LoanType,
 } from "@/lib/budget.functions";
 import { buildAmortization, calcLoan } from "@/lib/loan-math";
-import { loanMonthly } from "@/components/budget-liquidity";
+import { lineMonthly, loanMonthly } from "@/lib/budget-math";
 
 function loanYearTotal(l: BudgetLoan, year: number) {
   let t = 0;
@@ -31,9 +31,6 @@ function loanYearTotal(l: BudgetLoan, year: number) {
   return t;
 }
 
-function lineMonthly(l: BudgetLine, m: number) {
-  return l.monthly_override ? l.monthly_override[m] ?? 0 : l.annual_amount / 12;
-}
 import { formatDKK } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
@@ -89,7 +86,10 @@ import {
 // ---------- Spreadsheet helpers ----------
 
 function parseAmount(s: string): number | null {
-  const cleaned = s.replace(/\s|kr\.?/gi, "").replace(/\./g, "").replace(",", ".");
+  const cleaned = s
+    .replace(/\s|kr\.?/gi, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
   if (cleaned === "" || cleaned === "-") return 0;
   const n = Number(cleaned);
   return Number.isFinite(n) ? Math.round(n) : null;
@@ -109,7 +109,9 @@ function scaleRounded(values: number[], factor: number, target: number): number[
   const out = values.map((v) => Math.round(v * factor));
   const diff = Math.round(target) - out.reduce((s, x) => s + x, 0);
   let last = -1;
-  out.forEach((v, i) => { if (v !== 0) last = i; });
+  out.forEach((v, i) => {
+    if (v !== 0) last = i;
+  });
   out[last >= 0 ? last : 11] += diff;
   return out;
 }
@@ -143,16 +145,31 @@ function EditableNumber({ value, onCommit }: { value: number; onCommit: (n: numb
     <Button
       type="button"
       title="Klik for at rette"
-      variant="ghost" className="h-auto w-full justify-end text-right tabular-nums rounded-none px-2 py-1 cursor-text font-normal hover:bg-muted focus:ring-ring"
-      onClick={() => { setText(String(Math.round(value))); setEditing(true); }}
-      onFocus={() => { setText(String(Math.round(value))); setEditing(true); }}
+      variant="ghost"
+      className="h-auto w-full justify-end text-right tabular-nums rounded-none px-2 py-1 cursor-text font-normal hover:bg-muted focus:ring-ring"
+      onClick={() => {
+        setText(String(Math.round(value)));
+        setEditing(true);
+      }}
+      onFocus={() => {
+        setText(String(Math.round(value)));
+        setEditing(true);
+      }}
     >
       {formatDKK(value)}
     </Button>
   );
 }
 
-function EditableText({ value, onCommit, placeholder }: { value: string; onCommit: (v: string) => void; placeholder?: string }) {
+function EditableText({
+  value,
+  onCommit,
+  placeholder,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  placeholder?: string;
+}) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(value);
   const commit = () => {
@@ -180,14 +197,23 @@ function EditableText({ value, onCommit, placeholder }: { value: string; onCommi
       title="Klik for at rette"
       variant="ghost"
       className="h-auto w-full justify-start whitespace-normal text-left rounded px-1.5 py-1 cursor-text font-medium hover:bg-muted hover:ring-1 hover:ring-border"
-      onClick={() => { setText(value); setEditing(true); }}
+      onClick={() => {
+        setText(value);
+        setEditing(true);
+      }}
     >
       {value || <span className="text-muted-foreground">{placeholder ?? "—"}</span>}
     </Button>
   );
 }
 
-function DistributionMenu({ total, onApply }: { total: number; onApply: (months: number[] | null) => void }) {
+function DistributionMenu({
+  total,
+  onApply,
+}: {
+  total: number;
+  onApply: (months: number[] | null) => void;
+}) {
   const all = MONTHS.map((_, i) => i);
   return (
     <DropdownMenu>
@@ -211,15 +237,25 @@ function DistributionMenu({ total, onApply }: { total: number; onApply: (months:
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem onSelect={() => onApply(distribute(total, [0, 3, 6, 9]))}>Kvartalsvis (jan/apr/jul/okt)</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onApply(distribute(total, [2, 5, 8, 11]))}>Kvartalsvis bagud (mar/jun/sep/dec)</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onApply(distribute(total, [3, 9]))}>Halvårligt (apr/okt)</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onApply(distribute(total, [5, 11]))}>Halvårligt (jun/dec)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [0, 3, 6, 9]))}>
+          Kvartalsvis (jan/apr/jul/okt)
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [2, 5, 8, 11]))}>
+          Kvartalsvis bagud (mar/jun/sep/dec)
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [3, 9]))}>
+          Halvårligt (apr/okt)
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onApply(distribute(total, [5, 11]))}>
+          Halvårligt (jun/dec)
+        </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Engangsbeløb i måned</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             {MONTHS.map((m, i) => (
-              <DropdownMenuItem key={m} onSelect={() => onApply(distribute(total, [i]))}>{m}</DropdownMenuItem>
+              <DropdownMenuItem key={m} onSelect={() => onApply(distribute(total, [i]))}>
+                {m}
+              </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
@@ -232,7 +268,15 @@ function DistributionMenu({ total, onApply }: { total: number; onApply: (months:
   );
 }
 
-function QuickAddRow({ colSpan, pending, onAdd }: { colSpan: number; pending: boolean; onAdd: (label: string, amount: number) => void }) {
+function QuickAddRow({
+  colSpan,
+  pending,
+  onAdd,
+}: {
+  colSpan: number;
+  pending: boolean;
+  onAdd: (label: string, amount: number) => void;
+}) {
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const submit = () => {
@@ -261,7 +305,9 @@ function QuickAddRow({ colSpan, pending, onAdd }: { colSpan: number; pending: bo
             onChange={(e) => setAmount(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
           />
-          <Button size="sm" variant="outline" disabled={!label.trim() || pending} onClick={submit}>Tilføj</Button>
+          <Button size="sm" variant="outline" disabled={!label.trim() || pending} onClick={submit}>
+            Tilføj
+          </Button>
         </div>
       </TableCell>
     </TableRow>
@@ -269,14 +315,23 @@ function QuickAddRow({ colSpan, pending, onAdd }: { colSpan: number; pending: bo
 }
 
 export const Route = createFileRoute("/_authenticated/budget")({
-  head: () => ({ meta: [
-    { title: "Budget | Eriksminde" },
-    { name: "description", content: "Eriksmindes årsbudget med månedlige indtægter, driftsudgifter, låneydelser og resultat." },
-    { property: "og:title", content: "Budget | Eriksminde" },
-    { property: "og:description", content: "Overblik over Eriksmindes budget og resultat måned for måned." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Budget | Eriksminde" },
+      {
+        name: "description",
+        content:
+          "Eriksmindes årsbudget med månedlige indtægter, driftsudgifter, låneydelser og resultat.",
+      },
+      { property: "og:title", content: "Budget | Eriksminde" },
+      {
+        property: "og:description",
+        content: "Overblik over Eriksmindes budget og resultat måned for måned.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: BudgetPage,
 });
 
@@ -316,23 +371,24 @@ const CATEGORY_LABEL: Record<string, string> = {
   andet: "Andet",
 };
 
-
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
-const MONTHLY_TABLE_CLASS = "table-fixed min-w-[1800px] [&_thead]:bg-muted/60 [&_th]:border-r [&_th]:border-border/50 [&_td]:border-r [&_td]:border-border/40 [&_td]:tabular-nums";
+const MONTHLY_TABLE_CLASS =
+  "table-fixed min-w-[1800px] [&_thead]:bg-muted/60 [&_th]:border-r [&_th]:border-border/50 [&_td]:border-r [&_td]:border-border/40 [&_td]:tabular-nums";
 
 function MonthlyColumns() {
   return (
     <colgroup>
       <col className="w-64" />
       <col className="w-44" />
-      {MONTHS.map((month) => <col key={month} />)}
+      {MONTHS.map((month) => (
+        <col key={month} />
+      ))}
       <col className="w-32" />
       <col className="w-32" />
     </colgroup>
   );
 }
-
 
 function BudgetPage() {
   const qc = useQueryClient();
@@ -354,8 +410,7 @@ function BudgetPage() {
 
   const years = yearsQ.data ?? [];
   const thisYear = new Date().getFullYear();
-  const currentYear =
-    selectedYear ?? (years.includes(thisYear) ? thisYear : (years[0] ?? null));
+  const currentYear = selectedYear ?? (years.includes(thisYear) ? thisYear : (years[0] ?? null));
 
   const bundleQ = useQuery({
     queryKey: ["budget-year", currentYear],
@@ -367,7 +422,8 @@ function BudgetPage() {
   });
 
   const createScenarioMut = useMutation({
-    mutationFn: (data: { name: string; year: number; notes: string | null }) => createScenarioFn({ data }),
+    mutationFn: (data: { name: string; year: number; notes: string | null }) =>
+      createScenarioFn({ data }),
     onSuccess: (_res, vars) => {
       toast.success("Budget oprettet");
       qc.invalidateQueries({ queryKey: ["budget-years"] });
@@ -377,8 +433,12 @@ function BudgetPage() {
   });
 
   const copyMut = useMutation({
-    mutationFn: (data: { fromYear: number; toYear: number; adjustPct: number; rollForwardLoans: boolean }) =>
-      copyBudgetFn({ data }),
+    mutationFn: (data: {
+      fromYear: number;
+      toYear: number;
+      adjustPct: number;
+      rollForwardLoans: boolean;
+    }) => copyBudgetFn({ data }),
     onSuccess: (res) => {
       toast.success(`Budget ${res.year} oprettet ud fra det forrige år`);
       qc.invalidateQueries({ queryKey: ["budget-years"] });
@@ -418,7 +478,10 @@ function BudgetPage() {
 
   const totalIncome = incomes.reduce((s, l) => s + l.annual_amount, 0);
   const totalExpense = expenses.reduce((s, l) => s + l.annual_amount, 0);
-  const totalLoanPayments = loans.reduce((s, l) => s + loanYearTotal(l, currentYear ?? thisYear), 0);
+  const totalLoanPayments = loans.reduce(
+    (s, l) => s + loanYearTotal(l, currentYear ?? thisYear),
+    0,
+  );
   const result = totalIncome - totalExpense - totalLoanPayments;
 
   const nextYear = currentYear !== null ? currentYear + 1 : thisYear + 1;
@@ -429,7 +492,6 @@ function BudgetPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-brand-900">Budget</h1>
-          
         </div>
         <div className="flex items-center gap-2">
           {years.length > 0 && (
@@ -491,12 +553,28 @@ function BudgetPage() {
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">Budget {scenario.year} · Beløb i kr.</h2>
-            <div role="group" aria-label="Budgetvisning" className="flex gap-1 rounded-md border border-border p-1">
-              <Button size="sm" variant={monthlyView ? "secondary" : "ghost"} aria-pressed={monthlyView} onClick={() => setMonthlyView(true)}>
+            <h2 className="text-sm font-medium text-muted-foreground">
+              Budget {scenario.year} · Beløb i kr.
+            </h2>
+            <div
+              role="group"
+              aria-label="Budgetvisning"
+              className="flex gap-1 rounded-md border border-border p-1"
+            >
+              <Button
+                size="sm"
+                variant={monthlyView ? "secondary" : "ghost"}
+                aria-pressed={monthlyView}
+                onClick={() => setMonthlyView(true)}
+              >
                 <CalendarDays className="h-4 w-4" /> Månedsvisning
               </Button>
-              <Button size="sm" variant={!monthlyView ? "secondary" : "ghost"} aria-pressed={!monthlyView} onClick={() => setMonthlyView(false)}>
+              <Button
+                size="sm"
+                variant={!monthlyView ? "secondary" : "ghost"}
+                aria-pressed={!monthlyView}
+                onClick={() => setMonthlyView(false)}
+              >
                 <List className="h-4 w-4" /> Årsvisning
               </Button>
             </div>
@@ -523,7 +601,9 @@ function BudgetPage() {
           <div className="border-t border-border">
             <div className="py-3">
               <h2 className="font-semibold text-brand-900">Resultat pr. måned</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Indtægter − driftsudgifter − låneydelser</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Indtægter − driftsudgifter − låneydelser
+              </p>
             </div>
             <div className="overflow-x-auto">
               <Table className={MONTHLY_TABLE_CLASS} aria-label="Resultat pr. måned">
@@ -532,32 +612,61 @@ function BudgetPage() {
                   <TableRow>
                     <TableHead>Post</TableHead>
                     <TableHead aria-label="Kategori" />
-                    {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+                    {MONTHS.map((m) => (
+                      <TableHead key={m} className="w-[92px] text-right">
+                        {m}
+                      </TableHead>
+                    ))}
                     <TableHead className="text-right font-semibold bg-muted">I alt</TableHead>
                     <TableHead aria-label="Handlinger" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(() => {
-                    const incomeM = MONTHS.map((_, m) => incomes.reduce((s, l) => s + lineMonthly(l, m), 0));
-                    const expenseM = MONTHS.map((_, m) => expenses.reduce((s, l) => s + lineMonthly(l, m), 0));
-                    const loanM = MONTHS.map((_, m) => loans.reduce((s, l) => s + loanMonthly(l, scenario.year, m), 0));
+                    const incomeM = MONTHS.map((_, m) =>
+                      incomes.reduce((s, l) => s + lineMonthly(l, m), 0),
+                    );
+                    const expenseM = MONTHS.map((_, m) =>
+                      expenses.reduce((s, l) => s + lineMonthly(l, m), 0),
+                    );
+                    const loanM = MONTHS.map((_, m) =>
+                      loans.reduce((s, l) => s + loanMonthly(l, scenario.year, m), 0),
+                    );
                     const resultM = MONTHS.map((_, m) => incomeM[m] - expenseM[m] - loanM[m]);
-                    const rows: Array<{ label: string; values: number[]; bold?: boolean; signed?: boolean }> = [
+                    const rows: Array<{
+                      label: string;
+                      values: number[];
+                      bold?: boolean;
+                      signed?: boolean;
+                    }> = [
                       { label: "Indtægter", values: incomeM },
                       { label: "Driftsudgifter", values: expenseM },
                       { label: "Låneydelser", values: loanM },
                       { label: "Resultat", values: resultM, bold: true, signed: true },
                     ];
                     return rows.map((r) => (
-                      <TableRow key={r.label} className={r.bold ? "bg-accent font-semibold border-t-2 border-border" : ""}>
+                      <TableRow
+                        key={r.label}
+                        className={r.bold ? "bg-accent font-semibold border-t-2 border-border" : ""}
+                      >
                         <TableCell className={r.bold ? "font-semibold" : ""}>{r.label}</TableCell>
                         <TableCell />
                         {r.values.map((v, m) => (
                           <TableCell key={m} className="text-right tabular-nums">
                             {v !== 0 ? (
-                              <span className={r.signed && v < 0 ? "text-destructive" : r.bold && v >= 0 ? "text-brand-700" : r.bold ? "text-destructive" : ""}>
-                                {r.signed && v > 0 ? "+" : ""}{formatDKK(v)}
+                              <span
+                                className={
+                                  r.signed && v < 0
+                                    ? "text-destructive"
+                                    : r.bold && v >= 0
+                                      ? "text-brand-700"
+                                      : r.bold
+                                        ? "text-destructive"
+                                        : ""
+                                }
+                              >
+                                {r.signed && v > 0 ? "+" : ""}
+                                {formatDKK(v)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">–</span>
@@ -576,9 +685,6 @@ function BudgetPage() {
               </Table>
             </div>
           </div>
-
-
-
         </>
       )}
 
@@ -637,12 +743,25 @@ function ScenarioHeader({
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
         <div className="text-lg font-semibold text-brand-900">
-          {scenario.name} <span className="text-muted-foreground font-normal">· {scenario.year}</span>
+          {scenario.name}{" "}
+          <span className="text-muted-foreground font-normal">· {scenario.year}</span>
         </div>
-        {scenario.notes && <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{scenario.notes}</div>}
+        {scenario.notes && (
+          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
+            {scenario.notes}
+          </div>
+        )}
       </div>
       <div className="flex gap-2 shrink-0">
-        <Button variant="outline" size="sm" onClick={() => { setName(scenario.name); setNotes(scenario.notes ?? ""); setEditing(true); }}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setName(scenario.name);
+            setNotes(scenario.notes ?? "");
+            setEditing(true);
+          }}
+        >
           <Pencil className="h-4 w-4" />
         </Button>
         <DropdownMenu>
@@ -661,14 +780,31 @@ function ScenarioHeader({
 
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Rediger budget</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Rediger budget</DialogTitle>
+          </DialogHeader>
           <div className="space-y-3">
-            <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label>Noter</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} /></div>
+            <div>
+              <Label>Navn</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Noter</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(false)}>Annuller</Button>
-            <Button onClick={() => { onUpdate({ name: name.trim(), year: scenario.year, notes: notes.trim() || null }); setEditing(false); }}>Gem</Button>
+            <Button variant="outline" onClick={() => setEditing(false)}>
+              Annuller
+            </Button>
+            <Button
+              onClick={() => {
+                onUpdate({ name: name.trim(), year: scenario.year, notes: notes.trim() || null });
+                setEditing(false);
+              }}
+            >
+              Gem
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -677,7 +813,9 @@ function ScenarioHeader({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Slet budget {scenario.year}?</AlertDialogTitle>
-            <AlertDialogDescription>Alle poster og lån i budgettet slettes også. Dette kan ikke fortrydes.</AlertDialogDescription>
+            <AlertDialogDescription>
+              Alle poster og lån i budgettet slettes også. Dette kan ikke fortrydes.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuller</AlertDialogCancel>
@@ -709,26 +847,33 @@ function CopyBudgetDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Opret budget for {toYear}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Opret budget for {toYear}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-4 text-sm">
           <p className="text-muted-foreground">
-            Alle poster og lån fra budget {fromYear} kopieres til {toYear}. Kopierede poster får noten
-            “Kopieret fra {fromYear}”, så du kan se hvad du endnu ikke har gennemgået.
+            Alle poster og lån fra budget {fromYear} kopieres til {toYear}. Kopierede poster får
+            noten “Kopieret fra {fromYear}”, så du kan se hvad du endnu ikke har gennemgået.
           </p>
           <div className="flex items-start gap-3">
             <Switch id="roll-forward" checked={rollForward} onCheckedChange={setRollForward} />
             <div>
               <Label htmlFor="roll-forward">Videreført restgæld på lån</Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Lånebeløbet sættes til restgælden ved udgangen af {fromYear}, og løbetiden reduceres med 12 måneder.
-                Slå fra for at kopiere lånene uændret.
+                Lånebeløbet sættes til restgælden ved udgangen af {fromYear}, og løbetiden reduceres
+                med 12 måneder. Slå fra for at kopiere lånene uændret.
               </p>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
-          <Button disabled={pending} onClick={() => onConfirm({ adjustPct: 0, rollForwardLoans: rollForward })}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuller
+          </Button>
+          <Button
+            disabled={pending}
+            onClick={() => onConfirm({ adjustPct: 0, rollForwardLoans: rollForward })}
+          >
             Opret {toYear}
           </Button>
         </DialogFooter>
@@ -765,29 +910,51 @@ function LinesTable({
 
   const createMut = useMutation({
     mutationFn: (data: {
-      scenario_id: string; kind: "income" | "expense"; category: string; label: string;
-      annual_amount: number; monthly_override: number[] | null; source_note: string | null; sort_order: number;
+      scenario_id: string;
+      kind: "income" | "expense";
+      category: string;
+      label: string;
+      annual_amount: number;
+      monthly_override: number[] | null;
+      source_note: string | null;
+      sort_order: number;
     }) => createFn({ data }),
-    onSuccess: () => { toast.success("Linje tilføjet"); invalidate(); setCreating(false); },
+    onSuccess: () => {
+      toast.success("Linje tilføjet");
+      invalidate();
+      setCreating(false);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
     mutationFn: (data: {
-      id: string; category?: string; label?: string; annual_amount?: number;
-      monthly_override?: number[] | null; source_note?: string | null; sort_order?: number;
+      id: string;
+      category?: string;
+      label?: string;
+      annual_amount?: number;
+      monthly_override?: number[] | null;
+      source_note?: string | null;
+      sort_order?: number;
     }) => updateFn({ data }),
-    onSuccess: () => { invalidate(); setEditing(null); },
+    onSuccess: () => {
+      invalidate();
+      setEditing(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => { toast.success("Linje slettet"); invalidate(); setConfirmDelete(null); },
+    onSuccess: () => {
+      toast.success("Linje slettet");
+      invalidate();
+      setConfirmDelete(null);
+    },
   });
 
   const total = lines.reduce((s, l) => s + l.annual_amount, 0);
 
   const monthlyOf = (l: BudgetLine, m: number) =>
-    l.monthly_override ? l.monthly_override[m] ?? 0 : l.annual_amount / 12;
+    l.monthly_override ? (l.monthly_override[m] ?? 0) : l.annual_amount / 12;
 
   return (
     <div className="border-t border-border">
@@ -807,7 +974,11 @@ function LinesTable({
               <TableHead className="w-44">Kategori</TableHead>
               {monthlyView ? (
                 <>
-                  {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+                  {MONTHS.map((m) => (
+                    <TableHead key={m} className="w-[92px] text-right">
+                      {m}
+                    </TableHead>
+                  ))}
                   <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
                 </>
               ) : (
@@ -826,7 +997,11 @@ function LinesTable({
               const setMonth = (m: number, val: number) => {
                 const next = months.map((x) => Math.round(x));
                 next[m] = val;
-                updateMut.mutate({ id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) });
+                updateMut.mutate({
+                  id: l.id,
+                  monthly_override: next,
+                  annual_amount: next.reduce((s, x) => s + x, 0),
+                });
               };
               const setAnnual = (val: number) => {
                 if (!l.monthly_override) {
@@ -835,9 +1010,10 @@ function LinesTable({
                 }
                 const sum = months.reduce((s, x) => s + x, 0);
                 const active = months.map((x, i) => (x !== 0 ? i : -1)).filter((i) => i >= 0);
-                const next = sum !== 0
-                  ? scaleRounded(months, val / sum, val)
-                  : distribute(val, active.length ? active : MONTHS.map((_, i) => i));
+                const next =
+                  sum !== 0
+                    ? scaleRounded(months, val / sum, val)
+                    : distribute(val, active.length ? active : MONTHS.map((_, i) => i));
                 updateMut.mutate({ id: l.id, annual_amount: val, monthly_override: next });
               };
               const applyDist = (next: number[] | null) => {
@@ -845,51 +1021,86 @@ function LinesTable({
                 updateMut.mutate(
                   next === null
                     ? { id: l.id, monthly_override: null, annual_amount: Math.round(total) }
-                    : { id: l.id, monthly_override: next, annual_amount: next.reduce((s, x) => s + x, 0) },
+                    : {
+                        id: l.id,
+                        monthly_override: next,
+                        annual_amount: next.reduce((s, x) => s + x, 0),
+                      },
                 );
               };
               return (
-              <TableRow key={l.id}>
-                <TableCell className="font-medium min-w-40">
-                  <EditableText value={l.label} onCommit={(v) => v && updateMut.mutate({ id: l.id, label: v })} />
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">{CATEGORY_LABEL[l.category] ?? l.category}</TableCell>
-                {monthlyView ? (
-                  <>
-                    {months.map((v, m) => (
-                      <TableCell key={m} className="text-right text-sm px-0 py-1">
-                        <EditableNumber value={v} onCommit={(n) => setMonth(m, n)} />
+                <TableRow key={l.id}>
+                  <TableCell className="font-medium min-w-40">
+                    <EditableText
+                      value={l.label}
+                      onCommit={(v) => v && updateMut.mutate({ id: l.id, label: v })}
+                    />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {CATEGORY_LABEL[l.category] ?? l.category}
+                  </TableCell>
+                  {monthlyView ? (
+                    <>
+                      {months.map((v, m) => (
+                        <TableCell key={m} className="text-right text-sm px-0 py-1">
+                          <EditableNumber value={v} onCommit={(n) => setMonth(m, n)} />
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right tabular-nums text-sm font-semibold">
+                        {formatDKK(months.reduce((s, x) => s + x, 0))}
                       </TableCell>
-                    ))}
-                    <TableCell className="text-right tabular-nums text-sm font-semibold">
-                      {formatDKK(months.reduce((s, x) => s + x, 0))}
-                    </TableCell>
-                  </>
-                ) : (
-                  <>
-                    <TableCell className="text-right p-1 min-w-28">
-                      <EditableNumber value={l.annual_amount} onCommit={setAnnual} />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {formatDKK(l.annual_amount / 12)}
-                      {l.monthly_override && <div className="text-[10px]">manuel fordeling</div>}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground min-w-40">
-                      <EditableText value={l.source_note ?? ""} placeholder="—" onCommit={(v) => updateMut.mutate({ id: l.id, source_note: v || null })} />
-                    </TableCell>
-                  </>
-                )}
-                <TableCell className="text-right whitespace-nowrap">
-                  <DistributionMenu total={months.reduce((s, x) => s + x, 0)} onApply={applyDist} />
-                  <Button size="icon" className="h-8 w-8" variant="ghost" title="Rediger" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="icon" className="h-8 w-8" variant="ghost" title="Slet" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </TableCell>
-              </TableRow>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="text-right p-1 min-w-28">
+                        <EditableNumber value={l.annual_amount} onCommit={setAnnual} />
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {formatDKK(l.annual_amount / 12)}
+                        {l.monthly_override && <div className="text-[10px]">manuel fordeling</div>}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground min-w-40">
+                        <EditableText
+                          value={l.source_note ?? ""}
+                          placeholder="—"
+                          onCommit={(v) => updateMut.mutate({ id: l.id, source_note: v || null })}
+                        />
+                      </TableCell>
+                    </>
+                  )}
+                  <TableCell className="text-right whitespace-nowrap">
+                    <DistributionMenu
+                      total={months.reduce((s, x) => s + x, 0)}
+                      onApply={applyDist}
+                    />
+                    <Button
+                      size="icon"
+                      className="h-8 w-8"
+                      variant="ghost"
+                      title="Rediger"
+                      onClick={() => setEditing(l)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8"
+                      variant="ghost"
+                      title="Slet"
+                      onClick={() => setConfirmDelete(l)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
               );
             })}
             {lines.length === 0 && (
               <TableRow>
-                <TableCell colSpan={monthlyView ? 16 : 6} className="text-center text-muted-foreground py-6">
+                <TableCell
+                  colSpan={monthlyView ? 16 : 6}
+                  className="text-center text-muted-foreground py-6"
+                >
                   Ingen linjer endnu.
                 </TableCell>
               </TableRow>
@@ -899,8 +1110,14 @@ function LinesTable({
               pending={createMut.isPending}
               onAdd={(label, amount) =>
                 createMut.mutate({
-                  scenario_id: scenarioId, kind, category: kind === "income" ? "andet" : "andet",
-                  label, annual_amount: amount, monthly_override: null, source_note: null, sort_order: lines.length,
+                  scenario_id: scenarioId,
+                  kind,
+                  category: kind === "income" ? "andet" : "andet",
+                  label,
+                  annual_amount: amount,
+                  monthly_override: null,
+                  source_note: null,
+                  sort_order: lines.length,
                 })
               }
             />
@@ -908,7 +1125,9 @@ function LinesTable({
           {lines.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
+                <TableCell colSpan={2} className="font-semibold">
+                  I alt
+                </TableCell>
                 {monthlyView ? (
                   <>
                     {MONTHS.map((_, m) => (
@@ -917,13 +1136,22 @@ function LinesTable({
                       </TableCell>
                     ))}
                     <TableCell className="text-right tabular-nums font-bold">
-                      {formatDKK(lines.reduce((s, l) => s + MONTHS.reduce((a, _, m) => a + monthlyOf(l, m), 0), 0))}
+                      {formatDKK(
+                        lines.reduce(
+                          (s, l) => s + MONTHS.reduce((a, _, m) => a + monthlyOf(l, m), 0),
+                          0,
+                        ),
+                      )}
                     </TableCell>
                   </>
                 ) : (
                   <>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatDKK(total)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatDKK(total / 12)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">
+                      {formatDKK(total)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">
+                      {formatDKK(total / 12)}
+                    </TableCell>
                     <TableCell />
                   </>
                 )}
@@ -941,7 +1169,9 @@ function LinesTable({
           title={`Ny ${kind === "income" ? "indtægt" : "udgift"}`}
           initial={null}
           kind={kind}
-          onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, kind, sort_order: lines.length, ...v })}
+          onSubmit={(v) =>
+            createMut.mutate({ scenario_id: scenarioId, kind, sort_order: lines.length, ...v })
+          }
         />
       )}
       {editing && (
@@ -964,7 +1194,9 @@ function LinesTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuller</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmDelete && deleteMut.mutate(confirmDelete.id)}>Slet</AlertDialogAction>
+            <AlertDialogAction onClick={() => confirmDelete && deleteMut.mutate(confirmDelete.id)}>
+              Slet
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1005,7 +1237,8 @@ function LineDialog({
 
   const submit = () => {
     const override = useMonthly ? monthly.map((v) => Number(v) || 0) : null;
-    const annualNum = useMonthly && override ? override.reduce((s, v) => s + v, 0) : Number(annual) || 0;
+    const annualNum =
+      useMonthly && override ? override.reduce((s, v) => s + v, 0) : Number(annual) || 0;
     onSubmit({
       label: label.trim(),
       category,
@@ -1018,20 +1251,34 @@ function LineDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
-          <div><Label>Post</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} /></div>
+          <div>
+            <Label>Post</Label>
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} />
+          </div>
           <div>
             <Label>Kategori</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {CATEGORY_OPTIONS.map((c) => <SelectItem key={c} value={c}>{CATEGORY_LABEL[c]}</SelectItem>)}
+                {CATEGORY_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {CATEGORY_LABEL[c]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           {!useMonthly && (
-            <div><Label>Beløb pr. år (kr.)</Label><Input type="number" value={annual} onChange={(e) => setAnnual(e.target.value)} /></div>
+            <div>
+              <Label>Beløb pr. år (kr.)</Label>
+              <Input type="number" value={annual} onChange={(e) => setAnnual(e.target.value)} />
+            </div>
           )}
           <div className="flex items-center gap-2">
             <Switch checked={useMonthly} onCheckedChange={setUseMonthly} />
@@ -1042,18 +1289,35 @@ function LineDialog({
               {MONTHS.map((m, i) => (
                 <div key={m}>
                   <Label className="text-xs">{m}</Label>
-                  <Input type="number" value={monthly[i]} onChange={(e) => {
-                    const next = [...monthly]; next[i] = e.target.value; setMonthly(next);
-                  }} />
+                  <Input
+                    type="number"
+                    value={monthly[i]}
+                    onChange={(e) => {
+                      const next = [...monthly];
+                      next[i] = e.target.value;
+                      setMonthly(next);
+                    }}
+                  />
                 </div>
               ))}
             </div>
           )}
-          <div><Label>Kilde / note</Label><Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Fx Note 3, skatteregnskab 2025" /></div>
+          <div>
+            <Label>Kilde / note</Label>
+            <Input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="Fx Note 3, skatteregnskab 2025"
+            />
+          </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
-          <Button disabled={!label.trim()} onClick={submit}>Gem</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuller
+          </Button>
+          <Button disabled={!label.trim()} onClick={submit}>
+            Gem
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1062,7 +1326,15 @@ function LineDialog({
 
 // ---------- Loans ----------
 
-function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: BudgetLoan[]; year: number }) {
+function LoansSection({
+  scenarioId,
+  loans,
+  year,
+}: {
+  scenarioId: string;
+  loans: BudgetLoan[];
+  year: number;
+}) {
   const qc = useQueryClient();
   const createFn = useServerFn(createLoan);
   const updateFn = useServerFn(updateLoan);
@@ -1077,23 +1349,45 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
 
   const createMut = useMutation({
     mutationFn: (data: {
-      scenario_id: string; name: string; monthly_payment: number; sort_order: number;
-    }) => createFn({ data: {
-      ...data,
-      principal: 0, interest_rate: 0, term_months: 0, loan_type: "standing" as LoanType,
-      start_date: `${year}-${year === 2026 ? "11" : "01"}-01`, notes: null,
-    } }),
-    onSuccess: () => { toast.success("Lån tilføjet"); invalidate(); setCreating(false); },
+      scenario_id: string;
+      name: string;
+      monthly_payment: number;
+      sort_order: number;
+    }) =>
+      createFn({
+        data: {
+          ...data,
+          principal: 0,
+          interest_rate: 0,
+          term_months: 0,
+          loan_type: "standing" as LoanType,
+          start_date: `${year}-${year === 2026 ? "11" : "01"}-01`,
+          notes: null,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Lån tilføjet");
+      invalidate();
+      setCreating(false);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: { id: string; name?: string; monthly_payment?: number }) => updateFn({ data }),
-    onSuccess: () => { invalidate(); setEditing(null); },
+    mutationFn: (data: { id: string; name?: string; monthly_payment?: number }) =>
+      updateFn({ data }),
+    onSuccess: () => {
+      invalidate();
+      setEditing(null);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => { toast.success("Lån slettet"); invalidate(); setConfirmDelete(null); },
+    onSuccess: () => {
+      toast.success("Lån slettet");
+      invalidate();
+      setConfirmDelete(null);
+    },
   });
 
   const totalAnnual = loans.reduce((s, l) => s + loanYearTotal(l, year), 0);
@@ -1114,7 +1408,11 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
             <TableRow>
               <TableHead>Navn</TableHead>
               <TableHead>Kategori</TableHead>
-              {MONTHS.map((m) => <TableHead key={m} className="w-[92px] text-right">{m}</TableHead>)}
+              {MONTHS.map((m) => (
+                <TableHead key={m} className="w-[92px] text-right">
+                  {m}
+                </TableHead>
+              ))}
               <TableHead className="w-28 text-right font-semibold">I alt</TableHead>
               <TableHead className="w-24 text-right">Handling</TableHead>
             </TableRow>
@@ -1131,33 +1429,65 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
                       {v !== 0 ? formatDKK(v) : <span className="text-muted-foreground">–</span>}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right tabular-nums font-medium">{formatDKK(loanYearTotal(l, year))}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium">
+                    {formatDKK(loanYearTotal(l, year))}
+                  </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {l.monthly_payment == null && l.principal > 0 && (
-                      <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => setAmort(l)} title="Amortisering">📊</Button>
+                      <Button
+                        size="icon"
+                        className="h-8 w-8"
+                        variant="ghost"
+                        onClick={() => setAmort(l)}
+                        title="Amortisering"
+                      >
+                        📊
+                      </Button>
                     )}
-                    <Button size="icon" className="h-8 w-8" variant="ghost" title="Rediger" onClick={() => setEditing(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="icon" className="h-8 w-8" variant="ghost" title="Slet" onClick={() => setConfirmDelete(l)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8"
+                      variant="ghost"
+                      title="Rediger"
+                      onClick={() => setEditing(l)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8"
+                      variant="ghost"
+                      title="Slet"
+                      onClick={() => setConfirmDelete(l)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
             })}
             {loans.length === 0 && (
               <TableRow>
-                <TableCell colSpan={16} className="text-center text-muted-foreground py-6">Ingen lån endnu.</TableCell>
+                <TableCell colSpan={16} className="text-center text-muted-foreground py-6">
+                  Ingen lån endnu.
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
           {loans.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2} className="font-semibold">I alt</TableCell>
+                <TableCell colSpan={2} className="font-semibold">
+                  I alt
+                </TableCell>
                 {MONTHS.map((_, m) => (
                   <TableCell key={m} className="text-right tabular-nums font-semibold">
                     {formatDKK(loans.reduce((s, l) => s + loanMonthly(l, year, m), 0))}
                   </TableCell>
                 ))}
-                <TableCell className="text-right tabular-nums font-bold">{formatDKK(totalAnnual)}</TableCell>
+                <TableCell className="text-right tabular-nums font-bold">
+                  {formatDKK(totalAnnual)}
+                </TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
@@ -1172,7 +1502,9 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
           title="Nyt lån"
           year={year}
           initial={null}
-          onSubmit={(v) => createMut.mutate({ scenario_id: scenarioId, sort_order: loans.length, ...v })}
+          onSubmit={(v) =>
+            createMut.mutate({ scenario_id: scenarioId, sort_order: loans.length, ...v })
+          }
         />
       )}
       {editing && (
@@ -1197,7 +1529,9 @@ function LoansSection({ scenarioId, loans, year }: { scenarioId: string; loans: 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuller</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmDelete && deleteMut.mutate(confirmDelete.id)}>Slet</AlertDialogAction>
+            <AlertDialogAction onClick={() => confirmDelete && deleteMut.mutate(confirmDelete.id)}>
+              Slet
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1226,28 +1560,60 @@ function LoanDialog({
   );
 
   const monthlyNum = Number(monthly) || 0;
-  const annualPayment = loanYearTotal({
-    ...(initial ?? {
-      id: "", scenario_id: "", name: "", principal: 0, interest_rate: 0,
-      term_months: 0, loan_type: "standing", notes: null, sort_order: 0,
-      start_date: `${year}-${year === 2026 ? "11" : "01"}-01`,
-    }),
-    monthly_payment: monthlyNum,
-  }, year);
+  const annualPayment = loanYearTotal(
+    {
+      ...(initial ?? {
+        id: "",
+        scenario_id: "",
+        name: "",
+        principal: 0,
+        interest_rate: 0,
+        term_months: 0,
+        loan_type: "standing",
+        notes: null,
+        sort_order: 0,
+        start_date: `${year}-${year === 2026 ? "11" : "01"}-01`,
+      }),
+      monthly_payment: monthlyNum,
+    },
+    year,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
-          <div><Label>Navn</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fx Realkreditlån (Nykredit)" /></div>
-          <div><Label>Månedlig ydelse (kr.)</Label><Input type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="Fx 18.965" /></div>
+          <div>
+            <Label>Navn</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Fx Realkreditlån (Nykredit)"
+            />
+          </div>
+          <div>
+            <Label>Månedlig ydelse (kr.)</Label>
+            <Input
+              type="number"
+              value={monthly}
+              onChange={(e) => setMonthly(e.target.value)}
+              placeholder="Fx 18.965"
+            />
+          </div>
           <div className="rounded-lg bg-muted p-3 text-sm">
-            <div className="flex justify-between"><span>Ydelse i {year}</span><span className="tabular-nums font-semibold">{formatDKK(annualPayment)}</span></div>
+            <div className="flex justify-between">
+              <span>Ydelse i {year}</span>
+              <span className="tabular-nums font-semibold">{formatDKK(annualPayment)}</span>
+            </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuller</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuller
+          </Button>
           <Button
             disabled={!name.trim() || monthlyNum <= 0}
             onClick={() => onSubmit({ name: name.trim(), monthly_payment: monthlyNum })}
@@ -1260,12 +1626,20 @@ function LoanDialog({
   );
 }
 
-function AmortDialog({ loan, onOpenChange }: { loan: BudgetLoan | null; onOpenChange: (v: boolean) => void }) {
+function AmortDialog({
+  loan,
+  onOpenChange,
+}: {
+  loan: BudgetLoan | null;
+  onOpenChange: (v: boolean) => void;
+}) {
   const rows = loan ? buildAmortization(loan) : [];
   return (
     <Dialog open={!!loan} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>Amortisering — {loan?.name}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Amortisering — {loan?.name}</DialogTitle>
+        </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto">
           <Table>
             <TableHeader>
@@ -1283,12 +1657,18 @@ function AmortDialog({ loan, onOpenChange }: { loan: BudgetLoan | null; onOpenCh
                   <TableCell>{r.year}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatDKK(r.payment)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatDKK(r.interest)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatDKK(r.principal)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatDKK(r.principal)}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">{formatDKK(r.balance)}</TableCell>
                 </TableRow>
               ))}
               {rows.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">Ingen ydelser at vise.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                    Ingen ydelser at vise.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>

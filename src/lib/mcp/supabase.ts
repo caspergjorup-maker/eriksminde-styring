@@ -8,7 +8,8 @@ function url() {
   return v as string;
 }
 function key() {
-  const v = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  const v =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ?? import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   if (!v) throw new Error("Backend-nøgle mangler");
   return v as string;
 }
@@ -24,4 +25,10 @@ export function supabaseForUser(ctx: ToolContext) {
 
 export function json(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
+}
+
+export function cleanFields<T extends Record<string, unknown>>(fields: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
 }

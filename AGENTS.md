@@ -1,5 +1,5 @@
 ## Budget calculations
-- Keep loan month eligibility in `loanMonthly` and use it for annual totals, monthly results, liquidity, and loan-dialog estimates so all views agree.
+- Keep shared line and loan month eligibility in `src/lib/budget-math.ts` (`lineMonthly` and `loanMonthly`) and use it for annual totals, monthly results, liquidity, MCP overviews, and loan-dialog estimates so all views agree.
 - Budget monthly tables share one column definition, including reserved category and action columns, so months and totals align across all sections.
 
 ## Authentication

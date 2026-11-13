@@ -54,6 +54,9 @@ export async function dinero<T>(path: string, init?: { method?: string; body?: u
       const j = JSON.parse(text);
       msg = j.languageSpecificMessages?.[0]?.message ?? j.message ?? msg;
     } catch { /* html */ }
+    if (res.status === 403) {
+      throw new Error("Dinero giver ikke adgang lige nu. Dinero-abonnementet skal være Pro (eller højere), før appen kan hente og sende data.");
+    }
     throw new Error(`Dinero-fejl (${res.status}): ${msg}`);
   }
   return (text ? JSON.parse(text) : null) as T;

@@ -5,9 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { EriksmindeLogo } from "@/components/eriksminde-logo";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>): { next?: string } =>
+    typeof s["next"] === "string" ? { next: s["next"] } : {},
   head: () => ({
     meta: [
       { title: "Log ind — Eriksminde" },
@@ -23,23 +26,33 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const target = next ? oauthReturnPath(next) : "/overblik";
+  const go = () =>
+    target === "/overblik"
+      ? navigate({ to: "/overblik", replace: true })
+      : (window.location.replace(target), Promise.resolve());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
-      if (active && data.user) void navigate({ to: "/overblik", replace: true });
+      if (active && data.user) void go();
     });
     return () => { active = false; };
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, target]);
 
   async function handleGoogleSignIn() {
     setError(null);
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/auth",
+        redirect_uri:
+          window.location.origin +
+          "/auth" +
+          (target !== "/overblik" ? "?next=" + encodeURIComponent(target) : ""),
       });
       if (result?.error) throw result.error;
       if (result?.redirected) return;
@@ -47,7 +60,7 @@ function AuthPage() {
       if (sessionError || !data.user) {
         throw new Error("Login blev ikke gennemført. Prøv igen med Google.");
       }
-      await navigate({ to: "/overblik", replace: true });
+      await go();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Noget gik galt");
     } finally {

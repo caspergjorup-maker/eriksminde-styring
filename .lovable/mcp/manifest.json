@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "sdk_version": "3.5.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://dveduhypqxjeumwdftlp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "eriksminde-farm-hub",
+      "version": "0.1.0",
+      "title": "Eriksminde Farm Hub"
+    },
+    "tools": [
+      {
+        "name": "read_farm_data",
+        "title": "Læs gårdens data",
+        "description": "Læs rækker fra en af Eriksmindes tabeller. Tabeller: fields (Marker (areal, afgrøde, forpagtningsareal)), parcels (Matrikler), field_parcels (Kobling mellem marker og matrikler), land_leases (Forpagtningsaftaler for jord), buildings (Bygninger og udlejningspotentiale), building_units (Bygningsenheder), building_leases (Lejeaftaler for bygninger), hunting_leases (Jagtlejeaftaler), straw_inventory (Halmlager), straw_movements (Halmsalg og -bevægelser), tasks (Opgaver), maintenance_tasks (Vedligehold), machines (Maskiner), contacts (Kunder og leverandører), invoices (Fakturakladder), budget_scenarios (Budgetter pr. år), budget_lines (Budgetlinjer (indtægter/udgifter, månedsfordeling)), budget_loans (Lån i budgettet), forest_parcels (Skovarealer), forest_activities (Skovaktiviteter (hugst m.m.)).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "table": {
+              "type": "string",
+              "enum": [
+                "fields",
+                "parcels",
+                "field_parcels",
+                "land_leases",
+                "buildings",
+                "building_units",
+                "building_leases",
+                "hunting_leases",
+                "straw_inventory",
+                "straw_movements",
+                "tasks",
+                "maintenance_tasks",
+                "machines",
+                "contacts",
+                "invoices",
+                "budget_scenarios",
+                "budget_lines",
+                "budget_loans",
+                "forest_parcels",
+                "forest_activities"
+              ],
+              "description": "Tabellen der skal læses."
+            },
+            "limit": {
+              "description": "Maks antal rækker (standard 200).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          },
+          "required": [
+            "table"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_task",
+        "title": "Opret opgave",
+        "description": "Opret en ny driftsopgave på Eriksminde.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "due_date": {
+              "description": "Frist, YYYY-MM-DD",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "category": {
+              "type": "string",
+              "maxLength": 60
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "record_straw_movement",
+        "title": "Registrer halmsalg/-tilgang",
+        "description": "Registrer salg (out) eller tilgang (in) af halmballer. Brug read_farm_data på contacts for at finde kundens id.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "bale_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60,
+              "description": "Balletype som i straw_inventory"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "in",
+                "out"
+              ]
+            },
+            "unit_price": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "Pris pr. balle i kr."
+            },
+            "contact_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "movement_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "bale_type",
+            "quantity",
+            "direction",
+            "unit_price"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_invoice_draft",
+        "title": "Opret fakturakladde",
+        "description": "Opret en fakturakladde (uden moms) i appen. Den sendes til Dinero fra siden Fakturakladder. Find kundens id via read_farm_data på contacts.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "contact_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "amount_excl_vat": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100000000,
+              "description": "Beløb i kr."
+            },
+            "invoice_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          "required": [
+            "contact_id",
+            "description",
+            "amount_excl_vat"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

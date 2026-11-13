@@ -86,7 +86,10 @@ export const syncContactsToDinero = createServerFn({ method: "POST" })
     let created = 0;
     for (const c of rows ?? []) if ((await ensureDineroContact(c, existing)).created) created++;
     // Kontakter der kun findes i Dinero kopieres ind i appen.
-    const known = new Set((rows ?? []).map((r) => norm(r.name)));
+    // Sammenlign med ALLE appens kontakter, så kunder ikke importeres som leverandører (og omvendt).
+    const { data: allRows, error: allErr } = await context.supabase.from("contacts").select("name");
+    if (allErr) throw new Error(allErr.message);
+    const known = new Set((allRows ?? []).map((r) => norm(r.name)));
     const fresh = existing.filter((d) => !known.has(norm(d.Name)));
     let imported = 0;
     if (fresh.length > 0) {

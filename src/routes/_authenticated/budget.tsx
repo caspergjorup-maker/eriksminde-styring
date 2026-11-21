@@ -21,6 +21,7 @@ import {
   type BudgetLine,
   type BudgetLoan,
   type LoanType,
+  type PaymentFrequency,
 } from "@/lib/budget.functions";
 import { buildAmortization, calcLoan } from "@/lib/loan-math";
 import { lineMonthly, loanMonthly } from "@/lib/budget-math";
@@ -1352,6 +1353,7 @@ function LoansSection({
       scenario_id: string;
       name: string;
       monthly_payment: number;
+      payment_frequency: PaymentFrequency;
       sort_order: number;
     }) =>
       createFn({
@@ -1373,7 +1375,12 @@ function LoansSection({
     onError: (e: Error) => toast.error(e.message),
   });
   const updateMut = useMutation({
-    mutationFn: (data: { id: string; name?: string; monthly_payment?: number }) =>
+    mutationFn: (data: {
+      id: string;
+      name?: string;
+      monthly_payment?: number;
+      payment_frequency?: PaymentFrequency;
+    }) =>
       updateFn({ data }),
     onSuccess: () => {
       invalidate();
@@ -1552,9 +1559,10 @@ function LoanDialog({
   title: string;
   year: number;
   initial: BudgetLoan | null;
-  onSubmit: (v: { name: string; monthly_payment: number }) => void;
+  onSubmit: (v: { name: string; monthly_payment: number; payment_frequency: PaymentFrequency }) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
+  const [frequency, setFrequency] = useState<PaymentFrequency>(initial?.payment_frequency ?? "monthly");
   const [monthly, setMonthly] = useState(
     initial ? String(initial.monthly_payment ?? Math.round(calcLoan(initial).monthlyPayment)) : "",
   );
@@ -1575,6 +1583,7 @@ function LoanDialog({
         start_date: `${year}-${year === 2026 ? "11" : "01"}-01`,
       }),
       monthly_payment: monthlyNum,
+      payment_frequency: frequency,
     },
     year,
   );
@@ -1595,7 +1604,18 @@ function LoanDialog({
             />
           </div>
           <div>
-            <Label>Månedlig ydelse (kr.)</Label>
+            <Label>Betaling</Label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value as PaymentFrequency)}
+            >
+              <option value="monthly">Månedlig</option>
+              <option value="quarterly">Kvartalsvis (mar, jun, sep, dec)</option>
+            </select>
+          </div>
+          <div>
+            <Label>{frequency === "quarterly" ? "Ydelse pr. termin (kr.)" : "Månedlig ydelse (kr.)"}</Label>
             <Input
               type="number"
               value={monthly}
@@ -1616,7 +1636,9 @@ function LoanDialog({
           </Button>
           <Button
             disabled={!name.trim() || monthlyNum <= 0}
-            onClick={() => onSubmit({ name: name.trim(), monthly_payment: monthlyNum })}
+            onClick={() =>
+              onSubmit({ name: name.trim(), monthly_payment: monthlyNum, payment_frequency: frequency })
+            }
           >
             Gem
           </Button>

@@ -33,6 +33,8 @@ export function loanMonthly(loan: BudgetLoan, year: number, month: number): numb
     if (index < startIndex) return 0;
     if (loan.term_months > 0 && index >= startIndex + loan.term_months) return 0;
   }
+  // Kvartalsvise terminer forfalder i marts, juni, september og december.
+  if (loan.payment_frequency === "quarterly" && month % 3 !== 2) return 0;
   return monthlyPayment;
 }
 

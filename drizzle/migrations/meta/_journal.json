@@ -15,6 +15,13 @@
       "when": 1794584656292,
       "tag": "0001_tighten_profiles_site_settings_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795250515646,
+      "tag": "0002_loan_payment_frequency",
+      "breakpoints": true
     }
   ]
 }

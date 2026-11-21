@@ -38,7 +38,11 @@ export type BudgetLoan = {
   notes: string | null;
   sort_order: number;
   monthly_payment: number | null;
+  /** 'quarterly' = monthly_payment er ydelsen pr. termin (mar/jun/sep/dec). */
+  payment_frequency?: PaymentFrequency;
 };
+
+export type PaymentFrequency = "monthly" | "quarterly";
 
 export type ScenarioBundle = {
   scenario: BudgetScenario;
@@ -121,6 +125,7 @@ export const getBudgetByYear = createServerFn({ method: "GET" })
         interest_rate: Number(r.interest_rate ?? 0),
         term_months: Number(r.term_months ?? 0),
         monthly_payment: r.monthly_payment != null ? Number(r.monthly_payment) : null,
+        payment_frequency: r.payment_frequency === "quarterly" ? "quarterly" : "monthly",
       })) as BudgetLoan[],
     };
   });
@@ -198,6 +203,7 @@ export const copyBudgetToYear = createServerFn({ method: "POST" })
         term_months: Number(r.term_months ?? 0),
         loan_type: r.loan_type as LoanType,
         monthly_payment: r.monthly_payment != null ? Number(r.monthly_payment) : null,
+        payment_frequency: r.payment_frequency === "quarterly" ? "quarterly" : "monthly",
         start_date: (r.start_date as string | null) ?? null,
         notes: (r.notes as string | null) ?? null,
         sort_order: (r.sort_order as number) ?? 0,
@@ -226,6 +232,8 @@ export const copyBudgetToYear = createServerFn({ method: "POST" })
         interest_rate: loan.interest_rate,
         term_months: Math.max(0, loan.term_months - 12),
         loan_type: loan.loan_type,
+        monthly_payment: loan.monthly_payment,
+        payment_frequency: loan.payment_frequency ?? "monthly",
         start_date: start ? start.toISOString().slice(0, 10) : null,
         notes: [loan.notes, `Restgæld videreført fra ${data.fromYear}`].filter(Boolean).join(" · ").slice(0, 2000),
         sort_order: loan.sort_order,
@@ -307,6 +315,7 @@ const loanInput = z.object({
   notes: z.string().trim().max(2000).nullable(),
   sort_order: z.number().int().default(0),
   monthly_payment: z.number().min(0).nullable().optional(),
+  payment_frequency: z.enum(["monthly", "quarterly"]).optional(),
 });
 
 export const createLoan = createServerFn({ method: "POST" })

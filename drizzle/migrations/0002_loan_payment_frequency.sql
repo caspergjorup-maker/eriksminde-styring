@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_loans ADD COLUMN payment_frequency text NOT NULL DEFAULT 'monthly';

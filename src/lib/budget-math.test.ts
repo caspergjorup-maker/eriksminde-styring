@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test";
 import type { BudgetLine, BudgetLoan } from "./budget.functions";
-import { budgetMonthlySummary } from "./budget-math";
+import { budgetMonthlySummary, loanMonthly } from "./budget-math";
 
 const baseLine: BudgetLine = {
   id: "line",
@@ -61,5 +61,23 @@ describe("Månedligt budget til MCP-overblikket", () => {
       result: 8500,
     });
     expect(monthly.reduce((sum, month) => sum + month.result, 0)).toBe(17000);
+  });
+});
+
+describe("kvartalsvise låneterminer", () => {
+  const dlr = {
+    id: "dlr", scenario_id: "s", name: "DLR", principal: 6422000, interest_rate: 0, term_months: 360,
+    loan_type: "standing", start_date: "2026-11-01", notes: null, sort_order: 0,
+    monthly_payment: 37595, payment_frequency: "quarterly",
+  } as BudgetLoan;
+  test("2026: kun december betales", () => {
+    expect(loanMonthly(dlr, 2026, 10)).toBe(0);
+    expect(loanMonthly(dlr, 2026, 11)).toBe(37595);
+  });
+  test("2027: mar, jun, sep, dec = 150.380 kr.", () => {
+    const months = Array.from({ length: 12 }, (_, m) => loanMonthly(dlr, 2027, m));
+    expect(months.filter((v) => v > 0).length).toBe(4);
+    expect(months[2]).toBe(37595);
+    expect(months.reduce((a, b) => a + b, 0)).toBe(150380);
   });
 });

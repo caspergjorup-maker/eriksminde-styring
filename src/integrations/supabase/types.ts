@@ -73,6 +73,7 @@ export type Database = {
           monthly_payment: number | null
           name: string
           notes: string | null
+          payment_frequency: string
           principal: number
           scenario_id: string
           sort_order: number
@@ -88,6 +89,7 @@ export type Database = {
           monthly_payment?: number | null
           name: string
           notes?: string | null
+          payment_frequency?: string
           principal?: number
           scenario_id: string
           sort_order?: number
@@ -103,6 +105,7 @@ export type Database = {
           monthly_payment?: number | null
           name?: string
           notes?: string | null
+          payment_frequency?: string
           principal?: number
           scenario_id?: string
           sort_order?: number

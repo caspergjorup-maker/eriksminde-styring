@@ -201,6 +201,7 @@ export default defineTool({
         principal: Number(loan.principal ?? 0),
         interest_rate: Number(loan.interest_rate ?? 0),
         monthly_payment: loan.monthly_payment == null ? null : Number(loan.monthly_payment),
+        payment_frequency: loan.payment_frequency === "quarterly" ? ("quarterly" as const) : ("monthly" as const),
       })) as BudgetLoan[];
       const monthly = budgetMonthlySummary(scenario.year, lines, loans);
       budget = {

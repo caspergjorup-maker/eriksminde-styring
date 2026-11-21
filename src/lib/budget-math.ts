@@ -39,7 +39,26 @@ export function loanMonthly(loan: BudgetLoan, year: number, month: number): numb
 }
 
 /** Netto cashflow pr. måned for et budgetår. */
-export function monthlyNet(year: number, lines: BudgetLine[], loans: BudgetLoan[]): number[] {
+/** Kapital & etablering (indskud, købsomkostninger) pr. måned fra bankposter — påvirker likviditet, ikke drift. */
+export function capitalByMonth(
+  year: number,
+  txs: { booked_date: string; amount: number; kind: string | null }[],
+): number[] {
+  const out = MONTHS.map(() => 0);
+  for (const t of txs) {
+    if (t.kind !== "capital" || !t.booked_date.startsWith(`${year}-`)) continue;
+    const m = Number(t.booked_date.slice(5, 7)) - 1;
+    if (m >= 0 && m < 12) out[m] = (out[m] ?? 0) + t.amount;
+  }
+  return out;
+}
+
+export function monthlyNet(
+  year: number,
+  lines: BudgetLine[],
+  loans: BudgetLoan[],
+  capital: number[] = [],
+): number[] {
   return MONTHS.map((_, month) => {
     const income = lines
       .filter((line) => line.kind === "income")
@@ -48,7 +67,7 @@ export function monthlyNet(year: number, lines: BudgetLine[], loans: BudgetLoan[
       .filter((line) => line.kind !== "income")
       .reduce((sum, line) => sum + lineMonthly(line, month), 0);
     const loanPayments = loans.reduce((sum, loan) => sum + loanMonthly(loan, year, month), 0);
-    return income - expenses - loanPayments;
+    return income - expenses - loanPayments + (capital[month] ?? 0);
   });
 }
 

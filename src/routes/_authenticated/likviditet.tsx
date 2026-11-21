@@ -16,7 +16,8 @@ import {
 import { getBudgetByYear, listBudgetYears } from "@/lib/budget.functions";
 import { getDineroBank } from "@/lib/dinero.functions";
 import { BudgetLiquidity, OpeningBalance } from "@/components/budget-liquidity";
-import { MONTHS as LIQ_MONTHS, monthlyNet } from "@/lib/budget-math";
+import { MONTHS as LIQ_MONTHS, capitalByMonth, monthlyNet } from "@/lib/budget-math";
+import { listBankTransactions } from "@/lib/bank.functions";
 import { formatDKK } from "@/lib/format";
 import {
   Select,
@@ -56,6 +57,10 @@ function LiquidityPage() {
     })),
   });
 
+  const listBank = useServerFn(listBankTransactions);
+  const bankQ = useQuery({ queryKey: ["bank-transactions"], queryFn: () => listBank() });
+  const bankTxs = bankQ.data ?? [];
+
   const [opening, setOpening] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -69,7 +74,7 @@ function LiquidityPage() {
     if (!b) return;
     // Kurven starter i oktober 2026 (overtagelsen) — ingen punkter før.
     const from = y === 2026 ? 9 : 0;
-    monthlyNet(y, b.lines, b.loans).forEach((n, m) => {
+    monthlyNet(y, b.lines, b.loans, capitalByMonth(y, bankTxs)).forEach((n, m) => {
       if (m < from) return;
       run += n;
       points.push({ label: `${LIQ_MONTHS[m]} ${String(y).slice(2)}`, saldo: Math.round(run) });
@@ -171,6 +176,7 @@ function LiquidityPage() {
           incomes={curBundle.lines.filter((l) => l.kind === "income")}
           expenses={curBundle.lines.filter((l) => l.kind === "expense")}
           loans={curBundle.loans}
+          capital={capitalByMonth(current, bankTxs)}
           opening={yearOpening[current] ?? 0}
           onOpeningChange={curIdx === 0 ? setOpening : () => {}}
         />

@@ -70,6 +70,7 @@ export function BudgetLiquidity({
   loans,
   opening: props_opening,
   onOpeningChange,
+  capital: capitalProp,
 }: {
   year: number;
   incomes: BudgetLine[];
@@ -77,6 +78,7 @@ export function BudgetLiquidity({
   loans: BudgetLoan[];
   opening?: number;
   onOpeningChange?: (n: number) => void;
+  capital?: number[];
 }) {
   const [localOpening, setLocalOpening] = useState(0);
   const opening = props_opening ?? localOpening;
@@ -85,7 +87,8 @@ export function BudgetLiquidity({
   const inc = MONTHS.map((_, m) => incomes.reduce((s, l) => s + lineMonthly(l, m), 0));
   const exp = MONTHS.map((_, m) => expenses.reduce((s, l) => s + lineMonthly(l, m), 0));
   const loan = MONTHS.map((_, m) => loans.reduce((s, l) => s + loanMonthly(l, year, m), 0));
-  const net = MONTHS.map((_, m) => inc[m] - exp[m] - loan[m]);
+  const cap = MONTHS.map((_, m) => capitalProp?.[m] ?? 0);
+  const net = MONTHS.map((_, m) => inc[m] - exp[m] - loan[m] + cap[m]);
 
   const cum: number[] = [];
   let run = opening;
@@ -179,6 +182,17 @@ export function BudgetLiquidity({
               ))}
               <TableCell className="text-right tabular-nums text-sm font-semibold text-red-700">
                 −{formatDKK(loan.reduce((s, x) => s + x, 0))}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Kapital &amp; etablering</TableCell>
+              {cap.map((v, m) => (
+                <TableCell key={m} className={`text-right tabular-nums text-sm ${v >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                  {v ? formatDKK(v) : "—"}
+                </TableCell>
+              ))}
+              <TableCell className="text-right tabular-nums text-sm font-semibold">
+                {formatDKK(cap.reduce((s, x) => s + x, 0))}
               </TableCell>
             </TableRow>
             <TableRow className="border-t-2 border-border">

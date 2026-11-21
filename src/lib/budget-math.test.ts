@@ -81,3 +81,14 @@ describe("kvartalsvise låneterminer", () => {
     expect(months.reduce((a, b) => a + b, 0)).toBe(150380);
   });
 });
+
+import { capitalByMonth as _cap } from "./budget-math";
+test("kapital fra bankposter lægges i den rigtige måned og kun for kind=capital", () => {
+  const c = _cap(2026, [
+    { booked_date: "2026-10-20", amount: 100000, kind: "capital" },
+    { booked_date: "2026-10-20", amount: -64250, kind: "capital" },
+    { booked_date: "2026-11-09", amount: -2997.15, kind: "expense" },
+  ]);
+  expect(c[9]).toBe(35750);
+  expect(c[10]).toBe(0);
+});

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+/// <reference types="bun" />
+import { describe, expect, it } from "bun:test";
 import { matchRule, parseBankCsv, bankPattern } from "./bank-csv";
 
 const csv = `"Dato";"Valør";"Tekst";"";"Beløb";"Saldo";"Egen bilagsreference"

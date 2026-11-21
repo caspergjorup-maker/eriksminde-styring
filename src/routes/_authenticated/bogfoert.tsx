@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { getBudgetByYear } from "@/lib/budget.functions";
 import { getDineroYear } from "@/lib/dinero.functions";
+import { listBankTransactions } from "@/lib/bank.functions";
 import { MONTHS as LIQ_MONTHS, lineMonthly, loanMonthly } from "@/lib/budget-math";
 import { formatDKK } from "@/lib/format";
 import {
@@ -48,6 +49,12 @@ function Page() {
     queryFn: () => getActual({ data: { year } }),
   });
 
+  const getBank = useServerFn(listBankTransactions);
+  const bank = useQuery({ queryKey: ["bank-tx"], queryFn: () => getBank() });
+  // Bankposter (ekskl. kapital) bruges som faktiske tal, når Dinero ikke svarer.
+  const bankYear = (bank.data ?? []).filter((t) => t.booked_date.startsWith(String(year)) && t.kind && t.kind !== "capital");
+  const bankIncome = LIQ_MONTHS.map((_, m) => bankYear.filter((t) => Number(t.booked_date.slice(5, 7)) - 1 === m && t.kind === "income").reduce((s, t) => s + t.amount, 0));
+  const bankExpense = LIQ_MONTHS.map((_, m) => bankYear.filter((t) => Number(t.booked_date.slice(5, 7)) - 1 === m && t.kind === "expense").reduce((s, t) => s - t.amount, 0));
   const b = budget.data;
   const bIncome = LIQ_MONTHS.map((_, m) =>
     (b?.lines ?? []).filter((l) => l.kind === "income").reduce((s, l) => s + lineMonthly(l, m), 0),
@@ -59,13 +66,14 @@ function Page() {
         .reduce((s, l) => s + lineMonthly(l, m), 0) +
       (b?.loans ?? []).reduce((s, l) => s + loanMonthly(l, year, m), 0),
   );
-  const a = actual.data;
+  const useBank = !actual.data;
+  const a = actual.data ?? { income: bankIncome, expense: bankExpense, orgName: "" };
   const rows: { label: string; v: number[]; strong?: boolean; diff?: boolean }[] = [
     { label: "Budget – indtægter", v: bIncome },
-    { label: "Bogført – indtægter", v: a?.income ?? [], strong: true },
+    { label: useBank ? "Bank – indtægter" : "Bogført – indtægter", v: a?.income ?? [], strong: true },
     { label: "Afvigelse", v: bIncome.map((x, m) => (a?.income[m] ?? 0) - x), diff: true },
     { label: "Budget – udgifter inkl. lån", v: bExpense },
-    { label: "Bogført – udgifter", v: a?.expense ?? [], strong: true },
+    { label: useBank ? "Bank – udgifter" : "Bogført – udgifter", v: a?.expense ?? [], strong: true },
     { label: "Afvigelse", v: bExpense.map((x, m) => x - (a?.expense[m] ?? 0)), diff: true },
   ];
 
@@ -75,7 +83,9 @@ function Page() {
         <div>
           <h1 className="text-2xl font-semibold text-[var(--brand-900)]">Budget vs. bogført</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Bogførte tal hentes direkte fra Dinero{a ? ` (${a.orgName})` : ""}. Afvigelse er grøn
+            {useBank
+              ? "Faktiske tal fra indlæste kontoudtog (kapitalposter tæller ikke med)."
+              : `Bogførte tal hentes direkte fra Dinero (${a.orgName}).`} Afvigelse er grøn
             når det går bedre end budgettet.
           </p>
         </div>
@@ -92,7 +102,7 @@ function Page() {
           </SelectContent>
         </Select>
       </div>
-      {actual.error && (
+      {actual.error && !useBank && (
         <p className="text-sm text-destructive">{(actual.error as Error).message}</p>
       )}
       {(budget.isLoading || actual.isLoading) && (

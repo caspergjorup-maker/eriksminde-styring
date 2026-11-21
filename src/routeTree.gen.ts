@@ -21,6 +21,7 @@ import { Route as AuthenticatedDokumenterRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFakturakladderRouteImport } from './routes/_authenticated/fakturakladder'
 import { Route as AuthenticatedHalmRouteImport } from './routes/_authenticated/halm'
 import { Route as AuthenticatedJagtlejeRouteImport } from './routes/_authenticated/jagtleje'
+import { Route as AuthenticatedKontoudtogRouteImport } from './routes/_authenticated/kontoudtog'
 import { Route as AuthenticatedKunderRouteImport } from './routes/_authenticated/kunder'
 import { Route as AuthenticatedLandbrugsjordRouteImport } from './routes/_authenticated/landbrugsjord'
 import { Route as AuthenticatedLeverandoererRouteImport } from './routes/_authenticated/leverandoerer'
@@ -93,6 +94,11 @@ const AuthenticatedHalmRoute = AuthenticatedHalmRouteImport.update({
 const AuthenticatedJagtlejeRoute = AuthenticatedJagtlejeRouteImport.update({
   id: '/jagtleje',
   path: '/jagtleje',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKontoudtogRoute = AuthenticatedKontoudtogRouteImport.update({
+  id: '/kontoudtog',
+  path: '/kontoudtog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedKunderRoute = AuthenticatedKunderRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/halm': typeof AuthenticatedHalmRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/kontoudtog': typeof AuthenticatedKontoudtogRoute
   '/kunder': typeof AuthenticatedKunderRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/halm': typeof AuthenticatedHalmRoute
   '/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/kontoudtog': typeof AuthenticatedKontoudtogRoute
   '/kunder': typeof AuthenticatedKunderRoute
   '/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/leverandoerer': typeof AuthenticatedLeverandoererRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/fakturakladder': typeof AuthenticatedFakturakladderRoute
   '/_authenticated/halm': typeof AuthenticatedHalmRoute
   '/_authenticated/jagtleje': typeof AuthenticatedJagtlejeRoute
+  '/_authenticated/kontoudtog': typeof AuthenticatedKontoudtogRoute
   '/_authenticated/kunder': typeof AuthenticatedKunderRoute
   '/_authenticated/landbrugsjord': typeof AuthenticatedLandbrugsjordRoute
   '/_authenticated/leverandoerer': typeof AuthenticatedLeverandoererRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/fakturakladder'
     | '/halm'
     | '/jagtleje'
+    | '/kontoudtog'
     | '/kunder'
     | '/landbrugsjord'
     | '/leverandoerer'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/fakturakladder'
     | '/halm'
     | '/jagtleje'
+    | '/kontoudtog'
     | '/kunder'
     | '/landbrugsjord'
     | '/leverandoerer'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fakturakladder'
     | '/_authenticated/halm'
     | '/_authenticated/jagtleje'
+    | '/_authenticated/kontoudtog'
     | '/_authenticated/kunder'
     | '/_authenticated/landbrugsjord'
     | '/_authenticated/leverandoerer'
@@ -411,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJagtlejeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kontoudtog': {
+      id: '/_authenticated/kontoudtog'
+      path: '/kontoudtog'
+      fullPath: '/kontoudtog'
+      preLoaderRoute: typeof AuthenticatedKontoudtogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kunder': {
       id: '/_authenticated/kunder'
       path: '/kunder'
@@ -506,6 +525,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFakturakladderRoute: typeof AuthenticatedFakturakladderRoute
   AuthenticatedHalmRoute: typeof AuthenticatedHalmRoute
   AuthenticatedJagtlejeRoute: typeof AuthenticatedJagtlejeRoute
+  AuthenticatedKontoudtogRoute: typeof AuthenticatedKontoudtogRoute
   AuthenticatedKunderRoute: typeof AuthenticatedKunderRoute
   AuthenticatedLandbrugsjordRoute: typeof AuthenticatedLandbrugsjordRoute
   AuthenticatedLeverandoererRoute: typeof AuthenticatedLeverandoererRoute
@@ -526,6 +546,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFakturakladderRoute: AuthenticatedFakturakladderRoute,
   AuthenticatedHalmRoute: AuthenticatedHalmRoute,
   AuthenticatedJagtlejeRoute: AuthenticatedJagtlejeRoute,
+  AuthenticatedKontoudtogRoute: AuthenticatedKontoudtogRoute,
   AuthenticatedKunderRoute: AuthenticatedKunderRoute,
   AuthenticatedLandbrugsjordRoute: AuthenticatedLandbrugsjordRoute,
   AuthenticatedLeverandoererRoute: AuthenticatedLeverandoererRoute,

@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_rules: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          kind: string
+          pattern: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          kind: string
+          pattern: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          pattern?: string
+        }
+        Relationships: []
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          balance: number | null
+          booked_date: string
+          category: string | null
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string | null
+          text: string
+        }
+        Insert: {
+          amount: number
+          balance?: number | null
+          booked_date: string
+          category?: string | null
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind?: string | null
+          text: string
+        }
+        Update: {
+          amount?: number
+          balance?: number | null
+          booked_date?: string
+          category?: string | null
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string | null
+          text?: string
+        }
+        Relationships: []
+      }
       budget_lines: {
         Row: {
           annual_amount: number

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import {
   copyBudgetToYear,
   createBudgetLine,
+  getMissingLinesFromPreviousYear,
+  importLinesFromPreviousYear,
   createLoan,
   createScenario,
   deleteBudgetLine,
@@ -273,8 +275,12 @@ function QuickAddRow({
   colSpan,
   pending,
   onAdd,
+  includeFuture,
+  onIncludeFutureChange,
 }: {
   colSpan: number;
+  includeFuture: boolean;
+  onIncludeFutureChange: (v: boolean) => void;
   pending: boolean;
   onAdd: (label: string, amount: number) => void;
 }) {
@@ -309,9 +315,99 @@ function QuickAddRow({
           <Button size="sm" variant="outline" disabled={!label.trim() || pending} onClick={submit}>
             Tilføj
           </Button>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground ml-2 cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={includeFuture}
+              onChange={(e) => onIncludeFutureChange(e.target.checked)}
+            />
+            Opret også i senere budgetår
+          </label>
         </div>
       </TableCell>
     </TableRow>
+  );
+}
+
+function MissingLinesBanner({ year }: { year: number }) {
+  const qc = useQueryClient();
+  const fetchMissing = useServerFn(getMissingLinesFromPreviousYear);
+  const importFn = useServerFn(importLinesFromPreviousYear);
+  const q = useQuery({
+    queryKey: ["budget-year", year, "missing"],
+    queryFn: () => fetchMissing({ data: { year } }),
+  });
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const mut = useMutation({
+    mutationFn: (ids: string[]) => importFn({ data: { year, ids } }),
+    onSuccess: (r) => {
+      toast.success(`${r.count} linje${r.count === 1 ? "" : "r"} hentet`);
+      qc.invalidateQueries({ queryKey: ["budget-year"] });
+      setOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const lines: { id: string; kind: string; label: string; annual_amount: number }[] =
+    q.data?.lines ?? [];
+  if (!q.data?.prevYear || lines.length === 0) return null;
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
+      <span>
+        {lines.length} linje{lines.length === 1 ? "" : "r"} fra {q.data.prevYear} findes ikke i {year}:{" "}
+        <span className="text-muted-foreground">{lines.map((l) => l.label).join(", ")}</span>
+      </span>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setPicked(new Set(lines.map((l) => l.id)));
+          setOpen(true);
+        }}
+      >
+        <Copy className="h-4 w-4" /> Hent fra {q.data.prevYear}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hent linjer fra {q.data.prevYear}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {lines.map((l) => (
+              <label key={l.id} className="flex items-center justify-between gap-3 cursor-pointer">
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={picked.has(l.id)}
+                    onChange={(e) => {
+                      const n = new Set(picked);
+                      if (e.target.checked) n.add(l.id);
+                      else n.delete(l.id);
+                      setPicked(n);
+                    }}
+                  />
+                  {l.label}
+                  <span className="text-xs text-muted-foreground">
+                    {l.kind === "income" ? "Indtægt" : "Udgift"}
+                  </span>
+                </span>
+                <span className="tabular-nums">{formatDKK(l.annual_amount)}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Annuller
+            </Button>
+            <Button disabled={picked.size === 0 || mut.isPending} onClick={() => mut.mutate([...picked])}>
+              Overfør til {year}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
@@ -580,6 +676,8 @@ function BudgetPage() {
               </Button>
             </div>
           </div>
+
+          <MissingLinesBanner year={scenario.year} />
 
           <LinesTable
             title="Indtægter"
@@ -906,6 +1004,7 @@ function LinesTable({
   const [editing, setEditing] = useState<BudgetLine | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<BudgetLine | null>(null);
+  const [includeFuture, setIncludeFuture] = useState(true);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["budget-year"] });
 
@@ -919,9 +1018,13 @@ function LinesTable({
       monthly_override: number[] | null;
       source_note: string | null;
       sort_order: number;
-    }) => createFn({ data }),
-    onSuccess: () => {
-      toast.success("Linje tilføjet");
+    }) => createFn({ data: { ...data, include_future: includeFuture } }),
+    onSuccess: (res) => {
+      toast.success(
+        res.futureYears.length > 0
+          ? `Linje tilføjet – også i ${res.futureYears.join(", ")}`
+          : "Linje tilføjet",
+      );
       invalidate();
       setCreating(false);
     },
@@ -1109,6 +1212,8 @@ function LinesTable({
             <QuickAddRow
               colSpan={monthlyView ? 16 : 6}
               pending={createMut.isPending}
+              includeFuture={includeFuture}
+              onIncludeFutureChange={setIncludeFuture}
               onAdd={(label, amount) =>
                 createMut.mutate({
                   scenario_id: scenarioId,

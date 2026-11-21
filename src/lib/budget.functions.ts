@@ -269,13 +269,98 @@ const lineInput = z.object({
   sort_order: z.number().int().default(0),
 });
 
+/** Monthly split to use when a line is carried into another year: one-off payments keep their month, everything else is spread evenly. */
+export function carryOverride(override: unknown): number[] | null {
+  if (!Array.isArray(override)) return null;
+  const nonZero = (override as number[]).filter((v) => Number(v) !== 0).length;
+  return nonZero === 1 ? (override as number[]).map(Number) : null;
+}
+
 export const createBudgetLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => lineInput.parse(d))
+  .inputValidator((d: unknown) =>
+    lineInput.extend({ include_future: z.boolean().default(true) }).parse(d),
+  )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("budget_lines").insert(data);
+    const { include_future, ...line } = data;
+    const { error } = await context.supabase.from("budget_lines").insert(line);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    let futureYears: number[] = [];
+    if (include_future) {
+      const cur = await context.supabase
+        .from("budget_scenarios").select("year").eq("id", line.scenario_id).single();
+      if (cur.error) throw new Error(cur.error.message);
+      const fut = await context.supabase
+        .from("budget_scenarios").select("id, year").gt("year", cur.data.year);
+      if (fut.error) throw new Error(fut.error.message);
+      const rows = (fut.data ?? []).map((sc) => ({
+        ...line,
+        scenario_id: sc.id as string,
+        monthly_override: carryOverride(line.monthly_override),
+      }));
+      if (rows.length > 0) {
+        const ins = await context.supabase.from("budget_lines").insert(rows);
+        if (ins.error) throw new Error(ins.error.message);
+      }
+      futureYears = (fut.data ?? []).map((sc) => sc.year as number).sort();
+    }
+    return { ok: true, futureYears };
+  });
+
+const lineKey = (r: { kind: unknown; label: unknown }) =>
+  `${String(r.kind)}|${String(r.label).trim().toLowerCase()}`;
+
+async function missingFromPrevious(sb: any, year: number) {
+  const sc = await sb.from("budget_scenarios").select("id, year").lte("year", year).order("year", { ascending: false }).limit(2);
+  if (sc.error) throw new Error(sc.error.message);
+  const cur = sc.data?.[0];
+  const prev = sc.data?.[1];
+  if (!cur || cur.year !== year || !prev) return { prevYear: null as number | null, curId: cur?.id as string | undefined, lines: [] as any[] };
+  const [a, b] = await Promise.all([
+    sb.from("budget_lines").select("*").eq("scenario_id", prev.id).order("sort_order"),
+    sb.from("budget_lines").select("kind, label").eq("scenario_id", cur.id),
+  ]);
+  if (a.error) throw new Error(a.error.message);
+  if (b.error) throw new Error(b.error.message);
+  const have = new Set((b.data ?? []).map(lineKey));
+  return { prevYear: prev.year as number, curId: cur.id as string, lines: (a.data ?? []).filter((r: any) => !have.has(lineKey(r))) };
+}
+
+export const getMissingLinesFromPreviousYear = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ year: z.number().int() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const r = await missingFromPrevious(context.supabase, data.year);
+    return {
+      prevYear: r.prevYear,
+      lines: r.lines.map((l: any) => ({
+        id: l.id as string, kind: l.kind as string, label: l.label as string,
+        category: l.category as string, annual_amount: Number(l.annual_amount ?? 0),
+      })),
+    };
+  });
+
+export const importLinesFromPreviousYear = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ year: z.number().int(), ids: z.array(z.string().uuid()).min(1) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const r = await missingFromPrevious(context.supabase, data.year);
+    if (!r.curId) throw new Error("Budgetåret findes ikke");
+    const wanted = new Set(data.ids);
+    const rows = r.lines.filter((l: any) => wanted.has(l.id)).map((l: any) => ({
+      scenario_id: r.curId,
+      kind: l.kind, category: l.category, label: l.label,
+      annual_amount: Number(l.annual_amount ?? 0),
+      monthly_override: carryOverride(l.monthly_override),
+      source_note: l.source_note, sort_order: l.sort_order ?? 0,
+    }));
+    if (rows.length > 0) {
+      const ins = await context.supabase.from("budget_lines").insert(rows);
+      if (ins.error) throw new Error(ins.error.message);
+    }
+    return { count: rows.length };
   });
 
 export const updateBudgetLine = createServerFn({ method: "POST" })
